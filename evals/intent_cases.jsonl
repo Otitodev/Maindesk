@@ -1,0 +1,30 @@
+{"text": "Hi, can I book an appointment for next Tuesday?", "expected": "book_appointment"}
+{"text": "I need to change my Thursday slot to Friday morning", "expected": "reschedule"}
+{"text": "Please cancel my appointment tomorrow", "expected": "cancel"}
+{"text": "What time does the clinic close on Saturdays?", "expected": "ask_question"}
+{"text": "I'm having severe chest pain right now", "expected": "escalate"}
+{"text": "Thanks so much, you're great!", "expected": "smalltalk"}
+{"text": "Do you accept Cigna insurance?", "expected": "ask_question"}
+{"text": "Move my checkup to a later time please", "expected": "reschedule"}
+{"text": "I need to speak to a human nurse immediately", "expected": "escalate"}
+{"text": "Can I get a 9am tomorrow?", "expected": "book_appointment"}
+{"text": "Where are you located?", "expected": "ask_question"}
+{"text": "Cancel everything please", "expected": "cancel"}
+{"text": "Good morning!", "expected": "smalltalk"}
+{"text": "What insurance do you take", "expected": "ask_question"}
+{"text": "Reschedule please to next week same time", "expected": "reschedule"}
+{"text": "Looking for the earliest appointment available", "expected": "book_appointment"}
+{"text": "I'm bleeding badly, what should I do?", "expected": "escalate"}
+{"text": "Drop my Monday 3pm visit", "expected": "cancel"}
+{"text": "How long is a typical visit?", "expected": "ask_question"}
+{"text": "Hello?", "expected": "smalltalk"}
+{"text": "I'd like to schedule a physical exam", "expected": "book_appointment"}
+{"text": "Push my appointment back two hours", "expected": "reschedule"}
+{"text": "Stop my reminders for tomorrow's slot", "expected": "cancel"}
+{"text": "My daughter swallowed a battery", "expected": "escalate"}
+{"text": "Do I need to fast before bloodwork?", "expected": "ask_question"}
+{"text": "Could I get something for next month please", "expected": "book_appointment"}
+{"text": "Switch my visit to a virtual one", "expected": "reschedule"}
+{"text": "Have a great day!", "expected": "smalltalk"}
+{"text": "Connect me with Dr. Lee directly", "expected": "escalate"}
+{"text": "What's your phone number for the lab?", "expected": "ask_question"}

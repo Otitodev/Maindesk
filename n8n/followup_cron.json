@@ -1,0 +1,35 @@
+{
+  "name": "HealthDesk Post-Visit Follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+      },
+      "name": "Every 6h Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.HEALTHDESK_API_BASE}}/internal/cron/followups",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-internal-key", "value": "={{$env.GATEWAY_PROXY_KEY}}" }
+          ]
+        }
+      },
+      "name": "Call HealthDesk followups endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Every 6h Trigger": {
+      "main": [[{ "node": "Call HealthDesk followups endpoint", "type": "main", "index": 0 }]]
+    }
+  }
+}

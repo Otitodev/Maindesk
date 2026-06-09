@@ -1,0 +1,55 @@
+# HealthDesk AI — Python 3.12 dependency matrix (resolved 2026-06-09)
+# Every pin verified against PyPI + official docs on the date above.
+# Install: pip install -r requirements.txt  (clean Python 3.12-slim image)
+
+# ── Core web ────────────────────────────────────────────────────────────
+fastapi==0.136.3          # latest stable, May 2026; supports Py3.10–3.14
+uvicorn[standard]==0.49.0 # latest stable, Jun 2026; ASGI + uvloop/httptools
+pydantic==2.13.4          # latest stable, May 2026; required by FastAPI 0.136
+pydantic-settings==2.14.1 # latest stable, May 2026; pulls pydantic>=2.7
+python-dotenv==1.2.2      # latest stable, Mar 2026; Py3.10+
+
+# ── LangGraph + Postgres checkpointer ───────────────────────────────────
+# langgraph 1.x is GA. langgraph-checkpoint-postgres 3.x is the matched
+# pair and still exposes `AsyncPostgresSaver.from_conn_string()` as an
+# `async with` ctx-mgr; `.setup()` remains an async method. No code change
+# needed in app/agents/orchestrator.py.
+langgraph==1.2.4
+langgraph-checkpoint-postgres==3.1.0
+# psycopg3 is the sync driver pulled in by the langgraph checkpointer.
+psycopg[binary,pool]==3.3.4
+
+# asyncpg is the async driver used by app/memory/db.py (pgvector pool).
+# It was missing from the previous requirements.txt — adding it now.
+asyncpg==0.31.0           # latest stable, Nov 2025; Py3.9+, PG 9.5–18
+
+# ── Qwen via OpenAI-compatible client ───────────────────────────────────
+# openai 2.x SDK; embeddings.create() still accepts `dimensions=` —
+# verified in openai-python api.md. Works through DashScope's
+# compatible-mode endpoint (see qwen_client patch note below).
+openai==2.41.0
+httpx==0.28.1             # last 0.x release; supabase 2.31 + openai 2.x both OK
+
+# ── Supabase / pgvector ─────────────────────────────────────────────────
+supabase==2.31.0          # latest stable, Jun 2026
+
+# ── LiveKit Agents 1.x ──────────────────────────────────────────────────
+# All four plugins below were cut on the same 1.5.18 train (Jun 5 2026)
+# and declare `livekit-agents>=1.5.x`. Pin agents to 1.5.17 (the latest
+# *unyanked* release: 1.5.18 itself was yanked as "not ready"; plugins
+# still install fine against 1.5.17). The plugins do not pin agents to
+# an exact patch, so this combination resolves cleanly.
+livekit-agents==1.5.17
+livekit-plugins-openai==1.5.17        # LLM(base_url=…) accepted — Qwen via DashScope
+livekit-plugins-deepgram==1.5.17      # supports model="nova-3"
+livekit-plugins-elevenlabs==1.5.17    # supports model="eleven_flash_v2_5"
+livekit-plugins-silero==1.5.17        # silero.VAD.load() unchanged
+
+# ── Caching ─────────────────────────────────────────────────────────────
+# cachetools 7.x; TLRUCache(maxsize, ttu, timer=time.monotonic, getsizeof=None)
+# signature confirmed on cachetools.readthedocs.io. No code change.
+cachetools==7.1.4
+
+# ── Dev / eval ──────────────────────────────────────────────────────────
+pytest==9.0.3
+pytest-asyncio==1.4.0

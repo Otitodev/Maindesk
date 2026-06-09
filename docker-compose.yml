@@ -1,0 +1,49 @@
+services:
+  healthdesk:
+    build: .
+    image: healthdesk-ai:latest
+    container_name: healthdesk
+    env_file: .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - n8n
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: healthdesk-pg
+    environment:
+      POSTGRES_USER: healthdesk
+      POSTGRES_PASSWORD: healthdesk
+      POSTGRES_DB: healthdesk
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: healthdesk-n8n
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      HEALTHDESK_API_BASE: http://healthdesk:8000
+      GATEWAY_PROXY_KEY: ${GATEWAY_PROXY_KEY}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8ndata:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  n8ndata:

@@ -1,0 +1,86 @@
+{
+  "_comment": "10 scripted memory-recall scenarios (TRD §16). seed_memories are pre-loaded against patient_id; queries should retrieve the listed expected_ids in their top-k.",
+  "scenarios": [
+    {
+      "id": 1,
+      "patient_id": "11111111-1111-1111-1111-111111111111",
+      "seed_memories": [
+        {"id": "m1", "content": "Patient prefers afternoon appointments after 3pm.", "memory_type": "preference", "importance_score": 0.7},
+        {"id": "m2", "content": "Patient is allergic to penicillin.", "memory_type": "medical", "importance_score": 0.95},
+        {"id": "m3", "content": "Last visit was for a sprained ankle on 2026-04-12.", "memory_type": "history", "importance_score": 0.5}
+      ],
+      "query": "Can I book something later in the day?",
+      "expected_top": ["m1"]
+    },
+    {
+      "id": 2,
+      "patient_id": "11111111-1111-1111-1111-111111111111",
+      "query": "Just a reminder, I can't take penicillin",
+      "expected_top": ["m2"]
+    },
+    {
+      "id": 3,
+      "patient_id": "22222222-2222-2222-2222-222222222222",
+      "seed_memories": [
+        {"id": "m4", "content": "Patient drives 40 minutes from Lekki to reach the clinic.", "memory_type": "preference", "importance_score": 0.4},
+        {"id": "m5", "content": "Patient has type 2 diabetes diagnosed 2024.", "memory_type": "medical", "importance_score": 0.9},
+        {"id": "m6", "content": "Spouse Adaeze sometimes books on patient's behalf.", "memory_type": "context", "importance_score": 0.6}
+      ],
+      "query": "My wife will book for me today",
+      "expected_top": ["m6"]
+    },
+    {
+      "id": 4,
+      "patient_id": "22222222-2222-2222-2222-222222222222",
+      "query": "I'm calling about my blood sugar levels",
+      "expected_top": ["m5"]
+    },
+    {
+      "id": 5,
+      "patient_id": "33333333-3333-3333-3333-333333333333",
+      "seed_memories": [
+        {"id": "m7", "content": "Patient cancelled last 3 appointments at short notice.", "memory_type": "behaviour", "importance_score": 0.7},
+        {"id": "m8", "content": "Patient is on Cigna PPO insurance.", "memory_type": "billing", "importance_score": 0.6}
+      ],
+      "query": "Does my Cigna plan cover this?",
+      "expected_top": ["m8"]
+    },
+    {
+      "id": 6,
+      "patient_id": "33333333-3333-3333-3333-333333333333",
+      "query": "I need to cancel tomorrow's visit",
+      "expected_top": ["m7"]
+    },
+    {
+      "id": 7,
+      "patient_id": "44444444-4444-4444-4444-444444444444",
+      "seed_memories": [
+        {"id": "m9", "content": "Patient prefers female physicians.", "memory_type": "preference", "importance_score": 0.7},
+        {"id": "m10", "content": "Patient has white-coat hypertension; readings spike on arrival.", "memory_type": "medical", "importance_score": 0.6}
+      ],
+      "query": "Can I see a woman doctor please?",
+      "expected_top": ["m9"]
+    },
+    {
+      "id": 8,
+      "patient_id": "44444444-4444-4444-4444-444444444444",
+      "query": "My blood pressure was 160 over 95 when I arrived last time",
+      "expected_top": ["m10"]
+    },
+    {
+      "id": 9,
+      "patient_id": "55555555-5555-5555-5555-555555555555",
+      "seed_memories": [
+        {"id": "m11", "content": "Patient is hearing-impaired; please reply over WhatsApp not by call.", "memory_type": "accessibility", "importance_score": 0.9}
+      ],
+      "query": "Calling to confirm tomorrow's slot",
+      "expected_top": ["m11"]
+    },
+    {
+      "id": 10,
+      "patient_id": "55555555-5555-5555-5555-555555555555",
+      "query": "What's the best way to reach me about results?",
+      "expected_top": ["m11"]
+    }
+  ]
+}

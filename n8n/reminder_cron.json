@@ -1,0 +1,39 @@
+{
+  "name": "HealthDesk Appointment Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hours", "hoursInterval": 1 }
+          ]
+        }
+      },
+      "name": "Hourly Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.HEALTHDESK_API_BASE}}/internal/cron/reminders",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-internal-key", "value": "={{$env.GATEWAY_PROXY_KEY}}" }
+          ]
+        }
+      },
+      "name": "Call HealthDesk reminders endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Hourly Trigger": {
+      "main": [[{ "node": "Call HealthDesk reminders endpoint", "type": "main", "index": 0 }]]
+    }
+  }
+}

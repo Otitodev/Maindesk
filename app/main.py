@@ -1,0 +1,33 @@
+from contextlib import AsyncExitStack, asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.agents.orchestrator import build_graph
+from app.config import get_settings
+from app.gateway.adapters.evolution_client import close_client as close_evolution_client
+from app.gateway.adapters.web import router as web_router
+from app.gateway.adapters.whatsapp import router as whatsapp_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings()
+    app.state.settings = settings
+    app.state.exit_stack = AsyncExitStack()
+    await app.state.exit_stack.__aenter__()
+    app.state.graph = await build_graph(app.state)
+    try:
+        yield
+    finally:
+        await close_evolution_client()
+        await app.state.exit_stack.aclose()
+
+
+app = FastAPI(title="HealthDesk AI", version="0.1.0", lifespan=lifespan)
+app.include_router(whatsapp_router)
+app.include_router(web_router)
+
+
+@app.get("/health")
+async def health() -> dict:
+    return {"status": "ok"}
