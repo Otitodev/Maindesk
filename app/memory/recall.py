@@ -51,9 +51,12 @@ async def recall_memories(
     top_k: int = 5,
 ) -> list[dict[str, Any]]:
     vec = await embed(query)
+    # asyncpg would send list[float] as real[] which can't cast to vector;
+    # pgvector accepts its text repr `[v1,v2,…]` which $1::vector then parses.
+    vec_literal = "[" + ",".join(repr(float(x)) for x in vec) + "]"
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(_RECALL_SQL, vec, patient_id, top_k * 2)
+        rows = await conn.fetch(_RECALL_SQL, vec_literal, patient_id, top_k * 2)
 
     scored = []
     for r in rows:

@@ -71,7 +71,8 @@ async def persist_turn(
             mem_id = row["id"]
         # Embed AFTER inserting so the row exists even if embedding fails.
         vec = await embed(summary)
+        vec_literal = "[" + ",".join(repr(float(x)) for x in vec) + "]"
         async with pool.acquire() as conn:
-            await conn.execute(_INSERT_EMBEDDING_SQL, vec, mem_id)
+            await conn.execute(_INSERT_EMBEDDING_SQL, vec_literal, mem_id)
     except Exception:
         log.exception("persist_turn failed (patient=%s)", patient_id)

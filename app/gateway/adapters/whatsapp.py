@@ -19,6 +19,7 @@ from app.gateway.adapters.evolution_client import send_text
 from app.gateway.cache import get_cached_session, set_cached_session
 from app.gateway.redact import redact
 from app.gateway.schema import PatientMessage, PatientReply
+from app.memory.profile import resolve_by_phone, upsert_profile
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks/whatsapp", tags=["whatsapp"])
@@ -113,6 +114,18 @@ async def receive(
     if not msg.content and not msg.media_url:
         # Status/typing/ack events — ack and drop.
         return {"status": "ignored"}
+
+    # Resolve patient identity from the WhatsApp number so memory recall
+    # can run. First-contact users get a stub profile (phone only); we'll
+    # enrich name later when the reasoner asks for it.
+    phone = msg.platform_meta.get("raw_from", "").split("@", 1)[0]
+    if phone:
+        try:
+            profile = await resolve_by_phone(phone)
+            patient_id = profile["id"] if profile else await upsert_profile(phone=phone)
+            msg = msg.model_copy(update={"patient_id": str(patient_id)})
+        except Exception:
+            log.exception("whatsapp identity resolution failed phone=%s", phone)
 
     graph = request.app.state.graph
     cached = get_cached_session(msg.session_id)
