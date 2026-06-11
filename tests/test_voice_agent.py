@@ -248,6 +248,145 @@ async def test_find_my_appointments_lists(monkeypatch):
 
 # ── @function_tool: escalate_to_staff ───────────────────────────────────
 
+# ── Session capture + write-back ────────────────────────────────────────
+
+class _StubItem:
+    """Quack-typed stand-in for an llm.ChatMessage on a captured event."""
+
+    def __init__(self, role: str, text: str | None) -> None:
+        self.role = role
+        self.text_content = text
+
+
+class _StubEv:
+    def __init__(self, item) -> None:
+        self.item = item
+
+
+def test_capture_appends_user_and_assistant_text():
+    a = _make_agent()
+    a._capture_conversation_item(_StubEv(_StubItem("user", "hi")))
+    a._capture_conversation_item(_StubEv(_StubItem("assistant", "hello there")))
+    assert a._conversation_log == [("user", "hi"), ("assistant", "hello there")]
+
+
+def test_capture_ignores_system_role():
+    a = _make_agent()
+    a._capture_conversation_item(_StubEv(_StubItem("system", "boot")))
+    assert a._conversation_log == []
+
+
+def test_capture_ignores_empty_text():
+    a = _make_agent()
+    a._capture_conversation_item(_StubEv(_StubItem("user", None)))
+    a._capture_conversation_item(_StubEv(_StubItem("assistant", "")))
+    assert a._conversation_log == []
+
+
+def test_capture_ignores_event_with_no_item():
+    a = _make_agent()
+    a._capture_conversation_item(_StubEv(None))
+    assert a._conversation_log == []
+
+
+async def test_persist_session_skips_without_patient(monkeypatch):
+    called = []
+
+    async def fake_persist(**kwargs):
+        called.append(kwargs)
+
+    monkeypatch.setattr(voice_mod, "persist_turn", fake_persist)
+    a = _make_agent(patient_id=None, phone=None)
+    a._conversation_log = [
+        ("user", "u1"), ("assistant", "a1"),
+        ("user", "u2"), ("assistant", "a2"),
+    ]
+    await a._persist_session()
+    assert called == []
+
+
+async def test_persist_session_skips_when_log_too_short(monkeypatch):
+    called = []
+
+    async def fake_persist(**kwargs):
+        called.append(kwargs)
+
+    monkeypatch.setattr(voice_mod, "persist_turn", fake_persist)
+    a = _make_agent()
+    a._conversation_log = [("user", "hello"), ("assistant", "hi")]  # 2 items < 4
+    await a._persist_session()
+    assert called == []
+
+
+async def test_persist_session_skips_when_no_user_text(monkeypatch):
+    """All-assistant log (degenerate but possible) shouldn't persist."""
+    called = []
+
+    async def fake_persist(**kwargs):
+        called.append(kwargs)
+
+    monkeypatch.setattr(voice_mod, "persist_turn", fake_persist)
+    a = _make_agent()
+    a._conversation_log = [("assistant", x) for x in ("a", "b", "c", "d")]
+    await a._persist_session()
+    assert called == []
+
+
+async def test_persist_session_writes_when_meaningful(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    async def fake_persist(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(voice_mod, "persist_turn", fake_persist)
+    a = _make_agent(patient_id="p-1", phone="234555")
+    a._conversation_log = [
+        ("user", "Can I book Tuesday?"),
+        ("assistant", "Sure, at what time?"),
+        ("user", "Around 3pm"),
+        ("assistant", "Booked you for 3pm Tuesday."),
+    ]
+    await a._persist_session()
+    assert captured["patient_id"] == "p-1"
+    assert captured["session_id"] == "voice:234555"
+    assert captured["intent"] == "voice_session"
+    assert "Can I book Tuesday?" in captured["user_text"]
+    assert "Around 3pm" in captured["user_text"]
+    assert "Sure, at what time?" in captured["assistant_text"]
+    assert "Booked you for 3pm" in captured["assistant_text"]
+    assert 0 < captured["importance"] <= 1
+
+
+async def test_persist_session_swallows_errors(monkeypatch):
+    async def boom(**_):
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(voice_mod, "persist_turn", boom)
+    a = _make_agent()
+    a._conversation_log = [
+        ("user", "u1"), ("assistant", "a1"),
+        ("user", "u2"), ("assistant", "a2"),
+    ]
+    # Must not raise — session exit must complete cleanly so LiveKit
+    # can tear down the room.
+    await a._persist_session()
+
+
+async def test_on_exit_calls_persist_session(monkeypatch):
+    called = []
+
+    async def fake_persist_session(self):
+        called.append(self._patient_id)
+
+    monkeypatch.setattr(voice_mod.HealthDeskAgent, "_persist_session", fake_persist_session)
+    a = _make_agent(patient_id="p-x")
+    await a.on_exit()
+    assert called == ["p-x"]
+
+
+# ── @function_tool: escalate_to_staff ───────────────────────────────────
+
+
 async def test_escalate_to_staff_notifies(monkeypatch):
     captured: dict[str, Any] = {}
 
