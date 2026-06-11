@@ -29,6 +29,11 @@ from app.config import get_settings
 log = logging.getLogger(__name__)
 
 
+def _route_after_recall(state: AgentState) -> str:
+    """Bypass the tools node for intents that never need tool calls."""
+    return "reasoner" if state.get("intent", "unknown") in {"smalltalk", "unknown"} else "tools"
+
+
 async def build_graph(app_state):
     """Wire the state graph and bind a Postgres checkpointer.
 
@@ -46,7 +51,7 @@ async def build_graph(app_state):
 
     graph.add_edge(START, "triage")
     graph.add_edge("triage", "recall")
-    graph.add_edge("recall", "tools")
+    graph.add_conditional_edges("recall", _route_after_recall, {"tools": "tools", "reasoner": "reasoner"})
     graph.add_edge("tools", "reasoner")
     graph.add_edge("reasoner", "writer")
     graph.add_edge("writer", END)

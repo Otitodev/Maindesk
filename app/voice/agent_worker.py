@@ -324,7 +324,7 @@ async def _resolve_caller(ctx: JobContext) -> tuple[str | None, str | None]:
         except json.JSONDecodeError:
             log.warning("room metadata was not valid JSON: %r", md[:200])
 
-    if not phone and s.healthdesk_demo_patient_phone:
+    if not phone and s.healthdesk_env == "demo" and s.healthdesk_demo_patient_phone:
         phone = s.healthdesk_demo_patient_phone
         log.info("voice: using demo patient phone %s", phone)
 
