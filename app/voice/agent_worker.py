@@ -261,6 +261,11 @@ class HealthDeskAgent(Agent):
         except ValueError:
             return f"That time did not parse: {slot_iso}"
         result = await book(self._patient_id, ts)
+        if result.get("error") == "slot_taken":
+            return (
+                f"Sorry, that slot was just taken. "
+                f"Would you like me to find another available time?"
+            )
         return f"Booked for {result['starts_at']}."
 
     @function_tool

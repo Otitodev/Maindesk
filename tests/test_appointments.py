@@ -72,3 +72,13 @@ async def test_book_slot_taken_returns_error(mock_pool):
     assert result["tool"] == "book"
     assert result["error"] == "slot_taken"
     assert result["starts_at"] == ts.isoformat()
+
+
+async def test_suggest_slots_cancelled_slot_is_available(mock_pool):
+    """A cancelled appointment at a given time must not block suggest_slots
+    from offering that slot — consistent with the partial unique index which
+    only enforces uniqueness for status='booked' rows."""
+    mock_pool.fetch.return_value = []  # no booked rows — cancelled row not returned
+    result = await suggest_slots(_msg(), n=3)
+    # All 3 slots are available because cancelled rows are excluded from the query
+    assert len(result["slots"]) == 3
