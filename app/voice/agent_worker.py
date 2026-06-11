@@ -68,6 +68,19 @@ log = logging.getLogger("voice")
 SYSTEM_PROMPT = """You are HealthDesk, a friendly front-desk assistant for a clinic.
 You are speaking out loud — keep sentences short and natural.
 
+Filler rule — VERY IMPORTANT for natural conversation:
+- Before calling ANY tool (find_open_slots, book_appointment,
+  find_my_appointments, escalate_to_staff), say a short filler sentence
+  FIRST so the caller hears you and doesn't think the line went dead.
+- Vary the filler. Use phrases like:
+    "One moment, let me check that for you..."
+    "Sure, let me pull that up..."
+    "Just a second while I look..."
+    "Let me see..."
+- Then call the tool. After the tool returns, continue with the result.
+- The filler is mandatory whenever a tool runs. Never silently invoke
+  a tool — the caller hears nothing while it runs, and that feels broken.
+
 Grounding rules — these are strict:
 - If you don't know a clinic-specific fact (hours, address, phone, doctor
   names, prices, insurance, services, parking), say "let me check and get
@@ -77,7 +90,7 @@ Grounding rules — these are strict:
 - Never give medical advice. For anything clinical, call escalate_to_staff
   and tell the caller a clinician will reach out.
 - If the caller mentions anything urgent or unsafe, call escalate_to_staff
-  immediately."""
+  immediately (still with a brief filler — "Hold on, getting someone now...")."""
 
 GREETING_INSTRUCTIONS = (
     'Greet the caller warmly: "Hi — you have reached the front desk. '
@@ -215,7 +228,10 @@ class HealthDeskAgent(Agent):
     @function_tool
     async def find_open_slots(self, date: str = "") -> str:
         """Find available appointment slots. Pass an ISO date (YYYY-MM-DD)
-        if the caller named a day; leave blank for the next available."""
+        if the caller named a day; leave blank for the next available.
+
+        BEFORE calling this, say a brief filler out loud — e.g.
+        "Let me check what we have available...". Do not call silently."""
         result = await suggest_slots(self._voice_msg(f"book for {date}"))
         slots = result.get("slots", []) or []
         if not slots:
@@ -225,7 +241,10 @@ class HealthDeskAgent(Agent):
     @function_tool
     async def book_appointment(self, slot_iso: str) -> str:
         """Book the caller's appointment. `slot_iso` must be an ISO 8601
-        timestamp you confirmed via find_open_slots."""
+        timestamp you confirmed via find_open_slots.
+
+        BEFORE calling this, say a brief filler out loud — e.g.
+        "Booking that for you now...". Do not call silently."""
         if not self._patient_id:
             return (
                 "I cannot book yet because I have not identified you. "
@@ -240,7 +259,10 @@ class HealthDeskAgent(Agent):
 
     @function_tool
     async def find_my_appointments(self) -> str:
-        """Look up the caller's upcoming appointments on file."""
+        """Look up the caller's upcoming appointments on file.
+
+        BEFORE calling this, say a brief filler out loud — e.g.
+        "One moment, pulling up your appointments...". Do not call silently."""
         if not self._patient_id:
             return "I do not have you on file yet."
         result = await find_existing(self._voice_msg(""))
@@ -255,7 +277,11 @@ class HealthDeskAgent(Agent):
     async def escalate_to_staff(self, reason: str) -> str:
         """Notify human staff that this caller needs help. Use this for
         any medical concern, urgent situation, or request that needs
-        human judgement."""
+        human judgement.
+
+        BEFORE calling this, reassure the caller out loud — e.g.
+        "Hold on, getting someone for you now..." — do not call silently.
+        The caller is often anxious when this fires; the filler matters."""
         await notify_staff(self._voice_msg(reason), reason=reason)
         return "I have notified staff — they will be with you shortly."
 
