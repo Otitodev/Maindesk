@@ -33,7 +33,8 @@ class Patient(TypedDict):
 
 DEMO_PATIENTS: list[Patient] = [
     {
-        "phone": "2348012345678",
+        # Mapped to the demo phone so WhatsApp-driven recall works.
+        "phone": "2340000000000",
         "full_name": "Adaeze Okafor",
         "memories": [
             {"content": "Patient prefers afternoon appointments after 3pm.",

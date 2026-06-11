@@ -45,6 +45,10 @@ class Settings(BaseSettings):
 
     # Voice on/off (Week-1 exit gate, PRD §11)
     healthdesk_voice: bool = True
+    # Phone used to identify the caller when LiveKit gives us no metadata
+    # (e.g. browser-based Agents Playground sessions). Maps to a seeded
+    # patient via memory.profile.resolve_by_phone so recall still works.
+    healthdesk_demo_patient_phone: str = ""
 
 
 @lru_cache
