@@ -85,6 +85,7 @@ async def receive(
     request: Request,
     x_signature: str | None = Header(default=None, alias="X-Hub-Signature-256"),
     x_auth_token: str | None = Header(default=None, alias="X-Auth-Token"),
+    apikey: str | None = Header(default=None, alias="apikey"),
 ) -> dict[str, str]:
     settings = get_settings()
     body = await request.body()
@@ -94,9 +95,13 @@ async def receive(
             log.warning("whatsapp webhook hmac rejected")
             raise HTTPException(status_code=401, detail="invalid signature")
     else:
+        # Evolution v2 sends the instance API key in an `apikey` header on
+        # webhook callbacks. We accept either that or our own X-Auth-Token
+        # in token mode so both Evolution-driven and custom callers work.
+        candidate = x_auth_token or apikey
         client_ip = request.client.host if request.client else ""
         if not _verify_token(
-            x_auth_token,
+            candidate,
             settings.evolution_webhook_secret,
             client_ip,
             settings.evolution_ip_allowlist,
