@@ -30,6 +30,11 @@ def _importance(state: AgentState) -> float:
     return 0.2
 
 
+def _log_task_exc(task: asyncio.Task) -> None:
+    if not task.cancelled() and task.exception():
+        log.error("persist_turn failed: %s", task.exception())
+
+
 async def writer_node(state: AgentState) -> AgentState:
     msg = state.get("message")
     reply = state.get("reply")
@@ -40,7 +45,7 @@ async def writer_node(state: AgentState) -> AgentState:
     if score < 0.3:
         return {}
 
-    asyncio.create_task(
+    task = asyncio.create_task(
         persist_turn(
             patient_id=msg.patient_id,
             session_id=msg.session_id,
@@ -50,4 +55,5 @@ async def writer_node(state: AgentState) -> AgentState:
             intent=state.get("intent", "unknown"),
         )
     )
+    task.add_done_callback(_log_task_exc)
     return {}

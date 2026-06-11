@@ -8,9 +8,13 @@ for the demo and easy to swap for a real backend later.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
+import asyncpg
+
+from app.config import get_settings
 from app.gateway.schema import PatientMessage
 from app.memory.db import get_pool
 
@@ -18,9 +22,11 @@ log = logging.getLogger(__name__)
 
 
 async def suggest_slots(_msg: PatientMessage, *, n: int = 3) -> dict[str, Any]:
-    """Return the next `n` open 30-min slots starting tomorrow 09:00 local-UTC."""
+    """Return the next `n` open 30-min slots starting tomorrow 09:00 in the clinic's timezone."""
+    settings = get_settings()
+    tz = ZoneInfo(settings.clinic_timezone)
     pool = await get_pool()
-    base = (datetime.now(timezone.utc) + timedelta(days=1)).replace(
+    base = (datetime.now(tz) + timedelta(days=1)).replace(
         hour=9, minute=0, second=0, microsecond=0
     )
     candidates = [base + timedelta(minutes=30 * i) for i in range(n * 4)]
@@ -28,7 +34,8 @@ async def suggest_slots(_msg: PatientMessage, *, n: int = 3) -> dict[str, Any]:
         taken = {
             r["starts_at"]
             for r in await conn.fetch(
-                "SELECT starts_at FROM appointments WHERE starts_at = ANY($1::timestamptz[])",
+                "SELECT starts_at FROM appointments "
+                "WHERE starts_at = ANY($1::timestamptz[]) AND status = 'booked'",
                 candidates,
             )
         }
@@ -57,11 +64,15 @@ async def find_existing(msg: PatientMessage) -> dict[str, Any]:
 
 async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
     pool = await get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "INSERT INTO appointments (patient_id, starts_at, status) "
-            "VALUES ($1, $2, 'booked') RETURNING id",
-            patient_id,
-            starts_at,
-        )
-    return {"tool": "book", "id": str(row["id"]), "starts_at": starts_at.isoformat()}
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "INSERT INTO appointments (patient_id, starts_at, status) "
+                "VALUES ($1, $2, 'booked') RETURNING id",
+                patient_id,
+                starts_at,
+            )
+        return {"tool": "book", "id": str(row["id"]), "starts_at": starts_at.isoformat()}
+    except asyncpg.UniqueViolationError:
+        log.warning("double-booking attempted patient=%s starts_at=%s", patient_id, starts_at)
+        return {"tool": "book", "error": "slot_taken", "starts_at": starts_at.isoformat()}

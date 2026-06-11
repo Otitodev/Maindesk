@@ -1,12 +1,15 @@
 from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.agents.orchestrator import build_graph
 from app.config import get_settings
 from app.gateway.adapters.evolution_client import close_client as close_evolution_client
 from app.gateway.adapters.web import router as web_router
 from app.gateway.adapters.whatsapp import router as whatsapp_router
+from app.gateway.limiter import limiter
 
 
 @asynccontextmanager
@@ -24,6 +27,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="HealthDesk AI", version="0.1.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(whatsapp_router)
 app.include_router(web_router)
 

@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app.main as main_mod
+from app.config import get_settings
 from app.gateway.schema import PatientReply
 
 
@@ -80,3 +81,34 @@ def test_health_endpoint(stub_graph):
         r = client.get("/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
+
+
+def test_web_webhook_rejects_missing_api_key(stub_graph, monkeypatch):
+    monkeypatch.setenv("WEB_API_KEY", "secret-key")
+    get_settings.cache_clear()
+    with TestClient(main_mod.app) as client:
+        r = client.post("/webhooks/web", json={"session_id": "x", "content": "hi"})
+    assert r.status_code == 401
+    get_settings.cache_clear()
+
+
+def test_web_webhook_accepts_valid_api_key(stub_graph, monkeypatch):
+    monkeypatch.setenv("WEB_API_KEY", "secret-key")
+    get_settings.cache_clear()
+    with TestClient(main_mod.app) as client:
+        r = client.post(
+            "/webhooks/web",
+            json={"session_id": "x", "content": "hi"},
+            headers={"X-API-Key": "secret-key"},
+        )
+    assert r.status_code == 200
+    get_settings.cache_clear()
+
+
+def test_web_webhook_no_key_configured_allows_all(stub_graph, monkeypatch):
+    monkeypatch.setenv("WEB_API_KEY", "")
+    get_settings.cache_clear()
+    with TestClient(main_mod.app) as client:
+        r = client.post("/webhooks/web", json={"session_id": "x", "content": "hi"})
+    assert r.status_code == 200
+    get_settings.cache_clear()
