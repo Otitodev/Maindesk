@@ -53,8 +53,15 @@ from app.config import get_settings
 from app.gateway.schema import PatientMessage
 from app.memory.profile import resolve_by_phone, upsert_profile
 from app.memory.recall import recall_memories
+from app.memory.write import persist_turn
 from app.tools.appointments import book, find_existing, suggest_slots
 from app.tools.escalation import notify_staff
+
+# Minimum number of items in the conversation log to bother persisting.
+# Greeting + one short exchange is 3 items; we want at least 2 full
+# back-and-forths so the summariser has something useful to work with.
+_PERSIST_MIN_ITEMS = 4
+_PERSIST_IMPORTANCE = 0.6
 
 log = logging.getLogger("voice")
 
@@ -87,11 +94,65 @@ class HealthDeskAgent(Agent):
         self._patient_phone = patient_phone
         # Session id used by tools and memory write-back.
         self._session_id = f"voice:{patient_phone or 'unknown'}"
+        # Captured (role, text) tuples — populated by _capture_conversation_item
+        # via the conversation_item_added event.
+        self._conversation_log: list[tuple[str, str]] = []
 
     # ── Lifecycle ───────────────────────────────────────────────────────
 
     async def on_enter(self) -> None:
+        # Wire turn capture so we can write a session memory on exit.
+        # Bound method works as a sync handler — pyee-style emitter.
+        self.session.on("conversation_item_added", self._capture_conversation_item)
         self.session.generate_reply(instructions=GREETING_INSTRUCTIONS)
+
+    async def on_exit(self) -> None:
+        await self._persist_session()
+
+    # ── Conversation capture + persistence ──────────────────────────────
+
+    def _capture_conversation_item(self, ev) -> None:
+        """Append (role, text) tuples to the session log as LiveKit emits
+        them. Synchronous because it's pure list-append — any I/O lives
+        in on_exit / _persist_session."""
+        item = getattr(ev, "item", None)
+        if item is None:
+            return
+        role = getattr(item, "role", None)
+        text = getattr(item, "text_content", None)
+        if text and role in ("user", "assistant"):
+            self._conversation_log.append((role, text))
+
+    async def _persist_session(self) -> None:
+        """Summarise the call and write one memory row. Skips when there
+        is no patient on file or the call was too short to be useful."""
+        if not self._patient_id:
+            return
+        if len(self._conversation_log) < _PERSIST_MIN_ITEMS:
+            log.info(
+                "voice: skipping write-back, only %d items",
+                len(self._conversation_log),
+            )
+            return
+        user_lines = "\n".join(t for r, t in self._conversation_log if r == "user")
+        assistant_lines = "\n".join(t for r, t in self._conversation_log if r == "assistant")
+        if not user_lines:
+            return
+        try:
+            await persist_turn(
+                patient_id=self._patient_id,
+                session_id=self._session_id,
+                user_text=user_lines,
+                assistant_text=assistant_lines,
+                importance=_PERSIST_IMPORTANCE,
+                intent="voice_session",
+            )
+            log.info(
+                "voice: persisted session memory patient=%s items=%d",
+                self._patient_id, len(self._conversation_log),
+            )
+        except Exception:
+            log.exception("voice session persist failed")
 
     # ── Proactive memory recall (RAG via llm_node override) ─────────────
 
