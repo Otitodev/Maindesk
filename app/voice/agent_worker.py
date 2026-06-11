@@ -36,6 +36,12 @@ import logging
 import os
 from datetime import datetime
 
+# Load .env into os.environ BEFORE importing livekit.* so the LiveKit
+# CLI sees LIVEKIT_API_KEY / LIVEKIT_API_SECRET. Pydantic Settings reads
+# the same file for our own code but never exports to os.environ.
+from dotenv import load_dotenv
+load_dotenv()
+
 from livekit.agents import (
     Agent,
     AgentSession,
@@ -362,4 +368,14 @@ async def entrypoint(ctx: JobContext) -> None:
 
 if __name__ == "__main__":
     os.environ.setdefault("LIVEKIT_URL", get_settings().livekit_url)
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm))
+    # agent_name="healthdesk" registers us for explicit dispatch so the
+    # worker shows up in LiveKit Cloud Console's agent dropdown. Without
+    # a name the worker only runs via auto-dispatch on API-created rooms,
+    # which the Console UI doesn't trigger.
+    cli.run_app(
+        WorkerOptions(
+            entrypoint_fnc=entrypoint,
+            prewarm_fnc=prewarm,
+            agent_name="healthdesk",
+        )
+    )
