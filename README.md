@@ -2,7 +2,7 @@
 
 A multi-channel autonomous front-desk agent for clinics. Patients reach it on **WhatsApp**, the **web**, or by **voice**, and the same brain answers across all three — with patient-specific memory carried across channels.
 
-> Submission for the Qwen Cloud Hackathon (Track 4). See [`../Qwen_prd.md`](../Qwen_prd.md) and [`../Qwen_trd.md`](../Qwen_trd.md) for full product and technical specs.
+> Submission for the Qwen Cloud Hackathon (Track 4). See [`docs/PRD.md`](docs/PRD.md) and [`docs/TRD.md`](docs/TRD.md) for full product and technical specs.
 
 ---
 
