@@ -31,6 +31,31 @@ Grounding rules — these are strict:
 - If the patient's request needs human judgement, say you'll connect them
   to staff."""
 
+# Canned escalation lines per detected language (the escalation path never
+# reaches the LLM, so it can't translate itself). Fallback is English.
+_ESCALATION_TEXT = {
+    "en": "Let me connect you with one of our staff — one moment.",
+    "es": "Permítame conectarle con nuestro personal — un momento.",
+    "fr": "Je vous mets en relation avec notre personnel — un instant.",
+    "pt": "Vou conectá-lo com a nossa equipe — um momento.",
+    "ar": "سأقوم بتوصيلك بأحد موظفينا — لحظة من فضلك.",
+    "zh": "我帮您转接我们的工作人员，请稍等。",
+    "yo": "Jẹ́ kí n so ọ́ pọ̀ mọ́ òṣìṣẹ́ wa kan — ẹ dúró díẹ̀.",
+    "ha": "Bari in haɗa ka da ma'aikacinmu — ɗan lokaci kaɗan.",
+    "ig": "Ka m jikọọ gị na otu n'ime ndị ọrụ anyị — nwa oge.",
+}
+
+
+def _language_instruction(state: AgentState) -> str:
+    lang = state.get("language") or "en"
+    if lang == "en":
+        return ""
+    return (
+        f"\n\nThe patient is writing in another language (ISO code: {lang})."
+        f" Reply entirely in that language — do not switch to English."
+    )
+
+
 def _build_user_prompt(state: AgentState) -> str:
     msg = state.get("message")
     memories = state.get("memories") or []
@@ -53,7 +78,8 @@ async def reasoner_node(state: AgentState) -> AgentState:
         return {}
 
     if state.get("intent") == "escalate" or state.get("intent_confidence", 1.0) < s.escalation_confidence_threshold:
-        text = "Let me connect you with one of our staff — one moment."
+        lang = state.get("language") or "en"
+        text = _ESCALATION_TEXT.get(lang, _ESCALATION_TEXT["en"])
         return {
             "reply": PatientReply(session_id=msg.session_id, channel=msg.channel, content=text),
             "escalated": True,
@@ -62,7 +88,7 @@ async def reasoner_node(state: AgentState) -> AgentState:
     try:
         text = await complete(
             model=s.qwen_model_plus,
-            system=_SYSTEM,
+            system=_SYSTEM + _language_instruction(state),
             user=_build_user_prompt(state),
             temperature=0.3,
             max_tokens=400,
