@@ -170,6 +170,8 @@ app/
     store.py               escalation queue persistence + staff actions
     events.py              in-process pub/sub for live updates
     templates/index.html   single-page staff console
+  mcp/
+    server.py              FastMCP stdio server — clinic tools for MCP clients
   voice/
     agent_worker.py        LiveKit Agents 1.x worker w/ full parity:
                            - llm_node override → memory recall
@@ -193,6 +195,39 @@ tests/                     111 cases, all green
 Dockerfile                 supervisord-based image (FastAPI + voice worker)
 docker-compose.yml         app + postgres(pgvector) + n8n
 ```
+
+---
+
+## MCP server
+
+The same clinic tools the agent uses are exposed over the [Model Context
+Protocol](https://modelcontextprotocol.io), so any MCP client — Claude
+Desktop, Cursor, etc. — can work the front desk without touching the web UI:
+
+| Tool | Does |
+|---|---|
+| `suggest_slots` | next open 30-min slots in the clinic timezone |
+| `lookup_patient` | resolve a patient profile by phone |
+| `book_appointment` | book a confirmed slot (double-booking guarded) |
+| `get_appointment_history` | upcoming + past appointments |
+| `escalate_to_staff` | page staff; lands in the `/staff` dashboard queue |
+
+Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "healthdesk": {
+      "command": "<repo>/.venv/Scripts/python.exe",
+      "args": ["-m", "app.mcp.server"],
+      "env": { "PYTHONPATH": "<repo>" }
+    }
+  }
+}
+```
+
+The server reads the same `.env` as the gateway; it needs `DATABASE_URL`
+(and Postgres up) to answer.
 
 ---
 
@@ -235,6 +270,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Capability | Status |
 |---|---|
 | Three-channel parity | ✅ |
+| MCP server (5 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
 | Multilingual replies (language auto-detected in triage) | ✅ text channels + voice STT code-switching |
 | pgvector memory + decay re-rank | ✅ |
