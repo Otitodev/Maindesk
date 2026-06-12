@@ -164,7 +164,12 @@ app/
     profile.py             patient profile resolve/upsert
   tools/
     appointments.py        slot suggestions, booking, lookup
-    escalation.py          Slack webhook for staff handoff
+    escalation.py          Slack webhook + dashboard queue insert
+  dashboard/
+    router.py              /staff human-in-the-loop console (HTMX + SSE)
+    store.py               escalation queue persistence + staff actions
+    events.py              in-process pub/sub for live updates
+    templates/index.html   single-page staff console
   voice/
     agent_worker.py        LiveKit Agents 1.x worker w/ full parity:
                            - llm_node override → memory recall
@@ -230,6 +235,8 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Capability | Status |
 |---|---|
 | Three-channel parity | ✅ |
+| Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
+| Multilingual replies (language auto-detected in triage) | ✅ text channels + voice STT code-switching |
 | pgvector memory + decay re-rank | ✅ |
 | Grounding rule against hallucinated facts | ✅ |
 | Outbound secret redaction | ✅ |

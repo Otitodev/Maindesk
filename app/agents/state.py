@@ -23,6 +23,8 @@ class AgentState(TypedDict, total=False):
     message: PatientMessage
     intent: Intent
     intent_confidence: float
+    # ISO 639-1 code of the patient's message, detected by triage ("en" default).
+    language: str
     memories: list[dict[str, Any]]
     tool_results: list[dict[str, Any]]
     reply: PatientReply

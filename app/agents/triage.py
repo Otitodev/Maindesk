@@ -17,8 +17,17 @@ log = logging.getLogger(__name__)
 
 _SYSTEM = """You classify patient messages for a clinic front desk.
 Respond with strict JSON: {"intent": <one of book_appointment, reschedule,
-cancel, ask_question, escalate, smalltalk, unknown>, "confidence": <0..1>}.
+cancel, ask_question, escalate, smalltalk, unknown>, "confidence": <0..1>,
+"language": <ISO 639-1 code of the message's language, e.g. en, ar, zh, fr, yo>}.
 No prose."""
+
+
+def _normalise_language(value) -> str:
+    """Coerce whatever the model returned into a plausible ISO 639 code."""
+    if not isinstance(value, str):
+        return "en"
+    code = value.strip().lower()
+    return code if 2 <= len(code) <= 3 and code.isalpha() else "en"
 
 
 async def triage_node(state: AgentState) -> AgentState:
@@ -35,7 +44,8 @@ async def triage_node(state: AgentState) -> AgentState:
         parsed = json.loads(raw)
         intent = parsed.get("intent", "unknown")
         conf = float(parsed.get("confidence", 0.0))
+        language = _normalise_language(parsed.get("language"))
     except (json.JSONDecodeError, ValueError, KeyError):
         log.warning("triage parse failed; defaulting to unknown")
-        intent, conf = "unknown", 0.0
-    return {"intent": intent, "intent_confidence": conf}
+        intent, conf, language = "unknown", 0.0, "en"
+    return {"intent": intent, "intent_confidence": conf, "language": language}

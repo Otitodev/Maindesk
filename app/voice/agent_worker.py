@@ -96,7 +96,12 @@ Grounding rules — these are strict:
 - Never give medical advice. For anything clinical, call escalate_to_staff
   and tell the caller a clinician will reach out.
 - If the caller mentions anything urgent or unsafe, call escalate_to_staff
-  immediately (still with a brief filler — "Hold on, getting someone now...")."""
+  immediately (still with a brief filler — "Hold on, getting someone now...").
+
+Language rule:
+- If the caller speaks a language other than English, reply entirely in
+  the caller's language (the TTS voice is multilingual). Keep using their
+  language until they switch."""
 
 GREETING_INSTRUCTIONS = (
     'Greet the caller warmly: "Hi — you have reached the front desk. '
@@ -363,7 +368,10 @@ async def entrypoint(ctx: JobContext) -> None:
 
     session = AgentSession(
         vad=ctx.proc.userdata["vad"],
-        stt=deepgram.STT(api_key=s.deepgram_api_key, model="nova-3"),
+        # language="multi" turns on nova-3's multilingual code-switching so
+        # non-English callers are transcribed instead of garbled. ElevenLabs
+        # flash v2.5 is already multilingual and follows the reply text.
+        stt=deepgram.STT(api_key=s.deepgram_api_key, model="nova-3", language="multi"),
         llm=_qwen_llm(),
         tts=elevenlabs.TTS(api_key=s.elevenlabs_api_key, model="eleven_flash_v2_5"),
     )
