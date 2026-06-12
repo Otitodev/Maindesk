@@ -18,19 +18,52 @@ Most agent-demo submissions are *"ChatGPT with a webhook"* — stateless, generi
 
 ## Architecture at a glance
 
-```
-   WhatsApp           Web chat           LiveKit voice
-       │                  │                    │
-       ▼                  ▼                    ▼
-  FastAPI gateway  ──►  redact()          LiveKit Agent
-       │                                       │
-       ▼                                       │
-  LangGraph                                    │
-  triage → recall → tools → reasoner → writer  │
-                                               │
-       ▼                                       ▼
-       └──────────────► Postgres + pgvector ◄──┘
-                        (Qwen text-embedding-v3, 1024d)
+```mermaid
+flowchart TB
+    WA["WhatsApp<br/>(Evolution API v2)"]
+    WEB["Web chat"]
+    VOICE["Voice call<br/>(LiveKit Cloud)"]
+
+    subgraph GW["FastAPI gateway"]
+        AUTH["webhook auth<br/>HMAC / token / apikey"]
+        REDACT["redact() on every<br/>outbound reply"]
+    end
+
+    subgraph LG["LangGraph orchestrator — AsyncPostgresSaver checkpoints"]
+        TRIAGE["triage<br/>Qwen-Turbo intent"] --> RECALL["recall<br/>top-k + decay re-rank"]
+        RECALL --> TOOLS["tools<br/>slots · booking · escalation"]
+        TOOLS --> REASONER["reasoner<br/>Qwen-Plus, strict grounding"]
+        REASONER --> WRITER["writer<br/>memory write-back"]
+    end
+
+    subgraph LK["LiveKit Agent worker (full parity)"]
+        LLMNODE["llm_node hook → memory recall"]
+        FTOOLS["@function_tool<br/>find / book / escalate"]
+    end
+
+    subgraph PG["Postgres 16 + pgvector"]
+        MEM[("memories<br/>text-embedding-v3 @ 1024d")]
+        APPT[("appointments · patients")]
+    end
+
+    N8N["n8n crons<br/>reminders · follow-ups"]
+    SLACK["Slack staff escalation"]
+
+    WA --> AUTH
+    WEB --> AUTH
+    VOICE --> LK
+    AUTH --> TRIAGE
+    REASONER --> REDACT
+    REDACT --> WA
+    REDACT --> WEB
+    RECALL <--> MEM
+    WRITER --> MEM
+    TOOLS <--> APPT
+    TOOLS --> SLACK
+    LLMNODE <--> MEM
+    FTOOLS <--> APPT
+    FTOOLS --> SLACK
+    N8N --> APPT
 ```
 
 | Layer | Tech |
@@ -94,7 +127,7 @@ curl -X POST localhost:8000/webhooks/web \
 # Intent eval (30 cases, hits real Qwen)
 python -m evals.run_intent_eval
 
-# Full test suite — 86 cases, no Qwen/LiveKit/Postgres required
+# Full test suite — 111 cases, no Qwen/LiveKit/Postgres required
 pytest
 ```
 
@@ -144,15 +177,31 @@ n8n/
   followup_cron.json       6-hourly post-visit follow-ups
 evals/
   intent_cases.jsonl       30 labelled intent classification cases
-  run_intent_eval.py       eval harness (currently 100% accuracy)
+  run_intent_eval.py       eval harness (accuracy + latency percentiles)
+  results/
+    intent_eval_results.json  committed output of the last eval run
   memory_recall_cases.json 10 scripted recall scenarios
   seed_demo.py             3 demo patients × 8 memories (embedded via Qwen)
 deploy/
   supervisord.conf         gateway + voice supervisor (for single-container deploy)
-tests/                     86 cases, all green
+tests/                     111 cases, all green
 Dockerfile                 supervisord-based image (FastAPI + voice worker)
 docker-compose.yml         app + postgres(pgvector) + n8n
 ```
+
+---
+
+## Eval results
+
+Measured against live Qwen via DashScope on 2026-06-12. Raw per-case output is committed at [`evals/results/intent_eval_results.json`](evals/results/intent_eval_results.json); reproduce with `python -m evals.run_intent_eval`.
+
+| Component | Metric | Result |
+|---|---|---|
+| Qwen-Turbo intent classifier | Accuracy on 30 labelled cases (6 intents) | **100% (30/30)** |
+| Triage round-trip latency | p50 / p95 | **882 ms / 5.6 s** |
+| Test suite (no network required) | 111 unit/integration cases | **all green** |
+
+The latency p95 is dominated by occasional slow responses from the DashScope international endpoint, not by anything in the pipeline — most calls complete in 700–950 ms.
 
 ---
 
@@ -184,7 +233,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | pgvector memory + decay re-rank | ✅ |
 | Grounding rule against hallucinated facts | ✅ |
 | Outbound secret redaction | ✅ |
-| 51-case + 25-case + 10-case test suite (86 total) | ✅ |
+| Test suite (111 cases) | ✅ |
 | Intent classifier eval (30 labelled cases) | ✅ 100% |
 | Voice filler-before-tool-call rule | ✅ |
 | Evolution v2 webhook auth (HMAC/token/apikey) | ✅ |
