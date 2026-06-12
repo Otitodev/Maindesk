@@ -17,6 +17,7 @@ from fastapi import APIRouter, Header, HTTPException, Request, status
 from app.config import get_settings
 from app.gateway.adapters.evolution_client import send_text
 from app.gateway.cache import get_cached_session, set_cached_session
+from app.gateway.limiter import limiter
 from app.gateway.redact import redact
 from app.gateway.schema import PatientMessage, PatientReply
 from app.memory.profile import resolve_by_phone, upsert_profile
@@ -81,6 +82,7 @@ def _normalise(payload: dict[str, Any]) -> PatientMessage:
 
 
 @router.post("", status_code=status.HTTP_200_OK)
+@limiter.limit("30/minute")
 async def receive(
     request: Request,
     x_signature: str | None = Header(default=None, alias="X-Hub-Signature-256"),

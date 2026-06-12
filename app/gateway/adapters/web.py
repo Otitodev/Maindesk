@@ -6,13 +6,16 @@ the orchestrator, return the reply inline (synchronous, unlike WhatsApp).
 
 from __future__ import annotations
 
+import hmac
 import logging
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from app.config import get_settings
 from app.gateway.cache import get_cached_session, set_cached_session
+from app.gateway.limiter import limiter
 from app.gateway.redact import redact
 from app.gateway.schema import PatientMessage, PatientReply
 
@@ -33,7 +36,14 @@ class WebOutbound(BaseModel):
 
 
 @router.post("", response_model=WebOutbound, status_code=status.HTTP_200_OK)
+@limiter.limit("30/minute")
 async def receive(payload: WebInbound, request: Request) -> WebOutbound:
+    settings = get_settings()
+    if settings.web_api_key:
+        auth_header = request.headers.get("X-API-Key", "")
+        if not hmac.compare_digest(auth_header, settings.web_api_key):
+            raise HTTPException(status_code=401, detail="unauthorized")
+
     if not payload.content.strip():
         raise HTTPException(status_code=422, detail="empty content")
 
