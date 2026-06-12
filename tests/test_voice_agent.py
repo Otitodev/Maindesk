@@ -212,6 +212,18 @@ async def test_book_appointment_calls_book(monkeypatch):
     assert captured["ts"] == datetime(2026, 6, 12, 15, 0, tzinfo=timezone.utc)
 
 
+async def test_book_appointment_slot_taken_does_not_confirm_booking(monkeypatch):
+    """When book() returns slot_taken, the caller must NOT hear 'Booked for...'."""
+    async def fake_book_taken(patient_id, ts):
+        return {"tool": "book", "error": "slot_taken", "starts_at": ts.isoformat()}
+
+    monkeypatch.setattr(voice_mod, "book", fake_book_taken)
+    a = _make_agent(patient_id="p-1")
+    out = await a.book_appointment(slot_iso="2026-06-12T15:00:00+00:00")
+    assert "Booked" not in out
+    assert "taken" in out.lower() or "sorry" in out.lower()
+
+
 # ── @function_tool: find_my_appointments ────────────────────────────────
 
 async def test_find_my_appointments_refuses_without_patient():

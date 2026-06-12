@@ -42,13 +42,19 @@ class Settings(BaseSettings):
     n8n_webhook_url: str = ""
     gateway_proxy_key: str = ""
     staff_escalation_webhook_url: str = ""
+    escalation_confidence_threshold: float = 0.45
 
     # Voice on/off (Week-1 exit gate, PRD §11)
     healthdesk_voice: bool = True
+    healthdesk_env: Literal["production", "demo"] = "production"
     # Phone used to identify the caller when LiveKit gives us no metadata
     # (e.g. browser-based Agents Playground sessions). Maps to a seeded
     # patient via memory.profile.resolve_by_phone so recall still works.
     healthdesk_demo_patient_phone: str = ""
+
+    # Web chat
+    web_api_key: str = ""
+    clinic_timezone: str = "UTC"
 
 
 @lru_cache

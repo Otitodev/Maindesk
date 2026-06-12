@@ -261,6 +261,11 @@ class HealthDeskAgent(Agent):
         except ValueError:
             return f"That time did not parse: {slot_iso}"
         result = await book(self._patient_id, ts)
+        if result.get("error") == "slot_taken":
+            return (
+                f"Sorry, that slot was just taken. "
+                f"Would you like me to find another available time?"
+            )
         return f"Booked for {result['starts_at']}."
 
     @function_tool
@@ -324,7 +329,7 @@ async def _resolve_caller(ctx: JobContext) -> tuple[str | None, str | None]:
         except json.JSONDecodeError:
             log.warning("room metadata was not valid JSON: %r", md[:200])
 
-    if not phone and s.healthdesk_demo_patient_phone:
+    if not phone and s.healthdesk_env == "demo" and s.healthdesk_demo_patient_phone:
         phone = s.healthdesk_demo_patient_phone
         log.info("voice: using demo patient phone %s", phone)
 

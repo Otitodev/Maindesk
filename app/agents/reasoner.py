@@ -31,9 +31,6 @@ Grounding rules — these are strict:
 - If the patient's request needs human judgement, say you'll connect them
   to staff."""
 
-_ESCALATION_CONFIDENCE = 0.45
-
-
 def _build_user_prompt(state: AgentState) -> str:
     msg = state.get("message")
     memories = state.get("memories") or []
@@ -55,7 +52,7 @@ async def reasoner_node(state: AgentState) -> AgentState:
     if msg is None:
         return {}
 
-    if state.get("intent") == "escalate" or state.get("intent_confidence", 1.0) < _ESCALATION_CONFIDENCE:
+    if state.get("intent") == "escalate" or state.get("intent_confidence", 1.0) < s.escalation_confidence_threshold:
         text = "Let me connect you with one of our staff — one moment."
         return {
             "reply": PatientReply(session_id=msg.session_id, channel=msg.channel, content=text),
