@@ -46,6 +46,10 @@ livekit-plugins-deepgram==1.5.17      # supports model="nova-3"
 livekit-plugins-elevenlabs==1.5.17    # supports model="eleven_flash_v2_5"
 livekit-plugins-silero==1.5.17        # silero.VAD.load() unchanged
 
+# ── MCP server ──────────────────────────────────────────────────────────
+# Official Model Context Protocol SDK; FastMCP stdio server in app/mcp/.
+mcp==1.27.2
+
 # ── Caching ─────────────────────────────────────────────────────────────
 # cachetools 7.x; TLRUCache(maxsize, ttu, timer=time.monotonic, getsizeof=None)
 # signature confirmed on cachetools.readthedocs.io. No code change.

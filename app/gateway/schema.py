@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
-Channel = Literal["voice", "whatsapp", "web"]
+Channel = Literal["voice", "whatsapp", "web", "mcp"]
 
 
 class PatientMessage(BaseModel):

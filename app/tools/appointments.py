@@ -62,6 +62,32 @@ async def find_existing(msg: PatientMessage) -> dict[str, Any]:
     }
 
 
+async def history(patient_id: str, *, limit: int = 10) -> dict[str, Any]:
+    """Upcoming and past appointments for a patient (MCP + dashboard)."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        upcoming = await conn.fetch(
+            "SELECT id, starts_at, status FROM appointments "
+            "WHERE patient_id = $1 AND starts_at >= NOW() ORDER BY starts_at ASC LIMIT $2",
+            patient_id,
+            limit,
+        )
+        past = await conn.fetch(
+            "SELECT id, starts_at, status FROM appointments "
+            "WHERE patient_id = $1 AND starts_at < NOW() ORDER BY starts_at DESC LIMIT $2",
+            patient_id,
+            limit,
+        )
+
+    def _rows(rows):
+        return [
+            {"id": str(r["id"]), "starts_at": r["starts_at"].isoformat(), "status": r["status"]}
+            for r in rows
+        ]
+
+    return {"tool": "history", "upcoming": _rows(upcoming), "past": _rows(past)}
+
+
 async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
     pool = await get_pool()
     try:
