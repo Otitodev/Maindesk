@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     gateway_proxy_key: str = ""
     staff_escalation_webhook_url: str = ""
     escalation_confidence_threshold: float = 0.45
+    # Staff dashboard (/staff). Empty = open access (local demo only).
+    staff_dashboard_key: str = ""
 
     # Voice on/off (Week-1 exit gate, PRD §11)
     healthdesk_voice: bool = True

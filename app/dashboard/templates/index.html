@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HealthDesk — Staff Console</title>
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<script src="https://unpkg.com/htmx-ext-sse@2.2.2"></script>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2129; --border: #2c3640;
+    --text: #e6edf3; --muted: #8b98a5; --accent: #4fc3f7;
+    --open: #f59e0b; --approved: #34d399; --redirected: #818cf8; --closed: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: baseline; gap: 12px;
+           padding: 18px 28px; border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 18px; margin: 0; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  .live { margin-left: auto; color: var(--approved); font-size: 13px; }
+  main { display: grid; grid-template-columns: 1fr 320px; gap: 20px;
+         padding: 20px 28px; max-width: 1200px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+       color: var(--muted); margin: 0 0 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border);
+          border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .card .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 600; text-transform: uppercase;
+           letter-spacing: .05em; padding: 2px 8px; border-radius: 99px; }
+  .badge.open       { background: #3b2a08; color: var(--open); }
+  .badge.approved   { background: #0a2e22; color: var(--approved); }
+  .badge.redirected { background: #1d2050; color: var(--redirected); }
+  .badge.closed     { background: #262b31; color: var(--closed); }
+  .chip { font-size: 12px; color: var(--accent); border: 1px solid var(--border);
+          padding: 1px 8px; border-radius: 99px; }
+  .who { font-weight: 600; }
+  .when, .session { color: var(--muted); font-size: 12px; }
+  .reason { margin: 8px 0 2px; }
+  .preview { color: var(--muted); font-size: 13px; font-style: italic; }
+  .note-line { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .actions input { flex: 1; min-width: 140px; background: var(--bg);
+                   border: 1px solid var(--border); border-radius: 6px;
+                   color: var(--text); padding: 6px 10px; font-size: 13px; }
+  button { border: 0; border-radius: 6px; padding: 6px 14px; font-size: 13px;
+           font-weight: 600; cursor: pointer; }
+  button.approve  { background: #115e45; color: #d1fae5; }
+  button.redirect { background: #312e81; color: #e0e7ff; }
+  button.close    { background: #374151; color: #e5e7eb; }
+  button:hover { filter: brightness(1.2); }
+  .empty { color: var(--muted); padding: 24px; text-align: center;
+           border: 1px dashed var(--border); border-radius: 10px; }
+  .booking { display: flex; justify-content: space-between; gap: 8px;
+             padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .booking:last-child { border-bottom: 0; }
+</style>
+</head>
+<body hx-ext="sse" sse-connect="/staff/events?key=__KEY__">
+  <header>
+    <h1>HealthDesk — Staff Console</h1>
+    <span class="sub">human-in-the-loop checkpoints</span>
+    <span class="live">● live</span>
+  </header>
+  <main>
+    <section>
+      <h2>Escalation queue</h2>
+      <div id="queue"
+           hx-get="/staff/queue?key=__KEY__"
+           hx-trigger="load, sse:escalation, every 10s"
+           hx-swap="innerHTML">
+        <div class="empty">Loading…</div>
+      </div>
+    </section>
+    <aside>
+      <h2>Upcoming bookings</h2>
+      <div id="bookings"
+           hx-get="/staff/bookings?key=__KEY__"
+           hx-trigger="load, every 15s"
+           hx-swap="innerHTML">
+        <div class="empty">Loading…</div>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>
