@@ -32,3 +32,15 @@ def test_escalate_routes_to_tools():
 
 def test_ask_question_routes_to_tools():
     assert _route_after_recall({"intent": "ask_question"}) == "tools"
+
+
+def test_pending_forces_tools_even_when_smalltalk():
+    # A bare "9am"/"yes" mid-flow can score smalltalk/unknown; the pending
+    # action must still route to tools so the flow gets executed.
+    assert _route_after_recall(
+        {"intent": "unknown", "pending": {"type": "book", "slots": []}}
+    ) == "tools"
+
+
+def test_no_pending_smalltalk_still_bypasses_tools():
+    assert _route_after_recall({"intent": "smalltalk", "pending": None}) == "reasoner"

@@ -8,7 +8,15 @@ import asyncpg
 import pytest
 
 from app.gateway.schema import PatientMessage
-from app.tools.appointments import book, suggest_slots
+from app.tools.appointments import book, cancel, reschedule, suggest_slots
+
+
+def _txn_cm():
+    """A mock async context manager standing in for conn.transaction()."""
+    cm = MagicMock()
+    cm.__aenter__ = AsyncMock(return_value=None)
+    cm.__aexit__ = AsyncMock(return_value=False)
+    return cm
 
 
 def _msg() -> PatientMessage:
@@ -82,3 +90,63 @@ async def test_suggest_slots_cancelled_slot_is_available(mock_pool):
     result = await suggest_slots(_msg(), n=3)
     # All 3 slots are available because cancelled rows are excluded from the query
     assert len(result["slots"]) == 3
+
+
+# ── cancel ──────────────────────────────────────────────────────────────
+
+async def test_cancel_success(mock_pool):
+    ts = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
+    mock_pool.fetchrow.return_value = {"id": "appt-1", "starts_at": ts}
+    result = await cancel("patient-1", "appt-1")
+    assert result["tool"] == "cancel"
+    assert result["status"] == "cancelled"
+    assert result["id"] == "appt-1"
+    # Scoped by patient_id and only touches booked rows.
+    sql = mock_pool.fetchrow.call_args[0][0]
+    assert "patient_id = $2" in sql
+    assert "status = 'booked'" in sql
+
+
+async def test_cancel_not_found(mock_pool):
+    mock_pool.fetchrow.return_value = None
+    result = await cancel("patient-1", "missing")
+    assert result["error"] == "not_found"
+
+
+# ── reschedule (atomic: book-new-then-cancel-old) ───────────────────────
+
+async def test_reschedule_success(mock_pool):
+    mock_pool.transaction = MagicMock(return_value=_txn_cm())
+    # 1st fetchrow: SELECT existing (found); 2nd: INSERT new slot.
+    mock_pool.fetchrow.side_effect = [{"id": "old-1"}, {"id": "new-1"}]
+    mock_pool.execute = AsyncMock()
+    ts = datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
+    result = await reschedule("patient-1", "old-1", ts)
+    assert result["tool"] == "reschedule"
+    assert result["id"] == "new-1"
+    assert result["old_appointment_id"] == "old-1"
+    assert result["starts_at"] == ts.isoformat()
+    assert "error" not in result
+    mock_pool.execute.assert_awaited_once()  # old row cancelled
+
+
+async def test_reschedule_not_found(mock_pool):
+    mock_pool.transaction = MagicMock(return_value=_txn_cm())
+    mock_pool.fetchrow.return_value = None  # SELECT existing → not found
+    mock_pool.execute = AsyncMock()
+    ts = datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
+    result = await reschedule("patient-1", "missing", ts)
+    assert result["error"] == "not_found"
+    mock_pool.execute.assert_not_awaited()  # never cancelled the old row
+
+
+async def test_reschedule_slot_taken_keeps_original(mock_pool):
+    """If the new slot clashes, the INSERT raises and the whole transaction
+    rolls back — the original appointment is never cancelled."""
+    mock_pool.transaction = MagicMock(return_value=_txn_cm())
+    mock_pool.fetchrow.side_effect = [{"id": "old-1"}, asyncpg.UniqueViolationError()]
+    mock_pool.execute = AsyncMock()
+    ts = datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
+    result = await reschedule("patient-1", "old-1", ts)
+    assert result["error"] == "slot_taken"
+    mock_pool.execute.assert_not_awaited()

@@ -30,7 +30,14 @@ log = logging.getLogger(__name__)
 
 
 def _route_after_recall(state: AgentState) -> str:
-    """Bypass the tools node for intents that never need tool calls."""
+    """Route to the tools node when work is needed there.
+
+    A pending action (a book/reschedule/cancel awaiting the patient's slot
+    pick or confirmation) always routes to tools so a bare reply like "9am"
+    or "yes" gets executed — even if triage scored it smalltalk/unknown.
+    Otherwise only genuinely tool-less intents skip straight to the reasoner."""
+    if state.get("pending"):
+        return "tools"
     return "reasoner" if state.get("intent", "unknown") in {"smalltalk", "unknown"} else "tools"
 
 
