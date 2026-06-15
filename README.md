@@ -102,9 +102,27 @@ flowchart TB
     CFG -.->|read at runtime| LG
     CFG -.->|persona · hours| VOICEW
     N8N --> APPTS
+
+    classDef channel fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+    classDef gateway fill:#f1f5f9,stroke:#475569,color:#1e293b;
+    classDef brain fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+    classDef tools fill:#dcfce7,stroke:#16a34a,color:#14532d;
+    classDef data fill:#fef9c3,stroke:#ca8a04,color:#713f12;
+    classDef ops fill:#ffe4e6,stroke:#e11d48,color:#881337;
+    classDef ext fill:#fae8ff,stroke:#c026d3,color:#701a75;
+
+    class VOICE,WA,WEB,EMAIL channel;
+    class AUTH,REDACT gateway;
+    class TRIAGE,GATE,HANDOFF,RECALL,TOOLS,REASONER,WRITER,LLMNODE,FTOOLS brain;
+    class APPTS,ESC tools;
+    class MEM,APPT,ESCT,CFG data;
+    class STAFF,ONB,N8N ops;
+    class MCP,CAL ext;
 ```
 
 > Static render for slides/print: [`docs/architecture.png`](docs/architecture.png).
+>
+> **Legend:** 🟦 channels · ⬜ gateway · 🟪 agent brain (text graph + voice worker) · 🟩 shared tool layer · 🟨 Postgres/pgvector · 🟥 ops surfaces (`/staff`, `/onboarding`, n8n) · 🟧 external (MCP, Google Calendar).
 
 The shape of the system is the headline: **four channels and an MCP server all funnel into one shared tool layer**, so booking / reschedule / cancel / escalation behave identically everywhere and write once to Postgres (the source of truth) while mirroring to Google Calendar. Decay-weighted pgvector memory feeds both the text graph and the voice worker; clinic config set in the onboarding wizard is read live by both.
 
