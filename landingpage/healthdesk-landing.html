@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthDesk AI — Your clinic's front desk, on autopilot</title>
+  <meta name="description" content="HealthDesk AI answers calls, books appointments, and follows up with patients — across voice, WhatsApp, and email — 24/7, in under 2 seconds." />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="HealthDesk AI — Your clinic's front desk, on autopilot" />
+  <meta property="og:description" content="Voice, WhatsApp, and email — one agent, 24/7, in under two seconds." />
+  <meta property="og:image" content="https://healthdesk.ai/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="HealthDesk AI" />
+  <meta name="twitter:description" content="Voice, WhatsApp, and email — one agent, 24/7." />
+
+  <!-- Inline SVG favicon: teal dot on white -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ffffff'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23008c97'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="vendor/fonts.css" />
+  <link rel="stylesheet" href="healthdesk-ds.css" />
+
+  <style>
+  /* ─────────────────────────────────────────────────────────────
+     PAGE-LEVEL STYLES
+     (design-system tokens applied here; no new hex values except
+      the footer bg which falls outside the DS surface scale)
+  ───────────────────────────────────────────────────────────── */
+
+  /* ── NAV ── */
+  .hd-nav {
+    transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+  .hd-nav.scrolled {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  /* ── FEATURES WRAPPER ── */
+  .features-section {
+    background: var(--bg-mist);
+    padding: var(--space-10) var(--space-7) 0;
+    position: relative;
+  }
+  .features-section::before {
+    content: '';
+    position: absolute;
+    top: -180px; left: 50%;
+    transform: translateX(-50%);
+    width: 900px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0,180,188,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .features-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .features-cta {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 0 100px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .features-cta p {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    font-weight: 300;
+    font-style: italic;
+  }
+  .features-cta p strong {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ── HOW IT WORKS ── */
+  .hiw-section {
+    background: var(--white);
+    padding: var(--space-10) var(--space-7);
+  }
+  .hiw-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .hiw-steps {
+    /* JS writes a 0→1 progress value here on scroll */
+    --line-progress: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+    margin-top: 64px;
+  }
+  /* Dashed connector track — full width, always visible */
+  .hiw-steps::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: calc(16.67% + 24px);
+    right: calc(16.67% + 24px);
+    height: 2px;
+    background-image: linear-gradient(to right, var(--teal-pale) 50%, transparent 0%);
+    background-size: 12px 2px;
+    background-repeat: repeat-x;
+    z-index: 0;
+  }
+  /* Drawn solid line — width tied to --line-progress; sits above the track */
+  .hiw-steps::after {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: calc(16.67% + 24px);
+    height: 2px;
+    width: calc((100% - 2 * (16.67% + 24px)) * var(--line-progress));
+    background: linear-gradient(90deg, var(--teal-ui), var(--teal-vivid));
+    box-shadow: 0 0 10px rgba(0, 180, 188, 0.45);
+    z-index: 1;
+    transition: width 0.18s cubic-bezier(0.22,1,0.36,1);
+    pointer-events: none;
+  }
+  .hiw-step {
+    padding: 0 40px 0 0;
+    position: relative;
+    z-index: 2;
+  }
+  .hiw-step:last-child { padding-right: 0; }
+  .hiw-number {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--teal-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--teal-text);
+    margin-bottom: 28px;
+    border: 3px solid var(--white);
+    box-shadow: 0 0 0 1px var(--teal-pale);
+    transition: background 0.35s, color 0.35s, box-shadow 0.35s, transform 0.35s;
+  }
+  /* Lit-up state — JS toggles .active on each .hiw-step as the line passes it */
+  .hiw-step.active .hiw-number {
+    background: var(--teal-ui);
+    color: var(--white);
+    box-shadow: 0 0 0 1px var(--teal-ui), 0 0 22px rgba(0,180,188,0.4);
+    transform: scale(1.06);
+  }
+  .hiw-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .hiw-desc {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+  .hiw-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teal-text);
+  }
+
+  /* ── STATS (dark) ── */
+  .stats-section {
+    background: var(--ink);
+    padding: 96px var(--space-7);
+    position: relative;
+    overflow: hidden;
+  }
+  .stats-section::after {
+    content: '';
+    position: absolute;
+    bottom: -120px; right: -80px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0,180,188,0.1) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .stats-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat-item {
+    padding: 0 40px;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .stat-item:first-child { padding-left: 0; border-left: none; }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 5vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--teal-on-dark);
+    display: block;
+    margin-bottom: 12px;
+  }
+  .stat-label {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+  .stat-label strong {
+    display: block;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+
+  /* ── TESTIMONIALS ── */
+  .testi-section {
+    background: var(--bg-mist);
+    padding: var(--space-10) var(--space-7);
+  }
+  .testi-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 56px;
+  }
+  .testi-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: 40px 36px 36px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  /* giant quote watermark */
+  .testi-card::before {
+    content: '\201C';
+    position: absolute;
+    top: 8px; left: 20px;
+    font-size: 7rem;
+    line-height: 1;
+    font-family: Georgia, serif;
+    color: var(--teal-pale);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .testi-quote {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--ink-mid);
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    margin-bottom: 28px;
+    padding-top: 20px;
+  }
+  .testi-author {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .testi-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--teal-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--teal-text);
+    flex-shrink: 0;
+  }
+  .testi-name {
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .testi-clinic {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  /* star rating */
+  .testi-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .testi-stars span {
+    font-size: 0.85rem;
+    color: var(--amber-star);
+  }
+
+  /* ── PRICING ── */
+  .pricing-section {
+    background: var(--white);
+    padding: var(--space-10) var(--space-7);
+  }
+  .pricing-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 56px;
+    align-items: start;
+  }
+  .pricing-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 40px 36px;
+    transition: box-shadow 0.25s;
+    position: relative;
+  }
+  .pricing-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .pricing-card--featured {
+    background: var(--ink);
+    border-color: transparent;
+    box-shadow: var(--shadow-lg);
+    padding-top: 52px;
+  }
+  .pricing-card--featured:hover {
+    box-shadow: var(--shadow-xl);
+  }
+  .pricing-card--enterprise {
+    border-style: dashed;
+    border-color: var(--border);
+  }
+  .pricing-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--teal-ui), var(--teal-vivid));
+    color: white;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .pricing-tier {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-tier { color: var(--teal-text); }
+  .pricing-card--featured .pricing-tier { color: var(--teal-on-dark); }
+  .pricing-price {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .pricing-price .amount {
+    font-size: 2.8rem;
+  }
+  .pricing-price .period {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 0.55;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-price { color: var(--ink); }
+  .pricing-card--featured .pricing-price { color: var(--white); }
+  .pricing-tagline {
+    font-size: 0.82rem;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-tagline { color: var(--ink-soft); }
+  .pricing-card--featured .pricing-tagline { color: rgba(255,255,255,0.55); }
+  .pricing-divider {
+    height: 1px;
+    margin-bottom: 24px;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-divider { background: var(--border-soft); }
+  .pricing-card--featured .pricing-divider { background: rgba(255,255,255,0.1); }
+  .pricing-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    margin-bottom: 32px;
+  }
+  .pricing-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-features li { color: var(--ink-soft); }
+  .pricing-card--featured .pricing-features li { color: rgba(255,255,255,0.72); }
+  /* check icon */
+  .pricing-features li::before {
+    content: '';
+    flex-shrink: 0;
+    margin-top: 5px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background-size: 100%;
+  }
+  .pricing-card:not(.pricing-card--featured) .pricing-features li::before {
+    background-color: var(--teal-pale);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2,6 5,9 10,3' fill='none' stroke='%23006e78' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .pricing-card--featured .pricing-features li::before {
+    background-color: rgba(0,180,188,0.2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2,6 5,9 10,3' fill='none' stroke='%2300b4bc' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  /* ── FAQ ── */
+  .faq-section {
+    background: var(--bg-mist);
+    padding: 96px var(--space-7);
+  }
+  .faq-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .faq-list {
+    margin-top: 56px;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .faq-item:first-child {
+    border-top: 1px solid var(--border-soft);
+  }
+  .faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.975rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .faq-question:focus-visible {
+    outline: 2px solid var(--teal-ui);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .faq-arrow {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+    color: var(--teal-ui);
+  }
+  .faq-arrow svg {
+    width: 16px; height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1),
+                padding 0.3s ease,
+                opacity 0.25s;
+    opacity: 0;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .faq-item.open .faq-answer {
+    max-height: 300px;
+    padding-bottom: 24px;
+    opacity: 1;
+  }
+
+  /* ── FINAL CTA (dark) ── */
+  .cta-dark {
+    background: var(--ink);
+    padding: 120px var(--space-7);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+  /* teal radial glow — bottom-left */
+  .cta-dark::before {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -60px;
+    width: 560px; height: 560px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0,180,188,0.13) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  /* faint grid pattern */
+  .cta-dark::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .cta-dark-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .cta-dark .section-eyebrow { justify-content: center; }
+  .cta-dark .section-eyebrow::before { display: none; }
+  .cta-headline {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 20px;
+  }
+  .cta-headline em {
+    font-style: normal;
+    color: var(--teal-on-dark);
+  }
+  .cta-sub {
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 44px;
+    font-style: italic;
+  }
+  .cta-trust-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .cta-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+  }
+  /* .live-dot already uses --green-live from the DS — no override needed */
+
+  /* ── FOOTER ── */
+  .site-footer {
+    background: var(--footer-bg);
+    padding: 72px var(--space-7) 0;
+  }
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 64px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer-brand {}
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    text-decoration: none;
+    margin-bottom: 14px;
+  }
+  .footer-logo .status-dot { background: var(--teal-ui); }
+  .footer-tagline {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.38);
+    line-height: 1.6;
+    max-width: 240px;
+    margin-bottom: 28px;
+  }
+  .footer-socials {
+    display: flex;
+    gap: 14px;
+  }
+  .footer-social-link {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .footer-social-link:hover { background: rgba(255,255,255,0.12); }
+  .footer-social-link svg {
+    width: 15px; height: 15px;
+    stroke: rgba(255,255,255,0.5);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .footer-col-title {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.28);
+    margin-bottom: 20px;
+  }
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .footer-links a {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.45);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: rgba(255,255,255,0.85); }
+  .footer-bottom {
+    padding: 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-copy {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.22);
+  }
+  .footer-legal {
+    display: flex;
+    gap: 20px;
+  }
+  .footer-legal a {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.22);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-legal a:hover { color: rgba(255,255,255,0.55); }
+
+  /* anchor offset so #pricing etc. don't land under the fixed nav */
+  section[id], div[id="hero"] { scroll-margin-top: 96px; }
+
+  /* small layout helpers (replace inline styles) */
+  .hero-sub { max-width: 560px; text-align: center; }
+  .hero-cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .scroll-hint--anchored { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); }
+  .pricing-card a.btn { width: 100%; text-align: center; }
+  .pricing-price--custom .amount { font-size: 2rem; }
+  .cta-eyebrow { color: var(--teal-on-dark); margin-bottom: 20px; }
+  .cta-btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+  /* skip-to-content link, visible on focus only */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: var(--white);
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    z-index: 1000;
+  }
+  .skip-link:focus { left: var(--space-5); top: var(--space-5); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 48px 0; }
+    .stat-item:nth-child(3) { border-left: none; }
+    /* let the third testimonial wrap to row 2 instead of being hidden */
+    .testi-grid { grid-template-columns: 1fr 1fr; }
+    .testi-grid .testi-card:last-child { grid-column: 1 / -1; max-width: 540px; margin-inline: auto; }
+  }
+
+  @media (max-width: 900px) {
+    .hiw-steps { grid-template-columns: 1fr; gap: 40px; }
+    .hiw-steps::before, .hiw-steps::after { display: none; }
+    /* On stacked mobile layout, all steps are "passed" by the time you see them */
+    .hiw-step.active .hiw-number { transform: none; box-shadow: 0 0 0 1px var(--teal-ui); }
+    .hiw-step { padding: 0; display: flex; gap: 20px; align-items: flex-start; }
+    .hiw-number { flex-shrink: 0; margin-bottom: 0; }
+    .pricing-grid { grid-template-columns: 1fr; max-width: 460px; margin-inline: auto; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+    .footer-brand { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 768px) {
+    .features-section { padding: 80px 24px 0; }
+    .hiw-section, .testi-section, .pricing-section { padding: 80px 24px; }
+    .faq-section, .cta-dark, .stats-section { padding-left: 24px; padding-right: 24px; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .testi-grid .testi-card:last-child { grid-column: auto; max-width: none; margin-inline: 0; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .stats-inner { grid-template-columns: 1fr 1fr; }
+    .stat-item { padding: 0 20px; }
+    .stat-item:nth-child(1), .stat-item:nth-child(2) { margin-bottom: 40px; }
+    .stat-item:nth-child(3) { border-left: 1px solid rgba(255,255,255,0.08); }
+    .cta-trust-row { flex-direction: column; gap: 14px; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; }
+  }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<!-- ═══════════════════════════════════════════════
+     NAV
+═══════════════════════════════════════════════ -->
+<header>
+<nav class="hd-nav" id="main-nav" aria-label="Primary">
+  <a href="#hero" class="hd-nav__logo">
+    <span class="hd-nav__logo-dot"></span>
+    HealthDesk AI
+  </a>
+  <ul class="hd-nav__links">
+    <li><a href="#features">Channels</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="#cta" class="hd-nav__cta">Book a demo</a>
+</nav>
+</header>
+
+<main id="main">
+
+<!-- ═══════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════ -->
+<section class="hd-hero" id="hero">
+  <div class="hd-hero__bg" id="vanta-bg"></div>
+
+  <div class="hd-hero__content">
+    <div class="badge">
+      <span class="badge__dot"></span>
+      Voice · WhatsApp · Email — one agent
+    </div>
+
+    <h1 class="text-hero">
+      Your front desk,<br />running on <em class="accent draw">autopilot</em>
+    </h1>
+
+    <p class="text-sub hero-sub">
+      HealthDesk AI answers calls, books appointments, and follows up with patients —
+      around the clock, in under two seconds, without hiring another person.
+    </p>
+
+    <div class="hero-cta-row">
+      <a href="#cta" class="btn btn--primary">See it live →</a>
+      <a href="#how-it-works" class="btn btn--ghost">How it works</a>
+    </div>
+
+    <div class="trust">
+      <div class="trust__avatars">
+        <span class="trust__avatar">HD</span>
+        <span class="trust__avatar">CF</span>
+        <span class="trust__avatar">HM</span>
+      </div>
+      In private beta with launch partner clinics
+    </div>
+  </div>
+
+  <div class="scroll-hint scroll-hint--anchored">
+    <span class="scroll-hint__label">Scroll</span>
+    <div class="scroll-hint__line"></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     FEATURES — sticky stack
+     ⚠ No overflow:hidden here — breaks sticky
+═══════════════════════════════════════════════ -->
+<section class="features-section" id="features">
+  <div class="features-inner">
+    <p class="section-eyebrow">What it handles</p>
+    <h2 class="section-headline">One agent.<br/>Every channel.</h2>
+    <p class="section-sub">HealthDesk AI works across voice, WhatsApp, and email simultaneously — so no patient falls through the cracks, whatever channel they use.</p>
+
+    <!-- STICKY STACK -->
+    <div class="stack-container">
+
+      <!-- CARD 1: VOICE -->
+      <div class="feat-card">
+        <div class="card-body">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <div class="card-meta">
+            <p class="feat-channel">Voice</p>
+            <h3 class="feat-heading">Every call answered, in seconds</h3>
+            <ul class="feat-list">
+              <li>Picks up in under 2 seconds, every time</li>
+              <li>Books, reschedules, and cancels appointments</li>
+              <li>Answers insurance, location, and hours FAQs</li>
+              <li>Warm-transfers to staff when human judgment is needed</li>
+            </ul>
+          </div>
+          <div class="feat-footer">
+            <span class="live-dot"></span>
+            Answers in &lt; 2 seconds
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: WHATSAPP -->
+      <div class="feat-card">
+        <div class="card-body">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          </div>
+          <div class="card-meta">
+            <p class="feat-channel">WhatsApp</p>
+            <h3 class="feat-heading">Replies, reminders, intake — handled</h3>
+            <ul class="feat-list">
+              <li>Responds to inbound messages around the clock</li>
+              <li>Sends reminders 24h and 1h before appointments</li>
+              <li>Collects pre-visit intake info before the patient arrives</li>
+              <li>Handles multi-language conversations automatically</li>
+            </ul>
+          </div>
+          <div class="feat-footer">
+            <span class="live-dot"></span>
+            Replies in &lt; 60 seconds
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: EMAIL -->
+      <div class="feat-card">
+        <div class="card-body">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="card-meta">
+            <p class="feat-channel">Email</p>
+            <h3 class="feat-heading">Zero inbox backlog, ever</h3>
+            <ul class="feat-list">
+              <li>Replies within 5 minutes, day or night</li>
+              <li>Drafts in your clinic's tone — not generic AI-speak</li>
+              <li>Auto-followup on no-shows within 24 hours</li>
+              <li>Urgent messages flagged to staff inside 5 minutes</li>
+            </ul>
+          </div>
+          <div class="feat-footer">
+            <span class="live-dot"></span>
+            Triaged in &lt; 5 minutes
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /stack-container -->
+
+    <div class="features-cta">
+      <a href="#cta" class="btn btn--primary">Book a walkthrough →</a>
+      <p><strong>Three channels.</strong> One agent. One dashboard.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════ -->
+<section class="hiw-section" id="how-it-works">
+  <div class="hiw-inner">
+    <p class="section-eyebrow">The process</p>
+    <h2 class="section-headline">Live in 48 hours,<br/>not 48 weeks.</h2>
+    <p class="section-sub">No rip-and-replace. No long contracts. We sit on top of what you already have.</p>
+
+    <div class="hiw-steps">
+
+      <div class="hiw-step">
+        <div class="hiw-number">01</div>
+        <h3 class="hiw-title">Connect your channels</h3>
+        <p class="hiw-desc">We integrate with your existing phone number, WhatsApp Business account, and email inbox. Nothing changes on your end.</p>
+        <span class="hiw-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1,6 4,9 11,2"/></svg>
+          Works with your existing number
+        </span>
+      </div>
+
+      <div class="hiw-step">
+        <div class="hiw-number">02</div>
+        <h3 class="hiw-title">Train your agent</h3>
+        <p class="hiw-desc">Tell us your hours, services, team, and common questions. We configure the agent to sound exactly like your clinic, not a robot.</p>
+        <span class="hiw-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1,6 4,9 11,2"/></svg>
+          Custom voice & personality
+        </span>
+      </div>
+
+      <div class="hiw-step">
+        <div class="hiw-number">03</div>
+        <h3 class="hiw-title">Flip the switch</h3>
+        <p class="hiw-desc">Your agent goes live. From day one it handles incoming contacts, books appointments, and sends follow-ups — while you watch in the dashboard.</p>
+        <span class="hiw-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1,6 4,9 11,2"/></svg>
+          Live in under 48 hours
+        </span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     STATS (dark)
+═══════════════════════════════════════════════ -->
+<section class="stats-section">
+  <div class="stats-inner">
+
+    <div class="stat-item">
+      <span class="stat-value">&lt; 2s</span>
+      <span class="stat-label">
+        <strong>Average response</strong>
+        Every call, message, and email answered near-instantly — before patients consider going elsewhere.
+      </span>
+    </div>
+
+    <div class="stat-item">
+      <span class="stat-value">24/7</span>
+      <span class="stat-label">
+        <strong>Always available</strong>
+        Bank holidays, weekends, 3am emergencies. The agent never sleeps, never takes lunch.
+      </span>
+    </div>
+
+    <div class="stat-item">
+      <span class="stat-value">3</span>
+      <span class="stat-label">
+        <strong>Channels in one agent</strong>
+        Voice, WhatsApp, and email managed from a single dashboard with one unified view.
+      </span>
+    </div>
+
+    <div class="stat-item">
+      <span class="stat-value">9 / 10</span>
+      <span class="stat-label">
+        <strong>Beta feedback</strong>
+        Patients rate their interaction with HealthDesk AI as on par with — or better than — speaking to a person.
+      </span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     TESTIMONIALS
+═══════════════════════════════════════════════ -->
+<section class="testi-section" id="testimonials">
+  <div class="testi-inner">
+    <p class="section-eyebrow">Early access clinics</p>
+    <h2 class="section-headline">What clinic owners say</h2>
+
+    <div class="testi-grid">
+
+      <div class="testi-card">
+        <div class="testi-stars">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <p class="testi-quote">
+          We used to miss roughly 30% of calls during peak hours. HealthDesk answered every single one from day one. Our receptionist now focuses entirely on the patients physically in the room — which is where she should be.
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar">SO</div>
+          <div>
+            <p class="testi-name">Dr. Sarah Okafor</p>
+            <p class="testi-clinic">Clinical Director, Harmony Dental · Lagos</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card">
+        <div class="testi-stars">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <p class="testi-quote">
+          Setup genuinely took less than a day. The agent sounded like us from the very first call — not like some generic IVR system. Patients haven't noticed any difference, which is exactly the point.
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar">JB</div>
+          <div>
+            <p class="testi-name">Dr. James Byrne</p>
+            <p class="testi-clinic">Practice Owner, ClearFlow Family Clinic · Dublin</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card">
+        <div class="testi-stars">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <p class="testi-quote">
+          The WhatsApp integration alone paid for itself in the first week. Appointment reminders that patients actually read, in a channel they already check 40 times a day. No-show rate dropped by 22%.
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar">AS</div>
+          <div>
+            <p class="testi-name">Dr. Amara Singh</p>
+            <p class="testi-clinic">Medical Director, WellPoint Medical · Toronto</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     PRICING
+═══════════════════════════════════════════════ -->
+<section class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <p class="section-eyebrow">Pricing</p>
+    <h2 class="section-headline">Simple pricing.<br/>No surprises.</h2>
+    <p class="section-sub">All plans include setup, training, and ongoing updates. Cancel anytime.</p>
+
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="pricing-card">
+        <p class="pricing-tier">Starter</p>
+        <p class="pricing-price"><span class="amount">$299</span><span class="period">/mo</span></p>
+        <p class="pricing-tagline">One channel. Perfect for clinics starting out with AI.</p>
+        <hr class="pricing-divider" />
+        <ul class="pricing-features">
+          <li>Voice channel</li>
+          <li>Up to 300 interactions/month</li>
+          <li>Appointment booking & rescheduling</li>
+          <li>Basic analytics dashboard</li>
+          <li>Email support</li>
+          <li>7-day setup</li>
+        </ul>
+        <a href="#cta" class="btn btn--ghost">Get started</a>
+      </div>
+
+      <!-- GROWTH (featured) -->
+      <div class="pricing-card pricing-card--featured">
+        <span class="pricing-badge">Most popular</span>
+        <p class="pricing-tier">Growth</p>
+        <p class="pricing-price"><span class="amount">$599</span><span class="period">/mo</span></p>
+        <p class="pricing-tagline">All three channels. Unlimited interactions.</p>
+        <hr class="pricing-divider" />
+        <ul class="pricing-features">
+          <li>Voice + WhatsApp + Email</li>
+          <li>Unlimited interactions</li>
+          <li>Custom agent voice & tone</li>
+          <li>Advanced analytics & reporting</li>
+          <li>Priority support (&lt; 4hr response)</li>
+          <li>Intake form automation</li>
+          <li>48-hour setup</li>
+        </ul>
+        <a href="#cta" class="btn btn--teal">Book a walkthrough</a>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="pricing-card pricing-card--enterprise">
+        <p class="pricing-tier">Enterprise</p>
+        <p class="pricing-price pricing-price--custom"><span class="amount">Custom</span></p>
+        <p class="pricing-tagline">For multi-site groups and white-label deployments.</p>
+        <hr class="pricing-divider" />
+        <ul class="pricing-features">
+          <li>Everything in Growth</li>
+          <li>White-label agent</li>
+          <li>API access & webhooks</li>
+          <li>Dedicated success manager</li>
+          <li>Audit logs &amp; role-based access</li>
+          <li>SLA guarantee</li>
+          <li>Custom integrations</li>
+        </ul>
+        <a href="mailto:hello@healthdesk.ai" class="btn btn--ghost">Talk to us →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     FAQ
+═══════════════════════════════════════════════ -->
+<section class="faq-section" id="faq">
+  <div class="faq-inner">
+    <p class="section-eyebrow">FAQ</p>
+    <h2 class="section-headline">Questions we always get</h2>
+
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How long does setup actually take?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          For most clinics, we're live within 48 hours of onboarding. The process is: we get your clinic details, configure the agent, run a test session with you, then flip the switch. No IT team required on your side.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Will it work with my current phone number?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          Yes. We route through your existing number — patients call the same number they always have. There's no porting, no number changes, and no disruption to calls that need to go to your staff directly.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          What happens when the agent can't answer something?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          The agent warm-transfers the caller to your team, sends a notification with context to your dashboard, or takes a message — depending on how you configure it. It never leaves a patient hanging.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Is patient data secure?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          All data is encrypted in transit and at rest. Every reply is run through an outbound redaction filter so secrets and PII can't leak. We never use patient conversations to train our models. Production HIPAA / BAA support is on the roadmap for Enterprise plans.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Can I customise how the agent sounds?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          Absolutely. You choose the agent's name, voice, tone, and the exact responses it gives to common questions. Growth and Enterprise plans include full custom voice cloning. The goal is for patients to think they're talking to one of your team.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          What's the cancellation policy?
+          <span class="faq-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+        <div class="faq-answer">
+          Cancel anytime with 30 days' notice. No lock-in, no cancellation fees, no awkward calls. We're confident you won't want to once you see what it does to your missed-call rate.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     FINAL CTA (dark)
+═══════════════════════════════════════════════ -->
+<section class="cta-dark" id="cta">
+  <div class="cta-dark-inner">
+    <p class="section-eyebrow cta-eyebrow">Ready when you are</p>
+
+    <h2 class="cta-headline">
+      Start answering <em>every call</em>.<br/>Starting Monday.
+    </h2>
+
+    <p class="cta-sub">
+      Book a 20-minute walkthrough. We'll show you the agent live, configure it for your clinic,
+      and have you up and running before the week is out.
+    </p>
+
+    <div class="cta-btn-row">
+      <a href="mailto:hello@healthdesk.ai" class="btn btn--teal btn--lg">Book a walkthrough →</a>
+      <a href="#features" class="btn btn--ghost--on-dark btn--lg">See how it works</a>
+    </div>
+
+    <div class="cta-trust-row">
+      <span class="cta-trust-item"><span class="live-dot"></span>No credit card required</span>
+      <span class="cta-trust-item"><span class="live-dot"></span>Live in under 48 hours</span>
+      <span class="cta-trust-item"><span class="live-dot"></span>Cancel anytime</span>
+    </div>
+  </div>
+</section>
+
+
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Brand col -->
+      <div class="footer-brand">
+        <a href="#" class="footer-logo">
+          <span class="status-dot"></span>
+          HealthDesk AI
+        </a>
+        <p class="footer-tagline">
+          Your clinic's front desk — always on, always human-sounding, never on hold.
+        </p>
+        <div class="footer-socials">
+          <!-- X / Twitter -->
+          <a href="https://x.com" class="footer-social-link" aria-label="X">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </a>
+          <!-- LinkedIn -->
+          <a href="https://linkedin.com" class="footer-social-link" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+          <!-- GitHub -->
+          <a href="https://github.com" class="footer-social-link" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div>
+        <p class="footer-col-title">Product</p>
+        <ul class="footer-links">
+          <li><a href="#features">Channels</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#">Integrations</a></li>
+          <li><a href="#">Changelog</a></li>
+        </ul>
+      </div>
+
+      <!-- Company -->
+      <div>
+        <p class="footer-col-title">Company</p>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="mailto:hello@healthdesk.ai">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal -->
+      <div>
+        <p class="footer-col-title">Legal</p>
+        <ul class="footer-links">
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">Security</a></li>
+          <li><a href="#">Data Processing</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 HealthDesk AI. All rights reserved.</p>
+      <div class="footer-legal">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════ -->
+<script src="vendor/three.min.js"></script>
+<script src="vendor/vanta.fog.min.js"></script>
+<script>
+  /* ── Vanta Fog (respects prefers-reduced-motion; pauses off-screen) ── */
+  let vantaInstance = null;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof VANTA !== 'undefined' && !reduceMotion) {
+    vantaInstance = VANTA.FOG({
+      el: '#vanta-bg',
+      mouseControls: true, touchControls: true, gyroControls: false,
+      minHeight: 200, minWidth: 200,
+      highlightColor: 0x00b4bc,
+      midtoneColor:   0xe4f6f7,
+      lowlightColor:  0x008c97,
+      baseColor:      0xfafffe,
+      blurFactor: 0.62, speed: 1.2, zoom: 0.9
+    });
+    const hero = document.getElementById('hero');
+    if (hero && 'IntersectionObserver' in window) {
+      new IntersectionObserver(([e]) => {
+        if (!vantaInstance) return;
+        if (e.isIntersecting) vantaInstance.resume?.();
+        else vantaInstance.pause?.();
+      }, { threshold: 0 }).observe(hero);
+    }
+  }
+
+  /* ── Single scroll handler: nav frosting + sticky-stack burial ── */
+  const nav = document.getElementById('main-nav');
+  const STICKY_TOP = 96;
+  const stackCards = document.querySelectorAll('.feat-card');
+  let scrollScheduled = false;
+  window.addEventListener('scroll', () => {
+    if (scrollScheduled) return;
+    scrollScheduled = true;
+    requestAnimationFrame(() => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+      stackCards.forEach((card, i) => {
+        const next = stackCards[i + 1];
+        if (!next) return;
+        card.classList.toggle('buried', next.getBoundingClientRect().top <= STICKY_TOP + 2);
+      });
+      scrollScheduled = false;
+    });
+  }, { passive: true });
+
+  /* ── FAQ accordion ── */
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-question')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  /* ── Smooth scroll for anchor links ── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>

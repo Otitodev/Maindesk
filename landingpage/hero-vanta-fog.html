@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthDesk AI — Hero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Ink scale (all pass WCAG AA on white) ── */
+      --ink:        #0c1c2e;  /* primary text  — contrast 17.3:1 */
+      --ink-mid:    #254257;  /* secondary     — contrast  9.1:1 */
+      --ink-soft:   #3d5568;  /* tertiary/muted — contrast  6.1:1 */
+
+      /* ── Teal scale ── */
+      --teal-text:  #006e78;  /* teal as TEXT   — contrast  5.9:1 ✓ */
+      --teal-ui:    #008c97;  /* UI accents (dots, lines) */
+      --teal-vivid: #00b4bc;  /* decorative only (never small text) */
+      --teal-pale:  #cef0f2;  /* avatar bg, badge fill  */
+
+      /* ── Surface ── */
+      --white:      #ffffff;
+      --surface:    rgba(255,255,255,0.82); /* frosted panels */
+
+      /* ── Border (solid, visible) ── */
+      --border:     #8ecdd2;  /* contrast on white: 2.4:1 — ok for non-text UI */
+      --border-strong: #3d8f96; /* stronger teal border for focus/ghost btn */
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── NAV ─────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 48px;
+    }
+
+    .nav-logo {
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--teal-ui);
+      display: inline-block;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--ink); }
+
+    .nav-cta {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border: 1.5px solid var(--ink);
+      border-radius: 4px;
+      color: var(--ink);
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--ink);
+      color: var(--white);
+    }
+
+    /* ─── HERO ────────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #vanta-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* soft noise overlay for depth */
+    #vanta-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 780px;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* pill badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 16px 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      letter-spacing: 0.02em;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--teal-ui);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    /* headline */
+    h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(2.6rem, 6vw, 4.4rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--teal-text);
+      position: relative;
+    }
+
+    /* the signature: hand-drawn underline on the teal word */
+    h1 em::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 100%; height: 3px;
+      background: var(--teal-ui);
+      border-radius: 2px;
+      opacity: 0.4;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: draw 0.9s 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    @keyframes draw {
+      to { transform: scaleX(1); }
+    }
+
+    /* subhead */
+    p.sub {
+      font-size: clamp(1rem, 2.2vw, 1.18rem);
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      max-width: 560px;
+      font-style: italic;
+    }
+
+    /* CTA row */
+    .cta-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .btn {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: var(--ink);
+      color: var(--white);
+      box-shadow: 0 4px 24px rgba(12,28,46,0.18);
+    }
+
+    .btn-primary:hover {
+      background: #1b3550;
+      box-shadow: 0 8px 32px rgba(12,28,46,0.28);
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.82);
+      color: var(--ink);
+      border: 1.5px solid var(--border-strong);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 4px 16px rgba(0,140,151,0.14);
+    }
+
+    /* trust strip */
+    .trust {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.01em;
+    }
+
+    .trust-avatars {
+      display: flex;
+    }
+
+    .trust-avatars span {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid white;
+      margin-left: -8px;
+      background: var(--teal-pale);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--teal-text);
+    }
+
+    .trust-avatars span:first-child { margin-left: 0; }
+
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scroll-hint span {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--teal-ui), transparent);
+      animation: drip 1.8s ease-in-out infinite;
+    }
+
+    @keyframes drip {
+      0%   { transform: scaleY(0); transform-origin: top; opacity: 1; }
+      50%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+      100% { transform: scaleY(1); transform-origin: top; opacity: 0; }
+    }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 640px) {
+      nav { padding: 18px 24px; }
+      .nav-links, .nav-cta { display: none; }
+      .btn { width: 100%; text-align: center; }
+    }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FEATURES SECTION
+    ═══════════════════════════════════════════════════════ */
+
+    #features {
+      background: #f0fafb;
+      padding: 112px 48px 0;
+      position: relative;
+    }
+
+    /* decorative teal arc behind the section */
+    #features::before {
+      content: '';
+      position: absolute;
+      top: -180px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center,
+        rgba(0,180,188,0.08) 0%,
+        transparent 70%);
+      pointer-events: none;
+    }
+
+    .features-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* section header */
+    .section-eyebrow {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--teal-text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .section-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px; height: 1.5px;
+      background: var(--teal-text);
+      border-radius: 2px;
+    }
+
+    .section-headline {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 480px;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 1rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--ink-soft);
+      max-width: 420px;
+      margin-bottom: 72px;
+    }
+
+    /* sticky stack container */
+    .features-grid {
+      display: flex;
+      flex-direction: column;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* individual card — sticky stack */
+    .feat-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 48px 52px;
+      position: sticky;
+      top: 96px;           /* clears the fixed nav */
+      box-shadow:
+        0 2px 6px  rgba(12,28,46,0.06),
+        0 8px 32px rgba(12,28,46,0.07);
+      transition:
+        transform 0.5s cubic-bezier(0.22,1,0.36,1),
+        box-shadow 0.5s cubic-bezier(0.22,1,0.36,1),
+        filter 0.5s cubic-bezier(0.22,1,0.36,1);
+      transform-origin: top center;
+      will-change: transform, filter;
+    }
+
+    /* cards need margin-bottom for scroll distance — last card uses section padding instead */
+    .feat-card:nth-child(1),
+    .feat-card:nth-child(2) {
+      margin-bottom: 44vh;
+    }
+
+    .feat-card:nth-child(3) {
+      margin-bottom: 0;
+    }
+
+    /* stacking z-index */
+    .feat-card:nth-child(1) { z-index: 1; }
+    .feat-card:nth-child(2) { z-index: 2; }
+    .feat-card:nth-child(3) { z-index: 3; }
+
+    /* "buried" = a newer card has slid on top — scale + dim for depth */
+    .feat-card.buried {
+      transform: scale(0.96) translateY(-10px);
+      filter: brightness(0.94);
+      box-shadow:
+        0 1px 3px  rgba(12,28,46,0.04),
+        0 4px 12px rgba(12,28,46,0.05);
+    }
+
+    /* card layout: icon left, content right on wider cards */
+    .card-body {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 0 32px;
+      align-items: start;
+    }
+
+    .card-meta {
+      /* stacks channel label + heading + list */
+    }
+
+    /* teal top bar — always visible on sticky cards, no hover trigger needed */
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 48px; right: 48px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--teal-ui), var(--teal-vivid));
+      border-radius: 0 0 2px 2px;
+    }
+
+    /* teal underglow */
+    .feat-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+
+    /* icon wrapper */
+    .feat-icon {
+      width: 48px; height: 48px;
+      background: var(--teal-pale);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;   /* optical align with channel label */
+      flex-shrink: 0;
+    }
+
+    .feat-icon svg {
+      width: 22px; height: 22px;
+      stroke: var(--teal-text);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* channel label */
+    .feat-channel {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal-text);
+      margin-bottom: 8px;
+    }
+
+    /* card heading */
+    .feat-heading {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+
+    /* capability list */
+    .feat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .feat-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    /* teal check */
+    .feat-list li::before {
+      content: '';
+      flex-shrink: 0;
+      margin-top: 5px;
+      width: 14px; height: 14px;
+      background: var(--teal-pale);
+      border-radius: 50%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2,6 5,9 10,3' fill='none' stroke='%23006e78' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: 100%;
+    }
+
+    /* always-on badge */
+    .feat-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e8f5f6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      grid-column: 1 / -1; /* span full card-body grid */
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* bottom CTA strip */
+    .features-cta {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 64px 0 100px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .features-cta p {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    .features-cta p strong {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    /* ── responsive ── */
+    @media (max-width: 900px) {
+      #features { padding: 80px 24px 0; }
+      .section-sub { margin-bottom: 48px; }
+      .feat-card { padding: 36px 28px; }
+      .card-body { grid-template-columns: 1fr; gap: 20px 0; }
+      .feat-card:nth-child(1),
+      .feat-card:nth-child(2) { margin-bottom: 36vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <span class="dot"></span>
+      HealthDesk AI
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">How it works</a></li>
+      <li><a href="#">For clinics</a></li>
+      <li><a href="#">Pricing</a></li>
+    </ul>
+    <a href="#" class="nav-cta">Book a demo</a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div id="vanta-bg"></div>
+
+    <div class="hero-content">
+
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Voice · WhatsApp · Email — one agent
+      </div>
+
+      <h1>
+        Your front desk,<br />
+        running on <em>autopilot</em>
+      </h1>
+
+      <p class="sub">
+        HealthDesk AI answers calls, books appointments, and follows up with patients —
+        around the clock, in under two seconds, without hiring another person.
+      </p>
+
+      <div class="cta-row">
+        <a href="#" class="btn btn-primary">See it live →</a>
+        <a href="#" class="btn btn-ghost">Watch a 90s demo</a>
+      </div>
+
+      <div class="trust">
+        <div class="trust-avatars">
+          <span>HD</span>
+          <span>CF</span>
+          <span>HM</span>
+        </div>
+        Trusted by 3 clinics in early access
+      </div>
+
+    </div>
+
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- VANTA -->
+  <script src="three.r134.min.js"></script>
+  <script src="vanta.fog.min.js"></script>
+  <script>
+    VANTA.FOG({
+      el: "#vanta-bg",
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.00,
+      minWidth: 200.00,
+      highlightColor: 0x00b4bc,  /* --teal-vivid */
+      midtoneColor:   0xe4f6f7,  /* very light mist */
+      lowlightColor:  0x008c97,  /* --teal-ui */
+      baseColor:      0xfafffe,  /* near-white with teal warmth */
+      blurFactor: 0.62,
+      speed: 1.2,
+      zoom: 0.9
+    });
+  </script>
+  <!-- ═══════════ FEATURES SECTION ═══════════ -->
+  <section id="features">
+    <div class="features-inner">
+
+      <p class="section-eyebrow">What it handles</p>
+      <h2 class="section-headline">One agent.<br/>Every channel.</h2>
+      <p class="section-sub">
+        HealthDesk AI works across voice, WhatsApp, and email simultaneously —
+        so no patient falls through the cracks, whatever channel they use.
+      </p>
+
+      <div class="features-grid">
+
+        <!-- CARD 1: VOICE -->
+        <div class="feat-card">
+          <div class="card-body">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+            </div>
+            <div class="card-meta">
+              <p class="feat-channel">Voice</p>
+              <h3 class="feat-heading">Never miss a call again</h3>
+              <ul class="feat-list">
+                <li>Picks up in under 2 seconds, every time</li>
+                <li>Books, reschedules, and cancels appointments</li>
+                <li>Answers insurance, location, and hours FAQs</li>
+                <li>Warm-transfers to staff when human judgment is needed</li>
+              </ul>
+            </div>
+            <div class="feat-footer">
+              <span class="live-dot"></span>
+              Active 24 / 7 / 365
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: WHATSAPP -->
+        <div class="feat-card">
+          <div class="card-body">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+              </svg>
+            </div>
+            <div class="card-meta">
+              <p class="feat-channel">WhatsApp</p>
+              <h3 class="feat-heading">Meet patients where they already are</h3>
+              <ul class="feat-list">
+                <li>Responds to inbound messages around the clock</li>
+                <li>Sends reminders 24 h and 1 h before appointments</li>
+                <li>Collects pre-visit intake info before the patient arrives</li>
+                <li>Handles multi-language conversations automatically</li>
+              </ul>
+            </div>
+            <div class="feat-footer">
+              <span class="live-dot"></span>
+              Active 24 / 7 / 365
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: EMAIL -->
+        <div class="feat-card">
+          <div class="card-body">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <div class="card-meta">
+              <p class="feat-channel">Email</p>
+              <h3 class="feat-heading">Zero inbox backlog, ever</h3>
+              <ul class="feat-list">
+                <li>Triages and categorises every incoming message</li>
+                <li>Drafts responses in your clinic's voice and tone</li>
+                <li>Follows up automatically on no-shows and cancellations</li>
+                <li>Flags urgent messages instantly for staff review</li>
+              </ul>
+            </div>
+            <div class="feat-footer">
+              <span class="live-dot"></span>
+              Active 24 / 7 / 365
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grid -->
+
+      <div class="features-cta">
+        <a href="#" class="btn btn-primary" style="font-family:'Sora',sans-serif;font-size:.875rem;font-weight:600;letter-spacing:.02em;padding:14px 32px;border-radius:6px;text-decoration:none;background:var(--ink);color:var(--white);box-shadow:0 4px 24px rgba(12,28,46,.18);">
+          Book a walkthrough →
+        </a>
+        <p><strong>No integration fees.</strong> Live in under 48 hours.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- sticky stack scroll listener -->
+  <script>
+    const stackCards = document.querySelectorAll('.feat-card');
+    const STICKY_TOP = 96; // matches top: 96px in CSS
+
+    function updateStack() {
+      stackCards.forEach((card, i) => {
+        const nextCard = stackCards[i + 1];
+        if (!nextCard) return;
+
+        // nextCard.getBoundingClientRect().top falls to STICKY_TOP when it sticks
+        // once it's <= STICKY_TOP the current card is buried underneath
+        const nextTop = nextCard.getBoundingClientRect().top;
+        if (nextTop <= STICKY_TOP + 2) {
+          card.classList.add('buried');
+        } else {
+          card.classList.remove('buried');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateStack, { passive: true });
+    updateStack(); // run once on load
+  </script>
+
+</body>
+</html>
