@@ -57,6 +57,7 @@ from livekit.agents import (
 )
 from livekit.plugins import deepgram, elevenlabs, openai, silero
 
+from app import clinic_config
 from app.agents.hours import should_defer_to_staff
 from app.config import get_settings
 from app.gateway.schema import PatientMessage
@@ -132,7 +133,9 @@ class HealthDeskAgent(Agent):
     """Voice persona with proactive memory recall and reactive tools."""
 
     def __init__(self, patient_id: str | None, patient_phone: str | None) -> None:
-        super().__init__(instructions=SYSTEM_PROMPT)
+        block = clinic_config.knowledge_block()
+        instructions = f"{SYSTEM_PROMPT}\n\n{block}" if block else SYSTEM_PROMPT
+        super().__init__(instructions=instructions)
         self._patient_id = patient_id
         self._patient_phone = patient_phone
         # Session id used by tools and memory write-back.
@@ -442,6 +445,7 @@ async def entrypoint(ctx: JobContext) -> None:
         return
 
     await ctx.connect()
+    await clinic_config.refresh()  # load clinic persona/hours for this worker
 
     patient_id, patient_phone = await _resolve_caller(ctx)
     log.info(

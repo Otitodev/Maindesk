@@ -80,10 +80,10 @@ async def test_suggest_slots_sql_filters_only_booked(mock_pool):
 def _candidates():
     """The slot stream suggest_slots draws from, computed the same way."""
     from zoneinfo import ZoneInfo
-    from app.config import get_settings
+    from app import clinic_config
     from app.tools.appointments import _business_slots
-    s = get_settings()
-    return _business_slots(s, ZoneInfo(s.clinic_timezone)), s
+    cfg = clinic_config.current()
+    return _business_slots(cfg, ZoneInfo(cfg["timezone"])), cfg
 
 
 async def test_suggest_slots_returns_free_slots(mock_pool):
@@ -94,13 +94,13 @@ async def test_suggest_slots_returns_free_slots(mock_pool):
 
 
 async def test_suggest_slots_within_business_hours():
-    cands, s = _candidates()
+    cands, cfg = _candidates()
     assert cands, "expected upcoming business slots"
     now = datetime.now(cands[0].tzinfo)
     for slot in cands[:50]:
         assert slot > now
-        assert s.clinic_open_hour <= slot.hour < s.clinic_close_hour
-        assert slot.isoweekday() in s.clinic_working_days
+        assert cfg["open_hour"] <= slot.hour < cfg["close_hour"]
+        assert slot.isoweekday() in cfg["working_days"]
 
 
 async def test_suggest_slots_excludes_taken(mock_pool):
@@ -114,12 +114,12 @@ async def test_suggest_slots_excludes_taken(mock_pool):
 
 async def test_suggest_slots_excludes_calendar_busy(mock_pool, monkeypatch):
     from datetime import timedelta
-    cands, s = _candidates()
+    cands, cfg = _candidates()
     first = cands[0]
     mock_pool.fetch.return_value = []  # nothing booked in Postgres
     # Calendar reports the first slot's window as busy (staff blocked).
     _use_provider(monkeypatch, _FakeProvider(
-        busy=[(first, first + timedelta(minutes=s.clinic_slot_minutes))]
+        busy=[(first, first + timedelta(minutes=cfg["slot_minutes"]))]
     ))
     result = await suggest_slots(_msg(), n=3)
     assert first.isoformat() not in result["slots"]

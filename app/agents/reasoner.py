@@ -9,12 +9,20 @@ from __future__ import annotations
 
 import logging
 
+from app import clinic_config
 from app.agents.qwen_client import complete
 from app.agents.state import AgentState
 from app.config import get_settings
 from app.gateway.schema import PatientReply
 
 log = logging.getLogger(__name__)
+
+
+def build_reasoner_system() -> str:
+    """Base rules plus any clinic-specific persona/FAQ knowledge from the
+    onboarding config. Identical to `_SYSTEM` when nothing is configured."""
+    block = clinic_config.knowledge_block()
+    return f"{_SYSTEM}\n\n{block}" if block else _SYSTEM
 
 _SYSTEM = """You are HealthDesk, a friendly front-desk assistant for a clinic.
 Be brief, warm, and accurate.
@@ -106,7 +114,7 @@ async def reasoner_node(state: AgentState) -> AgentState:
     try:
         text = await complete(
             model=s.qwen_model_plus,
-            system=_SYSTEM + _language_instruction(state),
+            system=build_reasoner_system() + _language_instruction(state),
             user=_build_user_prompt(state),
             temperature=0.3,
             max_tokens=400,
