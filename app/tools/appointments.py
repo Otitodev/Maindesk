@@ -1,8 +1,14 @@
-"""Appointment tool stubs.
+"""Appointment tools.
 
-The hackathon demo uses a Supabase-backed appointments table; full
-calendar integration is out of scope. These are deterministic enough
-for the demo and easy to swap for a real backend later.
+Postgres is the booking ledger and the authoritative no-double-booking guard
+(partial unique index on status='booked'). A pluggable calendar provider
+(app.tools.calendar) supplies real availability (free/busy) and a best-effort
+staff-visible mirror of every booking. Mirror calls never fail a booking —
+Postgres remains the source of truth.
+
+The public functions (suggest_slots / find_existing / history / book / cancel /
+reschedule) keep their signatures and dict return shapes, so the LangGraph
+tools node, the voice worker, and the MCP server are unaffected.
 """
 
 from __future__ import annotations
@@ -17,29 +23,67 @@ import asyncpg
 from app.config import get_settings
 from app.gateway.schema import PatientMessage
 from app.memory.db import get_pool
+from app.tools.calendar import get_provider
 
 log = logging.getLogger(__name__)
 
 
+def _business_slots(settings, tz: ZoneInfo) -> list[datetime]:
+    """Upcoming slot start times within the clinic's working days and hours,
+    strictly in the future, ordered soonest-first."""
+    now = datetime.now(tz)
+    slot_minutes = settings.clinic_slot_minutes
+    out: list[datetime] = []
+    for day_offset in range(settings.slot_search_days):
+        day = (now + timedelta(days=day_offset)).date()
+        if day.isoweekday() not in settings.clinic_working_days:
+            continue
+        t = datetime(day.year, day.month, day.day, settings.clinic_open_hour, 0, tzinfo=tz)
+        close = datetime(day.year, day.month, day.day, settings.clinic_close_hour, 0, tzinfo=tz)
+        while t < close:
+            if t > now:
+                out.append(t)
+            t += timedelta(minutes=slot_minutes)
+    return out
+
+
 async def suggest_slots(_msg: PatientMessage, *, n: int = 3) -> dict[str, Any]:
-    """Return the next `n` open 30-min slots starting tomorrow 09:00 in the clinic's timezone."""
+    """Return the next `n` open slots within the clinic's business hours,
+    excluding both Postgres-booked times and calendar busy intervals."""
     settings = get_settings()
     tz = ZoneInfo(settings.clinic_timezone)
+    slot_minutes = settings.clinic_slot_minutes
+
+    candidates = _business_slots(settings, tz)
+    if not candidates:
+        return {"tool": "suggest_slots", "slots": []}
+    # Only check a bounded window — enough to find n free slots after exclusions.
+    window = candidates[: max(n * 8, n)]
+
     pool = await get_pool()
-    base = (datetime.now(tz) + timedelta(days=1)).replace(
-        hour=9, minute=0, second=0, microsecond=0
-    )
-    candidates = [base + timedelta(minutes=30 * i) for i in range(n * 4)]
     async with pool.acquire() as conn:
         taken = {
             r["starts_at"]
             for r in await conn.fetch(
                 "SELECT starts_at FROM appointments "
                 "WHERE starts_at = ANY($1::timestamptz[]) AND status = 'booked'",
-                candidates,
+                window,
             )
         }
-    free = [c.isoformat() for c in candidates if c not in taken][:n]
+
+    busy: list[tuple[datetime, datetime]] = []
+    try:
+        busy = await get_provider().busy_intervals(
+            window[0], window[-1] + timedelta(minutes=slot_minutes)
+        )
+    except Exception:
+        log.warning("calendar busy lookup failed; using DB availability only", exc_info=True)
+
+    def _is_busy(slot: datetime) -> bool:
+        slot_end = slot + timedelta(minutes=slot_minutes)
+        return any(slot < b_end and b_start < slot_end for b_start, b_end in busy)
+
+    free = [c.isoformat() for c in window if c not in taken and not _is_busy(c)][:n]
     return {"tool": "suggest_slots", "slots": free}
 
 
@@ -88,6 +132,64 @@ async def history(patient_id: str, *, limit: int = 10) -> dict[str, Any]:
     return {"tool": "history", "upcoming": _rows(upcoming), "past": _rows(past)}
 
 
+# ── Calendar mirroring (best-effort; never fails a booking) ──────────────────
+
+
+async def _set_event_id(appointment_id: str, event_id: str) -> None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE appointments SET calendar_event_id = $1 WHERE id = $2",
+            event_id,
+            appointment_id,
+        )
+
+
+async def _mirror_create(appointment_id: str, patient_id: str, starts_at: datetime) -> None:
+    s = get_settings()
+    try:
+        event_id = await get_provider().create_event(
+            patient_id, starts_at, duration_minutes=s.clinic_slot_minutes
+        )
+        if event_id:
+            await _set_event_id(appointment_id, event_id)
+    except Exception:
+        log.warning("calendar mirror (create) failed appt=%s", appointment_id, exc_info=True)
+
+
+async def _mirror_move(
+    appointment_id: str, old_event_id: str | None, patient_id: str, new_starts_at: datetime
+) -> None:
+    s = get_settings()
+    try:
+        provider = get_provider()
+        if old_event_id:
+            await provider.move_event(
+                old_event_id, new_starts_at, duration_minutes=s.clinic_slot_minutes
+            )
+            event_id = old_event_id
+        else:
+            event_id = await provider.create_event(
+                patient_id, new_starts_at, duration_minutes=s.clinic_slot_minutes
+            )
+        if event_id:
+            await _set_event_id(appointment_id, event_id)
+    except Exception:
+        log.warning("calendar mirror (move) failed appt=%s", appointment_id, exc_info=True)
+
+
+async def _mirror_cancel(event_id: str | None) -> None:
+    if not event_id:
+        return
+    try:
+        await get_provider().cancel_event(event_id)
+    except Exception:
+        log.warning("calendar mirror (cancel) failed event=%s", event_id, exc_info=True)
+
+
+# ── Mutations ────────────────────────────────────────────────────────────────
+
+
 async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
     pool = await get_pool()
     try:
@@ -98,10 +200,12 @@ async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
                 patient_id,
                 starts_at,
             )
-        return {"tool": "book", "id": str(row["id"]), "starts_at": starts_at.isoformat()}
     except asyncpg.UniqueViolationError:
         log.warning("double-booking attempted patient=%s starts_at=%s", patient_id, starts_at)
         return {"tool": "book", "error": "slot_taken", "starts_at": starts_at.isoformat()}
+    appointment_id = str(row["id"])
+    await _mirror_create(appointment_id, patient_id, starts_at)
+    return {"tool": "book", "id": appointment_id, "starts_at": starts_at.isoformat()}
 
 
 async def cancel(patient_id: str, appointment_id: str) -> dict[str, Any]:
@@ -114,12 +218,13 @@ async def cancel(patient_id: str, appointment_id: str) -> dict[str, Any]:
         row = await conn.fetchrow(
             "UPDATE appointments SET status = 'cancelled' "
             "WHERE id = $1 AND patient_id = $2 AND status = 'booked' "
-            "RETURNING id, starts_at",
+            "RETURNING id, starts_at, calendar_event_id",
             appointment_id,
             patient_id,
         )
     if row is None:
         return {"tool": "cancel", "error": "not_found", "appointment_id": appointment_id}
+    await _mirror_cancel(row.get("calendar_event_id"))
     return {
         "tool": "cancel",
         "id": str(row["id"]),
@@ -142,7 +247,7 @@ async def reschedule(
         async with pool.acquire() as conn:
             async with conn.transaction():
                 existing = await conn.fetchrow(
-                    "SELECT id FROM appointments "
+                    "SELECT id, calendar_event_id FROM appointments "
                     "WHERE id = $1 AND patient_id = $2 AND status = 'booked' "
                     "FOR UPDATE",
                     appointment_id,
@@ -164,12 +269,6 @@ async def reschedule(
                     "UPDATE appointments SET status = 'cancelled' WHERE id = $1",
                     appointment_id,
                 )
-        return {
-            "tool": "reschedule",
-            "id": str(new_row["id"]),
-            "old_appointment_id": appointment_id,
-            "starts_at": new_starts_at.isoformat(),
-        }
     except asyncpg.UniqueViolationError:
         log.warning(
             "reschedule slot taken patient=%s new=%s", patient_id, new_starts_at
@@ -179,3 +278,11 @@ async def reschedule(
             "error": "slot_taken",
             "starts_at": new_starts_at.isoformat(),
         }
+    new_id = str(new_row["id"])
+    await _mirror_move(new_id, existing.get("calendar_event_id"), patient_id, new_starts_at)
+    return {
+        "tool": "reschedule",
+        "id": new_id,
+        "old_appointment_id": appointment_id,
+        "starts_at": new_starts_at.isoformat(),
+    }
