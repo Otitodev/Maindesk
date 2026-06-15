@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 import asyncpg
 
-from app.config import get_settings
+from app import clinic_config
 from app.gateway.schema import PatientMessage
 from app.memory.db import get_pool
 from app.tools.calendar import get_provider
@@ -28,18 +28,19 @@ from app.tools.calendar import get_provider
 log = logging.getLogger(__name__)
 
 
-def _business_slots(settings, tz: ZoneInfo) -> list[datetime]:
+def _business_slots(cfg: dict, tz: ZoneInfo) -> list[datetime]:
     """Upcoming slot start times within the clinic's working days and hours,
-    strictly in the future, ordered soonest-first."""
+    strictly in the future, ordered soonest-first. `cfg` is a clinic-config
+    dict (see app.clinic_config)."""
     now = datetime.now(tz)
-    slot_minutes = settings.clinic_slot_minutes
+    slot_minutes = cfg["slot_minutes"]
     out: list[datetime] = []
-    for day_offset in range(settings.slot_search_days):
+    for day_offset in range(cfg["search_days"]):
         day = (now + timedelta(days=day_offset)).date()
-        if day.isoweekday() not in settings.clinic_working_days:
+        if day.isoweekday() not in cfg["working_days"]:
             continue
-        t = datetime(day.year, day.month, day.day, settings.clinic_open_hour, 0, tzinfo=tz)
-        close = datetime(day.year, day.month, day.day, settings.clinic_close_hour, 0, tzinfo=tz)
+        t = datetime(day.year, day.month, day.day, cfg["open_hour"], 0, tzinfo=tz)
+        close = datetime(day.year, day.month, day.day, cfg["close_hour"], 0, tzinfo=tz)
         while t < close:
             if t > now:
                 out.append(t)
@@ -50,11 +51,11 @@ def _business_slots(settings, tz: ZoneInfo) -> list[datetime]:
 async def suggest_slots(_msg: PatientMessage, *, n: int = 3) -> dict[str, Any]:
     """Return the next `n` open slots within the clinic's business hours,
     excluding both Postgres-booked times and calendar busy intervals."""
-    settings = get_settings()
-    tz = ZoneInfo(settings.clinic_timezone)
-    slot_minutes = settings.clinic_slot_minutes
+    cfg = clinic_config.current()
+    tz = ZoneInfo(cfg["timezone"])
+    slot_minutes = cfg["slot_minutes"]
 
-    candidates = _business_slots(settings, tz)
+    candidates = _business_slots(cfg, tz)
     if not candidates:
         return {"tool": "suggest_slots", "slots": []}
     # Only check a bounded window — enough to find n free slots after exclusions.
@@ -146,10 +147,10 @@ async def _set_event_id(appointment_id: str, event_id: str) -> None:
 
 
 async def _mirror_create(appointment_id: str, patient_id: str, starts_at: datetime) -> None:
-    s = get_settings()
+    duration = clinic_config.current()["slot_minutes"]
     try:
         event_id = await get_provider().create_event(
-            patient_id, starts_at, duration_minutes=s.clinic_slot_minutes
+            patient_id, starts_at, duration_minutes=duration
         )
         if event_id:
             await _set_event_id(appointment_id, event_id)
@@ -160,17 +161,17 @@ async def _mirror_create(appointment_id: str, patient_id: str, starts_at: dateti
 async def _mirror_move(
     appointment_id: str, old_event_id: str | None, patient_id: str, new_starts_at: datetime
 ) -> None:
-    s = get_settings()
+    duration = clinic_config.current()["slot_minutes"]
     try:
         provider = get_provider()
         if old_event_id:
             await provider.move_event(
-                old_event_id, new_starts_at, duration_minutes=s.clinic_slot_minutes
+                old_event_id, new_starts_at, duration_minutes=duration
             )
             event_id = old_event_id
         else:
             event_id = await provider.create_event(
-                patient_id, new_starts_at, duration_minutes=s.clinic_slot_minutes
+                patient_id, new_starts_at, duration_minutes=duration
             )
         if event_id:
             await _set_event_id(appointment_id, event_id)
