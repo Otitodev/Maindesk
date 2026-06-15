@@ -57,6 +57,7 @@ from livekit.agents import (
 )
 from livekit.plugins import deepgram, elevenlabs, openai, silero
 
+from app.agents.hours import should_defer_to_staff
 from app.config import get_settings
 from app.gateway.schema import PatientMessage
 from app.memory.profile import resolve_by_phone, upsert_profile
@@ -118,6 +119,14 @@ GREETING_INSTRUCTIONS = (
     'How can I help today?"'
 )
 
+# Used in after-hours mode when the clinic is actually open: staff are in, so
+# offer to connect/take a message rather than handling everything solo.
+GREETING_DEFERRAL = (
+    "Greet the caller warmly and let them know the clinic is open and staff can "
+    "help directly. Offer to take a quick message or connect them, and if they "
+    "need anything call escalate_to_staff. Keep it brief and friendly."
+)
+
 
 class HealthDeskAgent(Agent):
     """Voice persona with proactive memory recall and reactive tools."""
@@ -138,7 +147,9 @@ class HealthDeskAgent(Agent):
         # Wire turn capture so we can write a session memory on exit.
         # Bound method works as a sync handler — pyee-style emitter.
         self.session.on("conversation_item_added", self._capture_conversation_item)
-        self.session.generate_reply(instructions=GREETING_INSTRUCTIONS)
+        # In after-hours mode during open hours, greet as a staffed front desk.
+        greeting = GREETING_DEFERRAL if should_defer_to_staff() else GREETING_INSTRUCTIONS
+        self.session.generate_reply(instructions=greeting)
 
     async def on_exit(self) -> None:
         await self._persist_session()
