@@ -34,6 +34,7 @@ class Patient(TypedDict):
 DEMO_PATIENTS: list[Patient] = [
     {
         # Mapped to the demo phone so WhatsApp-driven recall works.
+        # Placeholder number — must match HEALTHDESK_DEMO_PATIENT_PHONE in .env.
         "phone": "2340000000000",
         "full_name": "Adaeze Okafor",
         "memories": [
