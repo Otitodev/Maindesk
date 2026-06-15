@@ -271,10 +271,11 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | WhatsApp | live (Evolution v2) | live | ✅ | ✅ | ✅ |
 | Web | live | live | ✅ | ✅ | ✅ |
 | Voice | live (LiveKit Cloud) | live | ✅ | ✅ | ✅ |
+| Email | live (provider webhook) | live (threaded reply) | ✅ (by email) | ✅ | ✅ |
 
 | Capability | Status |
 |---|---|
-| Three-channel parity | ✅ |
+| Channel parity (voice · WhatsApp · web · email) | ✅ one orchestrator graph + shared tool layer across all four |
 | Real calendar backend (Google) | ✅ business-hours availability + free/busy + booking mirror; falls back to local scheduler when unconfigured |
 | MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |

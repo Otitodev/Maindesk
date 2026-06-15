@@ -58,6 +58,14 @@ class Settings(BaseSettings):
     web_api_key: str = ""
     clinic_timezone: str = "UTC"
 
+    # Email channel (optional). Inbound arrives via a provider parse webhook;
+    # outbound goes through the provider's send API (Postmark-shaped by default).
+    email_api_url: str = "https://api.postmarkapp.com"
+    email_api_token: str = ""          # provider server token
+    email_from: str = ""               # verified sender address
+    email_webhook_secret: str = ""     # shared secret guarding the inbound webhook
+    email_send_timeout: float = 8.0
+
     # Clinic business hours — drive real appointment-slot generation.
     clinic_open_hour: int = 9          # first slot starts at this hour (local)
     clinic_close_hour: int = 17        # no slot starts at/after this hour
