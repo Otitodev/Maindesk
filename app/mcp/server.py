@@ -1,8 +1,9 @@
 """HealthDesk MCP server — clinic tools for any MCP-compatible client.
 
 Exposes the same tool layer the LangGraph agent and voice worker use, so
-Claude Desktop / Cursor / any MCP client can look up patients, check
-slots, book, and escalate without touching the web UI.
+Claude Desktop / Cursor / any MCP client can work the front desk — look up
+patients, check slots, book, reschedule, cancel, and escalate — without
+touching the web UI. Aimed at staff/admin "copilot" use, not patients.
 
 Run (stdio transport, what MCP clients spawn):
 
@@ -105,6 +106,47 @@ async def book_appointment(phone: str, slot_iso: str) -> dict[str, Any]:
         return {"error": result["error"], "starts_at": result.get("starts_at")}
     return {"booked": True, "appointment_id": result["id"], "starts_at": result["starts_at"],
             "patient": patient.get("full_name")}
+
+
+@mcp.tool()
+async def cancel_appointment(phone: str, appointment_id: str) -> dict[str, Any]:
+    """Cancel a booked appointment for the patient with this phone number.
+    `appointment_id` comes from get_appointment_history. Scoped to the
+    patient, so it never touches another patient's booking. Returns
+    not_found if there's no matching booked appointment."""
+    patient = await _patient_or_error(phone)
+    if "error" in patient:
+        return patient
+    result = await appointments.cancel(patient["id"], appointment_id)
+    if result.get("error"):
+        return {"error": result["error"], "appointment_id": appointment_id}
+    return {"cancelled": True, "appointment_id": result["id"],
+            "starts_at": result["starts_at"], "patient": patient.get("full_name")}
+
+
+@mcp.tool()
+async def reschedule_appointment(
+    phone: str, appointment_id: str, new_slot_iso: str
+) -> dict[str, Any]:
+    """Move an existing booked appointment to a new time. `appointment_id`
+    comes from get_appointment_history; `new_slot_iso` is an ISO 8601 slot
+    from suggest_slots. Atomic: if the new slot is taken, the original is
+    kept and slot_taken is returned."""
+    patient = await _patient_or_error(phone)
+    if "error" in patient:
+        return patient
+    try:
+        new_ts = datetime.fromisoformat(new_slot_iso.replace("Z", "+00:00"))
+    except ValueError:
+        return {"error": "bad_timestamp", "new_slot_iso": new_slot_iso,
+                "hint": "Pass an ISO 8601 timestamp from suggest_slots."}
+    result = await appointments.reschedule(patient["id"], appointment_id, new_ts)
+    if result.get("error"):
+        return {"error": result["error"], "starts_at": result.get("starts_at"),
+                "appointment_id": appointment_id}
+    return {"rescheduled": True, "appointment_id": result["id"],
+            "old_appointment_id": result["old_appointment_id"],
+            "starts_at": result["starts_at"], "patient": patient.get("full_name")}
 
 
 @mcp.tool()

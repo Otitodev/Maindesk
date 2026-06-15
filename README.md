@@ -202,13 +202,18 @@ docker-compose.yml         app + postgres(pgvector) + n8n
 
 The same clinic tools the agent uses are exposed over the [Model Context
 Protocol](https://modelcontextprotocol.io), so any MCP client — Claude
-Desktop, Cursor, etc. — can work the front desk without touching the web UI:
+Desktop, Cursor, etc. — can work the front desk without touching the web UI.
+This is aimed at **staff/admin "copilot" use** (ask an LLM client to check the
+schedule, move a booking, page a nurse), not at patients — patients stay on
+voice / WhatsApp / email.
 
 | Tool | Does |
 |---|---|
 | `suggest_slots` | next open 30-min slots in the clinic timezone |
 | `lookup_patient` | resolve a patient profile by phone |
 | `book_appointment` | book a confirmed slot (double-booking guarded) |
+| `reschedule_appointment` | move a booking atomically (slot-taken safe) |
+| `cancel_appointment` | cancel a booking (patient-scoped) |
 | `get_appointment_history` | upcoming + past appointments |
 | `escalate_to_staff` | page staff; lands in the `/staff` dashboard queue |
 
@@ -270,7 +275,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Capability | Status |
 |---|---|
 | Three-channel parity | ✅ |
-| MCP server (5 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
+| MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
 | Multilingual replies (language auto-detected in triage) | ✅ text channels + voice STT code-switching |
 | pgvector memory + decay re-rank | ✅ |
