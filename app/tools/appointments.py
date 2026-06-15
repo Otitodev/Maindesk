@@ -102,3 +102,80 @@ async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
     except asyncpg.UniqueViolationError:
         log.warning("double-booking attempted patient=%s starts_at=%s", patient_id, starts_at)
         return {"tool": "book", "error": "slot_taken", "starts_at": starts_at.isoformat()}
+
+
+async def cancel(patient_id: str, appointment_id: str) -> dict[str, Any]:
+    """Cancel a booked appointment. Scoped by patient_id so one caller can
+    never cancel another patient's slot. Idempotent-ish: a row that is not
+    found or already cancelled returns an explicit not_found error rather
+    than silently succeeding."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "UPDATE appointments SET status = 'cancelled' "
+            "WHERE id = $1 AND patient_id = $2 AND status = 'booked' "
+            "RETURNING id, starts_at",
+            appointment_id,
+            patient_id,
+        )
+    if row is None:
+        return {"tool": "cancel", "error": "not_found", "appointment_id": appointment_id}
+    return {
+        "tool": "cancel",
+        "id": str(row["id"]),
+        "starts_at": row["starts_at"].isoformat(),
+        "status": "cancelled",
+    }
+
+
+async def reschedule(
+    patient_id: str, appointment_id: str, new_starts_at: datetime
+) -> dict[str, Any]:
+    """Atomically move a booked appointment to a new time.
+
+    The new slot is secured *before* the old one is released, both inside a
+    single transaction: if the replacement slot clashes (partial unique index
+    on booked rows) the whole thing rolls back, so we never cancel the
+    original without having booked its replacement."""
+    pool = await get_pool()
+    try:
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                existing = await conn.fetchrow(
+                    "SELECT id FROM appointments "
+                    "WHERE id = $1 AND patient_id = $2 AND status = 'booked' "
+                    "FOR UPDATE",
+                    appointment_id,
+                    patient_id,
+                )
+                if existing is None:
+                    return {
+                        "tool": "reschedule",
+                        "error": "not_found",
+                        "appointment_id": appointment_id,
+                    }
+                new_row = await conn.fetchrow(
+                    "INSERT INTO appointments (patient_id, starts_at, status) "
+                    "VALUES ($1, $2, 'booked') RETURNING id",
+                    patient_id,
+                    new_starts_at,
+                )
+                await conn.execute(
+                    "UPDATE appointments SET status = 'cancelled' WHERE id = $1",
+                    appointment_id,
+                )
+        return {
+            "tool": "reschedule",
+            "id": str(new_row["id"]),
+            "old_appointment_id": appointment_id,
+            "starts_at": new_starts_at.isoformat(),
+        }
+    except asyncpg.UniqueViolationError:
+        log.warning(
+            "reschedule slot taken patient=%s new=%s", patient_id, new_starts_at
+        )
+        return {
+            "tool": "reschedule",
+            "error": "slot_taken",
+            "starts_at": new_starts_at.isoformat(),
+        }

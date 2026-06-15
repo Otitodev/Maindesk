@@ -30,5 +30,9 @@ class AgentState(TypedDict, total=False):
     reply: PatientReply
     escalated: bool
     session_cache: Any
+    # Multi-turn action awaiting the patient's slot pick or yes/no confirmation
+    # (book / reschedule / cancel). Persisted across turns by the checkpointer
+    # so any channel can resume a flow mid-conversation. None when idle.
+    pending: dict[str, Any] | None
     # LangGraph chat history channel (auto-merged across turns).
     messages: Annotated[list, add_messages]

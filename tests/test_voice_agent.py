@@ -414,3 +414,101 @@ async def test_escalate_to_staff_notifies(monkeypatch):
     assert captured["reason"] == "chest pain"
     assert captured["msg"].channel == "voice"
     assert captured["msg"].content == "chest pain"
+
+
+# ── @function_tool: cancel_appointment ──────────────────────────────────
+
+
+async def test_cancel_appointment_refuses_without_patient():
+    a = _make_agent(patient_id=None, phone=None)
+    out = await a.cancel_appointment(starts_at_iso="2026-06-12T15:00:00+00:00")
+    assert "on file" in out.lower()
+
+
+async def test_cancel_appointment_not_found(monkeypatch):
+    async def fake_find_existing(_msg):
+        return {"appointments": []}
+
+    monkeypatch.setattr(voice_mod, "find_existing", fake_find_existing)
+    a = _make_agent(patient_id="p-1")
+    out = await a.cancel_appointment(starts_at_iso="2026-06-12T15:00:00+00:00")
+    assert "could not find" in out.lower()
+
+
+async def test_cancel_appointment_cancels_matched_row(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    async def fake_find_existing(_msg):
+        return {"appointments": [
+            {"id": "appt-9", "starts_at": "2026-06-12T15:00:00+00:00", "status": "booked"}
+        ]}
+
+    async def fake_cancel(patient_id, appointment_id):
+        captured["args"] = (patient_id, appointment_id)
+        return {"tool": "cancel", "id": appointment_id, "status": "cancelled",
+                "starts_at": "2026-06-12T15:00:00+00:00"}
+
+    monkeypatch.setattr(voice_mod, "find_existing", fake_find_existing)
+    monkeypatch.setattr(voice_mod, "cancel", fake_cancel)
+    a = _make_agent(patient_id="p-1")
+    out = await a.cancel_appointment(starts_at_iso="2026-06-12T15:00:00+00:00")
+    assert "cancelled" in out.lower()
+    assert captured["args"] == ("p-1", "appt-9")
+
+
+# ── @function_tool: reschedule_appointment ──────────────────────────────
+
+
+async def test_reschedule_appointment_refuses_without_patient():
+    a = _make_agent(patient_id=None, phone=None)
+    out = await a.reschedule_appointment(
+        current_starts_at_iso="2026-06-12T15:00:00+00:00",
+        new_starts_at_iso="2026-06-13T09:00:00+00:00",
+    )
+    assert "on file" in out.lower()
+
+
+async def test_reschedule_appointment_moves_to_new_slot(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    async def fake_find_existing(_msg):
+        return {"appointments": [
+            {"id": "appt-9", "starts_at": "2026-06-12T15:00:00+00:00", "status": "booked"}
+        ]}
+
+    async def fake_reschedule(patient_id, appointment_id, new_ts):
+        captured["args"] = (patient_id, appointment_id, new_ts)
+        return {"tool": "reschedule", "id": "new-1", "old_appointment_id": appointment_id,
+                "starts_at": new_ts.isoformat()}
+
+    monkeypatch.setattr(voice_mod, "find_existing", fake_find_existing)
+    monkeypatch.setattr(voice_mod, "reschedule", fake_reschedule)
+    a = _make_agent(patient_id="p-1")
+    out = await a.reschedule_appointment(
+        current_starts_at_iso="2026-06-12T15:00:00+00:00",
+        new_starts_at_iso="2026-06-13T09:00:00+00:00",
+    )
+    assert "moved" in out.lower()
+    assert captured["args"][0] == "p-1"
+    assert captured["args"][1] == "appt-9"
+    assert captured["args"][2] == datetime(2026, 6, 13, 9, 0, tzinfo=timezone.utc)
+
+
+async def test_reschedule_appointment_slot_taken_does_not_confirm(monkeypatch):
+    async def fake_find_existing(_msg):
+        return {"appointments": [
+            {"id": "appt-9", "starts_at": "2026-06-12T15:00:00+00:00", "status": "booked"}
+        ]}
+
+    async def fake_reschedule_taken(patient_id, appointment_id, new_ts):
+        return {"tool": "reschedule", "error": "slot_taken", "starts_at": new_ts.isoformat()}
+
+    monkeypatch.setattr(voice_mod, "find_existing", fake_find_existing)
+    monkeypatch.setattr(voice_mod, "reschedule", fake_reschedule_taken)
+    a = _make_agent(patient_id="p-1")
+    out = await a.reschedule_appointment(
+        current_starts_at_iso="2026-06-12T15:00:00+00:00",
+        new_starts_at_iso="2026-06-13T09:00:00+00:00",
+    )
+    assert "moved" not in out.lower()
+    assert "taken" in out.lower()
