@@ -1,0 +1,821 @@
+/* ================================================================
+   HEALTHDESK AI — DESIGN SYSTEM v1.0
+   Import order: link fonts first, then this file.
+   All assets are vendored locally — no CDN or Google Fonts call.
+
+   <link rel="stylesheet" href="vendor/fonts.css" />
+   <link rel="stylesheet" href="healthdesk-ds.css" />
+================================================================ */
+
+
+/* ────────────────────────────────────────────────────────────────
+   1. TOKENS
+   All design decisions live here. Edit once, update everywhere.
+──────────────────────────────────────────────────────────────── */
+:root {
+
+  /* ── Ink scale ──────────────────────────────────────────────
+     All pass WCAG AA (4.5:1) on white. Use in order of visual
+     hierarchy: ink → ink-mid → ink-soft.                       */
+  --ink:        #0c1c2e;   /* primary text   — 17.3:1 on white */
+  --ink-mid:    #254257;   /* secondary text —  9.1:1 on white */
+  --ink-soft:   #3d5568;   /* muted/tertiary —  6.1:1 on white */
+
+  /* ── Teal scale ─────────────────────────────────────────────
+     teal-text: only teal safe for body-size text (5.9:1).
+     teal-ui:   borders, icons, interactive dots.
+     teal-vivid: decorative gradients only — never body text.
+     teal-pale:  backgrounds, avatar fills, icon wrappers.      */
+  --teal-text:  #006e78;   /* text-safe teal  —  5.9:1 on white */
+  --teal-ui:    #008c97;   /* UI-safe teal                       */
+  --teal-vivid: #00b4bc;   /* decorative only                    */
+  --teal-pale:  #cef0f2;   /* surface tint                       */
+
+  /* ── Semantic ───────────────────────────────────────────────*/
+  --green-live: #22c55e;   /* "active / live" indicator          */
+
+  /* Teal-vivid is OK as display-size text on dark surfaces only
+     (passes AA on --ink). Alias it here so the intent is explicit
+     wherever it's used — never apply at body sizes.              */
+  --teal-on-dark: #00b4bc;
+
+  /* Star-rating amber — used only on the testimonial card stars */
+  --amber-star: #f59e0b;
+
+  /* ── Surfaces ───────────────────────────────────────────────*/
+  --white:      #ffffff;
+  --bg-mist:    #f0fafb;   /* section background (features)      */
+  --surface:    rgba(255,255,255,0.82);   /* frosted glass panel */
+  --footer-bg:  #060e1a;   /* deeper than --ink for footer floor */
+
+  /* Hover state for the primary dark button */
+  --ink-hover:  #1b3550;
+
+  /* ── Borders ────────────────────────────────────────────────
+     Use --border for decorative UI lines (badges, dividers).
+     Use --border-strong for interactive edges (buttons, focus).
+     --border-soft is the very-pale teal used between rows.       */
+  --border:        #8ecdd2;
+  --border-strong: #3d8f96;
+  --border-soft:   #edf6f7;
+
+  /* ── Typography ─────────────────────────────────────────────*/
+  --font-display: 'Sora',    sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  /* ── Spacing scale (base-8) ─────────────────────────────────*/
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --space-10: 112px;
+
+  /* ── Radius ─────────────────────────────────────────────────*/
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-pill: 100px;
+
+  /* ── Shadows ────────────────────────────────────────────────*/
+  --shadow-sm:  0 1px 3px rgba(12,28,46,0.06), 0 2px 8px  rgba(12,28,46,0.04);
+  --shadow-md:  0 2px 6px rgba(12,28,46,0.06), 0 8px 32px rgba(12,28,46,0.07);
+  --shadow-lg:  0 4px 24px rgba(12,28,46,0.18);
+  --shadow-xl:  0 8px 32px rgba(12,28,46,0.28);
+
+  /* ── Z-index scale ──────────────────────────────────────────*/
+  --z-base:    1;
+  --z-card:    10;
+  --z-nav:     100;
+  --z-overlay: 200;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   2. RESET & BASE
+──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--white);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; }
+
+
+/* ────────────────────────────────────────────────────────────────
+   3. TYPOGRAPHY SCALE
+   Use these classes on any element; they're intentionally not
+   scoped to specific HTML tags so they port across frameworks.
+──────────────────────────────────────────────────────────────── */
+
+/* Hero-size display heading */
+.text-hero {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+/* Section heading */
+.text-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+/* Card / component heading */
+.text-h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* Subheading / intro paragraph */
+.text-sub {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 2.2vw, 1.18rem);
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Standard body copy */
+.text-body {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;  /* 15px */
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Small / caption */
+.text-sm {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;  /* 13px */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ALL-CAPS eyebrow label */
+.text-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-text);
+}
+
+/* Teal accent within a heading: wrap word in <em class="accent"> */
+.accent {
+  font-style: normal;
+  color: var(--teal-text);
+  position: relative;
+}
+
+/* Animated draw-underline on .accent — add class .draw to trigger */
+.accent.draw::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -4px;
+  width: 100%; height: 3px;
+  background: var(--teal-ui);
+  border-radius: 2px;
+  opacity: 0.4;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: hd-draw 0.9s 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   4. LAYOUT HELPERS
+──────────────────────────────────────────────────────────────── */
+
+/* Full-width section container */
+.container {
+  max-width: 1100px;
+  margin-inline: auto;
+  padding-inline: var(--space-7);  /* 48px */
+}
+
+.container--narrow {
+  max-width: 760px;
+  margin-inline: auto;
+  padding-inline: var(--space-7);
+}
+
+/* Section backgrounds */
+.bg-white { background: var(--white); }
+.bg-mist  { background: var(--bg-mist); }
+
+
+/* ────────────────────────────────────────────────────────────────
+   5. COMPONENTS
+──────────────────────────────────────────────────────────────── */
+
+
+/* ── 5a. NAVIGATION ─────────────────────────────────────────── */
+
+.hd-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px var(--space-7);
+}
+
+.hd-nav__logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+}
+
+.hd-nav__logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--teal-ui);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.hd-nav__links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+
+.hd-nav__links a {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
+}
+
+.hd-nav__links a:hover { color: var(--ink); }
+
+.hd-nav__cta {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.hd-nav__cta:hover {
+  background: var(--ink);
+  color: var(--white);
+}
+
+@media (max-width: 640px) {
+  .hd-nav { padding: 18px var(--space-5); }
+  .hd-nav__links, .hd-nav__cta { display: none; }
+}
+
+
+/* ── 5b. BADGE (pill) ───────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+/* Pulsing dot inside badge: <span class="badge__dot"></span> */
+.badge__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal-ui);
+  flex-shrink: 0;
+  animation: hd-pulse 2s ease-in-out infinite;
+}
+
+
+/* ── 5c. BUTTONS ─────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 14px 32px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn:hover  { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+
+/* Focus visible ring using teal */
+.btn:focus-visible {
+  outline: 2px solid var(--teal-ui);
+  outline-offset: 3px;
+}
+
+/* Primary — dark navy fill */
+.btn--primary {
+  background: var(--ink);
+  color: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+.btn--primary:hover {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Ghost — frosted glass */
+.btn--ghost {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--border-strong);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.btn--ghost:hover {
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 4px 16px rgba(0,140,151,0.14);
+}
+
+/* Ghost variant for use on dark surfaces (CTA section, dark hero) */
+.btn--ghost--on-dark {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.8);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.btn--ghost--on-dark:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--white);
+  box-shadow: 0 4px 16px rgba(0,180,188,0.18);
+}
+
+/* Teal fill — use sparingly */
+.btn--teal {
+  background: var(--teal-ui);
+  color: var(--white);
+  box-shadow: 0 4px 20px rgba(0,140,151,0.28);
+}
+.btn--teal:hover {
+  background: var(--teal-text);
+  box-shadow: 0 8px 28px rgba(0,110,120,0.32);
+}
+
+/* Sizes */
+.btn--sm { font-size: 0.8rem;  padding: 10px 20px; }
+.btn--lg { font-size: 1rem;    padding: 18px 40px; }
+
+@media (max-width: 640px) {
+  .btn { width: 100%; text-align: center; }
+}
+
+
+/* ── 5d. SECTION HEADER ─────────────────────────────────────── */
+
+/* Eyebrow with leading dash */
+.section-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--space-5);
+}
+
+.section-eyebrow::before {
+  content: '';
+  display: block;
+  width: 28px; height: 1.5px;
+  background: var(--teal-text);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.section-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: var(--space-4);
+}
+
+.section-sub {
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 420px;
+  margin-bottom: var(--space-8);
+}
+
+
+/* ── 5e. FEATURE CARD (sticky-stack) ────────────────────────── */
+
+/*
+  Sticky stack pattern — wrap cards in .stack-container then use JS:
+
+    const STICKY_TOP = 96;
+    const cards = document.querySelectorAll('.feat-card');
+    window.addEventListener('scroll', () => {
+      cards.forEach((card, i) => {
+        const next = cards[i + 1];
+        if (!next) return;
+        card.classList.toggle('buried', next.getBoundingClientRect().top <= STICKY_TOP + 2);
+      });
+    }, { passive: true });
+*/
+
+.stack-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.feat-card {
+  --card-pad-x: 52px;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-7) var(--card-pad-x);
+  position: sticky;
+  top: 96px;
+  box-shadow: var(--shadow-md);
+  transition:
+    transform   0.5s cubic-bezier(0.22,1,0.36,1),
+    box-shadow  0.5s cubic-bezier(0.22,1,0.36,1),
+    filter      0.5s cubic-bezier(0.22,1,0.36,1);
+  transform-origin: top center;
+  will-change: transform, filter;
+}
+
+/* Scroll spacer: non-last cards need margin to create scroll distance.
+   Last card gets its own runway so its dwell time matches the others
+   (otherwise it un-sticks as soon as the .features-cta enters view). */
+.feat-card:not(:last-child) { margin-bottom: 44vh; }
+.feat-card:last-child       { margin-bottom: 32vh; }
+
+/* Stacking z-index — set per card, or use nth-child pattern */
+.feat-card:nth-child(1) { z-index: 1; }
+.feat-card:nth-child(2) { z-index: 2; }
+.feat-card:nth-child(3) { z-index: 3; }
+.feat-card:nth-child(4) { z-index: 4; }
+.feat-card:nth-child(5) { z-index: 5; }
+
+/* Buried state — added by JS when a later card overlaps this one */
+.feat-card.buried {
+  transform: scale(0.96) translateY(-10px);
+  filter: brightness(0.94);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Gradient top bar — inset matches the card's horizontal padding so it
+   resizes correctly at the 900px breakpoint instead of overflowing. */
+.feat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--card-pad-x);
+  right: var(--card-pad-x);
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal-ui), var(--teal-vivid));
+  border-radius: 0 0 2px 2px;
+}
+
+/* Two-column inner layout: icon | content */
+.card-body {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 0 32px;
+  align-items: start;
+}
+
+/* Icon wrapper */
+.feat-icon {
+  width: 48px; height: 48px;
+  background: var(--teal-pale);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.feat-icon svg {
+  width: 22px; height: 22px;
+  stroke: var(--teal-text);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Channel label */
+.feat-channel {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal-text);
+  margin-bottom: var(--space-2);
+}
+
+/* Card heading */
+.feat-heading {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: var(--space-5);
+}
+
+/* Capability list */
+.feat-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.feat-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Teal check marker */
+.feat-list li::before {
+  content: '';
+  flex-shrink: 0;
+  margin-top: 5px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background-color: var(--teal-pale);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2,6 5,9 10,3' fill='none' stroke='%23006e78' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 100%;
+}
+
+/* Inner content wrapper inside .card-body — keeps channel label,
+   heading, and capability list grouped in the second grid column. */
+.card-meta { grid-column: 2; }
+
+/* Card footer (spans both columns) */
+.feat-footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .feat-card { --card-pad-x: 28px; padding: 36px var(--card-pad-x); }
+  .card-body { grid-template-columns: 1fr; gap: 20px 0; }
+  .card-meta { grid-column: 1; }
+  .feat-card:not(:last-child) { margin-bottom: 36vh; }
+  .feat-card:last-child       { margin-bottom: 24vh; }
+}
+
+
+/* ── 5f. STATUS INDICATORS ──────────────────────────────────── */
+
+/* Pulsing green "live" dot */
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green-live);
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+  flex-shrink: 0;
+  animation: hd-pulse 2s ease-in-out infinite;
+}
+
+/* Teal nav/logo dot */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--teal-ui);
+  display: inline-block;
+}
+
+
+/* ── 5g. TRUST STRIP (avatar cluster + label) ───────────────── */
+
+.trust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.01em;
+}
+
+.trust__avatars {
+  display: flex;
+}
+
+.trust__avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  margin-left: -8px;
+  background: var(--teal-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--teal-text);
+}
+
+.trust__avatars .trust__avatar:first-child { margin-left: 0; }
+
+
+/* ── 5h. SCROLL INDICATOR ───────────────────────────────────── */
+
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scroll-hint__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.scroll-hint__line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--teal-ui), transparent);
+  animation: hd-drip 1.8s ease-in-out infinite;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   6. VANTA HERO SHELL
+   Requires three.js r134 + vanta.fog.min.js loaded before use.
+   Copy the VANTA.FOG() config from healthdesk-ds.html.
+──────────────────────────────────────────────────────────────── */
+
+.hd-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hd-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Subtle noise grain over the fog */
+.hd-hero__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.hd-hero__content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 780px;
+  padding: 0 var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   7. KEYFRAME ANIMATIONS
+──────────────────────────────────────────────────────────────── */
+
+/* Pulsing dot (badge, live-dot) */
+@keyframes hd-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* Draw-underline on hero accent word */
+@keyframes hd-draw {
+  to { transform: scaleX(1); }
+}
+
+/* Drip — scroll indicator line */
+@keyframes hd-drip {
+  0%   { transform: scaleY(0); transform-origin: top; opacity: 1; }
+  50%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+  100% { transform: scaleY(1); transform-origin: top; opacity: 0; }
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   8. ACCESSIBILITY
+──────────────────────────────────────────────────────────────── */
+
+/* Global focus ring */
+:focus-visible {
+  outline: 2px solid var(--teal-ui);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Kill all motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
