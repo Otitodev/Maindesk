@@ -233,99 +233,6 @@
     margin-bottom: 2px;
   }
 
-  /* ── TESTIMONIALS ── */
-  .testi-section {
-    background: var(--bg-mist);
-    padding: var(--space-10) var(--space-7);
-  }
-  .testi-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .testi-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 56px;
-  }
-  .testi-card {
-    background: var(--white);
-    border-radius: var(--radius-xl);
-    padding: 40px 36px 36px;
-    box-shadow: var(--shadow-sm);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  /* giant quote watermark */
-  .testi-card::before {
-    content: '\201C';
-    position: absolute;
-    top: 8px; left: 20px;
-    font-size: 7rem;
-    line-height: 1;
-    font-family: Georgia, serif;
-    color: var(--teal-pale);
-    z-index: 0;
-    pointer-events: none;
-  }
-  .testi-quote {
-    font-size: 0.9375rem;
-    line-height: 1.7;
-    color: var(--ink-mid);
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    margin-bottom: 28px;
-    padding-top: 20px;
-  }
-  .testi-author {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    position: relative;
-    z-index: 1;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-soft);
-  }
-  .testi-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: var(--teal-pale);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--teal-text);
-    flex-shrink: 0;
-  }
-  .testi-name {
-    font-family: var(--font-display);
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 2px;
-  }
-  .testi-clinic {
-    font-size: 0.78rem;
-    color: var(--ink-soft);
-  }
-  /* star rating */
-  .testi-stars {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 16px;
-    position: relative;
-    z-index: 1;
-  }
-  .testi-stars span {
-    font-size: 0.85rem;
-    color: var(--amber-star);
-  }
-
   /* ── PRICING ── */
   .pricing-section {
     background: var(--white);
@@ -525,7 +432,7 @@
     color: var(--ink-soft);
   }
   .faq-item.open .faq-answer {
-    max-height: 300px;
+    max-height: 420px;
     padding-bottom: 24px;
     opacity: 1;
   }
@@ -738,9 +645,6 @@
   @media (max-width: 1024px) {
     .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 48px 0; }
     .stat-item:nth-child(3) { border-left: none; }
-    /* let the third testimonial wrap to row 2 instead of being hidden */
-    .testi-grid { grid-template-columns: 1fr 1fr; }
-    .testi-grid .testi-card:last-child { grid-column: 1 / -1; max-width: 540px; margin-inline: auto; }
   }
 
   @media (max-width: 900px) {
@@ -757,10 +661,8 @@
 
   @media (max-width: 768px) {
     .features-section { padding: 80px 24px 0; }
-    .hiw-section, .testi-section, .pricing-section { padding: 80px 24px; }
+    .hiw-section, .pricing-section { padding: 80px 24px; }
     .faq-section, .cta-dark, .stats-section { padding-left: 24px; padding-right: 24px; }
-    .testi-grid { grid-template-columns: 1fr; }
-    .testi-grid .testi-card:last-child { grid-column: auto; max-width: none; margin-inline: 0; }
     .footer-grid { grid-template-columns: 1fr; }
   }
 
@@ -1019,69 +921,6 @@
       </span>
     </div>
 
-  </div>
-</section>
-
-
-<!-- ═══════════════════════════════════════════════
-     TESTIMONIALS
-═══════════════════════════════════════════════ -->
-<section class="testi-section" id="testimonials">
-  <div class="testi-inner">
-    <p class="section-eyebrow">Early access clinics</p>
-    <h2 class="section-headline">What clinic owners say</h2>
-
-    <div class="testi-grid">
-
-      <div class="testi-card">
-        <div class="testi-stars">
-          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-        </div>
-        <p class="testi-quote">
-          We used to miss roughly 30% of calls during peak hours. HealthDesk answered every single one from day one. Our receptionist now focuses entirely on the patients physically in the room — which is where she should be.
-        </p>
-        <div class="testi-author">
-          <div class="testi-avatar">SO</div>
-          <div>
-            <p class="testi-name">Dr. Sarah Okafor</p>
-            <p class="testi-clinic">Clinical Director, Harmony Dental · Lagos</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="testi-card">
-        <div class="testi-stars">
-          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-        </div>
-        <p class="testi-quote">
-          Setup genuinely took less than a day. The agent sounded like us from the very first call — not like some generic IVR system. Patients haven't noticed any difference, which is exactly the point.
-        </p>
-        <div class="testi-author">
-          <div class="testi-avatar">JB</div>
-          <div>
-            <p class="testi-name">Dr. James Byrne</p>
-            <p class="testi-clinic">Practice Owner, ClearFlow Family Clinic · Dublin</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="testi-card">
-        <div class="testi-stars">
-          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-        </div>
-        <p class="testi-quote">
-          The WhatsApp integration alone paid for itself in the first week. Appointment reminders that patients actually read, in a channel they already check 40 times a day. No-show rate dropped by 22%.
-        </p>
-        <div class="testi-author">
-          <div class="testi-avatar">AS</div>
-          <div>
-            <p class="testi-name">Dr. Amara Singh</p>
-            <p class="testi-clinic">Medical Director, WellPoint Medical · Toronto</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
   </div>
 </section>
 
@@ -1411,7 +1250,9 @@
   /* ── Smooth scroll for anchor links ── */
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
+      const href = a.getAttribute('href');
+      if (!href || href === '#' || href.length < 2) return;
+      const target = document.querySelector(href);
       if (!target) return;
       e.preventDefault();
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
