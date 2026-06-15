@@ -20,51 +20,93 @@ Most agent-demo submissions are *"ChatGPT with a webhook"* — stateless, generi
 
 ```mermaid
 flowchart TB
-    WA["WhatsApp<br/>(Evolution API v2)"]
-    WEB["Web chat"]
-    VOICE["Voice call<br/>(LiveKit Cloud)"]
+    VOICE["📞 Voice<br/>LiveKit · Deepgram · ElevenLabs"]
+    WA["💬 WhatsApp<br/>Evolution API v2"]
+    WEB["🌐 Web chat"]
+    EMAIL["✉️ Email<br/>provider webhook"]
 
-    subgraph GW["FastAPI gateway"]
-        AUTH["webhook auth<br/>HMAC / token / apikey"]
+    subgraph GW["FastAPI gateway — async, single process"]
+        AUTH["webhook auth<br/>HMAC · token · secret"]
         REDACT["redact() on every<br/>outbound reply"]
     end
 
-    subgraph LG["LangGraph orchestrator — AsyncPostgresSaver checkpoints"]
-        TRIAGE["triage<br/>Qwen-Turbo intent"] --> RECALL["recall<br/>top-k + decay re-rank"]
-        RECALL --> TOOLS["tools<br/>slots · booking · escalation"]
-        TOOLS --> REASONER["reasoner<br/>Qwen-Plus, strict grounding"]
-        REASONER --> WRITER["writer<br/>memory write-back"]
+    subgraph LG["LangGraph orchestrator · AsyncPostgresSaver checkpoints"]
+        TRIAGE["triage<br/>Qwen-Turbo intent + language"]
+        GATE{"after-hours<br/>gate"}
+        HANDOFF["handoff<br/>acknowledge + escalate"]
+        RECALL["recall<br/>top-k + decay re-rank"]
+        TOOLS["tools<br/>booking state machine"]
+        REASONER["reasoner<br/>Qwen-Plus · strict grounding"]
+        WRITER["writer<br/>memory write-back"]
+        TRIAGE --> GATE
+        GATE -->|after-hours mode + open| HANDOFF
+        GATE -->|otherwise| RECALL
+        RECALL --> TOOLS --> REASONER --> WRITER
+        HANDOFF --> WRITER
     end
 
-    subgraph LK["LiveKit Agent worker (full parity)"]
-        LLMNODE["llm_node hook → memory recall"]
-        FTOOLS["@function_tool<br/>find / book / escalate"]
+    subgraph VOICEW["LiveKit voice worker — own process"]
+        LLMNODE["llm_node → memory recall"]
+        FTOOLS["@function_tool<br/>find · book · reschedule · cancel · escalate"]
     end
 
-    subgraph PG["Postgres 16 + pgvector"]
+    MCP["MCP server · 7 clinic tools<br/>(Claude Desktop / Cursor)"]
+
+    subgraph TOOLLAYER["Shared tool layer — one source of truth for every channel"]
+        APPTS["appointments<br/>slots · book · reschedule · cancel"]
+        ESC["escalation<br/>notify_staff"]
+    end
+
+    CAL["📅 Google Calendar<br/>free/busy + booking mirror<br/>(local fallback)"]
+
+    subgraph DB["Postgres 16 + pgvector"]
         MEM[("memories<br/>text-embedding-v3 @ 1024d")]
         APPT[("appointments · patients")]
+        ESCT[("escalations")]
+        CFG[("clinic_settings")]
     end
 
+    STAFF["🧑‍⚕️ Staff dashboard /staff<br/>human-in-the-loop queue"]
+    ONB["⚙️ Onboarding wizard /onboarding<br/>hours · persona · FAQs"]
     N8N["n8n crons<br/>reminders · follow-ups"]
-    SLACK["Slack staff escalation"]
 
     WA --> AUTH
     WEB --> AUTH
-    VOICE --> LK
+    EMAIL --> AUTH
+    VOICE --> VOICEW
     AUTH --> TRIAGE
     REASONER --> REDACT
+    HANDOFF --> REDACT
     REDACT --> WA
     REDACT --> WEB
+    REDACT --> EMAIL
+
+    TOOLS --> APPTS
+    TOOLS --> ESC
+    FTOOLS --> APPTS
+    FTOOLS --> ESC
+    MCP --> APPTS
+    MCP --> ESC
+
     RECALL <--> MEM
     WRITER --> MEM
-    TOOLS <--> APPT
-    TOOLS --> SLACK
     LLMNODE <--> MEM
-    FTOOLS <--> APPT
-    FTOOLS --> SLACK
-    N8N --> APPT
+
+    APPTS <--> APPT
+    APPTS <--> CAL
+    ESC --> ESCT
+
+    ESCT --> STAFF
+    APPT --> STAFF
+    ONB --> CFG
+    CFG -.->|read at runtime| LG
+    CFG -.->|persona · hours| VOICEW
+    N8N --> APPTS
 ```
+
+> Static render for slides/print: [`docs/architecture.png`](docs/architecture.png).
+
+The shape of the system is the headline: **four channels and an MCP server all funnel into one shared tool layer**, so booking / reschedule / cancel / escalation behave identically everywhere and write once to Postgres (the source of truth) while mirroring to Google Calendar. Decay-weighted pgvector memory feeds both the text graph and the voice worker; clinic config set in the onboarding wizard is read live by both.
 
 | Layer | Tech |
 |---|---|
@@ -76,6 +118,10 @@ flowchart TB
 | Voice TTS | ElevenLabs Flash v2.5 |
 | Voice runtime | LiveKit Agents 1.5 |
 | WhatsApp transport | Evolution API v2 (`evoapicloud/evolution-api`) |
+| Email transport | Provider webhook + send (Postmark-shaped, swappable) |
+| Calendar | Google Calendar v3 — free/busy + booking mirror; local fallback |
+| Clinic config | Self-serve onboarding wizard → `clinic_settings`, read at runtime |
+| External tool access | MCP server (7 clinic tools, any MCP client) |
 | Background jobs | n8n (reminders, follow-ups) |
 | Persistence | Postgres 16 + pgvector |
 
