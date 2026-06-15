@@ -58,6 +58,33 @@ class Settings(BaseSettings):
     web_api_key: str = ""
     clinic_timezone: str = "UTC"
 
+    # Email channel (optional). Inbound arrives via a provider parse webhook;
+    # outbound goes through the provider's send API (Postmark-shaped by default).
+    email_api_url: str = "https://api.postmarkapp.com"
+    email_api_token: str = ""          # provider server token
+    email_from: str = ""               # verified sender address
+    email_webhook_secret: str = ""     # shared secret guarding the inbound webhook
+    email_send_timeout: float = 8.0
+
+    # Clinic business hours — drive real appointment-slot generation.
+    clinic_open_hour: int = 9          # first slot starts at this hour (local)
+    clinic_close_hour: int = 17        # no slot starts at/after this hour
+    clinic_slot_minutes: int = 30      # slot length / appointment duration
+    clinic_working_days: list[int] = [1, 2, 3, 4, 5]  # ISO weekday: 1=Mon..7=Sun
+    slot_search_days: int = 14         # how far ahead suggest_slots looks
+
+    # Answering policy. "always" = handle every contact 24/7 (default).
+    # "after_hours" = auto-handle only when the clinic is closed; during open
+    # hours acknowledge and hand off to staff (logs an escalation).
+    answer_mode: Literal["always", "after_hours"] = "always"
+
+    # Google Calendar (optional). When both are set the calendar provider goes
+    # live — real free/busy + appointment mirroring; otherwise the local stub
+    # is used and behaviour matches Postgres-only scheduling.
+    google_calendar_id: str = ""
+    # Path to, or inline contents of, a service-account JSON key.
+    google_service_account_json: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

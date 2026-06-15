@@ -20,51 +20,111 @@ Most agent-demo submissions are *"ChatGPT with a webhook"* — stateless, generi
 
 ```mermaid
 flowchart TB
-    WA["WhatsApp<br/>(Evolution API v2)"]
-    WEB["Web chat"]
-    VOICE["Voice call<br/>(LiveKit Cloud)"]
+    VOICE["📞 Voice<br/>LiveKit · Deepgram · ElevenLabs"]
+    WA["💬 WhatsApp<br/>Evolution API v2"]
+    WEB["🌐 Web chat"]
+    EMAIL["✉️ Email<br/>provider webhook"]
 
-    subgraph GW["FastAPI gateway"]
-        AUTH["webhook auth<br/>HMAC / token / apikey"]
+    subgraph GW["FastAPI gateway — async, single process"]
+        AUTH["webhook auth<br/>HMAC · token · secret"]
         REDACT["redact() on every<br/>outbound reply"]
     end
 
-    subgraph LG["LangGraph orchestrator — AsyncPostgresSaver checkpoints"]
-        TRIAGE["triage<br/>Qwen-Turbo intent"] --> RECALL["recall<br/>top-k + decay re-rank"]
-        RECALL --> TOOLS["tools<br/>slots · booking · escalation"]
-        TOOLS --> REASONER["reasoner<br/>Qwen-Plus, strict grounding"]
-        REASONER --> WRITER["writer<br/>memory write-back"]
+    subgraph LG["LangGraph orchestrator · AsyncPostgresSaver checkpoints"]
+        TRIAGE["triage<br/>Qwen-Turbo intent + language"]
+        GATE{"after-hours<br/>gate"}
+        HANDOFF["handoff<br/>acknowledge + escalate"]
+        RECALL["recall<br/>top-k + decay re-rank"]
+        TOOLS["tools<br/>booking state machine"]
+        REASONER["reasoner<br/>Qwen-Plus · strict grounding"]
+        WRITER["writer<br/>memory write-back"]
+        TRIAGE --> GATE
+        GATE -->|after-hours mode + open| HANDOFF
+        GATE -->|otherwise| RECALL
+        RECALL --> TOOLS --> REASONER --> WRITER
+        HANDOFF --> WRITER
     end
 
-    subgraph LK["LiveKit Agent worker (full parity)"]
-        LLMNODE["llm_node hook → memory recall"]
-        FTOOLS["@function_tool<br/>find / book / escalate"]
+    subgraph VOICEW["LiveKit voice worker — own process"]
+        LLMNODE["llm_node → memory recall"]
+        FTOOLS["@function_tool<br/>find · book · reschedule · cancel · escalate"]
     end
 
-    subgraph PG["Postgres 16 + pgvector"]
+    MCP["MCP server · 7 clinic tools<br/>(Claude Desktop / Cursor)"]
+
+    subgraph TOOLLAYER["Shared tool layer — one source of truth for every channel"]
+        APPTS["appointments<br/>slots · book · reschedule · cancel"]
+        ESC["escalation<br/>notify_staff"]
+    end
+
+    CAL["📅 Google Calendar<br/>free/busy + booking mirror<br/>(local fallback)"]
+
+    subgraph DB["Postgres 16 + pgvector"]
         MEM[("memories<br/>text-embedding-v3 @ 1024d")]
         APPT[("appointments · patients")]
+        ESCT[("escalations")]
+        CFG[("clinic_settings")]
     end
 
+    STAFF["🧑‍⚕️ Staff dashboard /staff<br/>human-in-the-loop queue"]
+    ONB["⚙️ Onboarding wizard /onboarding<br/>hours · persona · FAQs"]
     N8N["n8n crons<br/>reminders · follow-ups"]
-    SLACK["Slack staff escalation"]
 
     WA --> AUTH
     WEB --> AUTH
-    VOICE --> LK
+    EMAIL --> AUTH
+    VOICE --> VOICEW
     AUTH --> TRIAGE
     REASONER --> REDACT
+    HANDOFF --> REDACT
     REDACT --> WA
     REDACT --> WEB
+    REDACT --> EMAIL
+
+    TOOLS --> APPTS
+    TOOLS --> ESC
+    FTOOLS --> APPTS
+    FTOOLS --> ESC
+    MCP --> APPTS
+    MCP --> ESC
+
     RECALL <--> MEM
     WRITER --> MEM
-    TOOLS <--> APPT
-    TOOLS --> SLACK
     LLMNODE <--> MEM
-    FTOOLS <--> APPT
-    FTOOLS --> SLACK
-    N8N --> APPT
+
+    APPTS <--> APPT
+    APPTS <--> CAL
+    ESC --> ESCT
+
+    ESCT --> STAFF
+    APPT --> STAFF
+    ONB --> CFG
+    CFG -.->|read at runtime| LG
+    CFG -.->|persona · hours| VOICEW
+    N8N --> APPTS
+
+    classDef channel fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+    classDef gateway fill:#f1f5f9,stroke:#475569,color:#1e293b;
+    classDef brain fill:#ede9fe,stroke:#7c3aed,color:#4c1d95;
+    classDef tools fill:#dcfce7,stroke:#16a34a,color:#14532d;
+    classDef data fill:#fef9c3,stroke:#ca8a04,color:#713f12;
+    classDef ops fill:#ffe4e6,stroke:#e11d48,color:#881337;
+    classDef ext fill:#fae8ff,stroke:#c026d3,color:#701a75;
+
+    class VOICE,WA,WEB,EMAIL channel;
+    class AUTH,REDACT gateway;
+    class TRIAGE,GATE,HANDOFF,RECALL,TOOLS,REASONER,WRITER,LLMNODE,FTOOLS brain;
+    class APPTS,ESC tools;
+    class MEM,APPT,ESCT,CFG data;
+    class STAFF,ONB,N8N ops;
+    class MCP,CAL ext;
 ```
+
+> Static render for slides/print: [`docs/architecture.png`](docs/architecture.png).
+>
+> **Legend:** 🟦 channels · ⬜ gateway · 🟪 agent brain (text graph + voice worker) · 🟩 shared tool layer · 🟨 Postgres/pgvector · 🟥 ops surfaces (`/staff`, `/onboarding`, n8n) · 🟧 external (MCP, Google Calendar).
+
+The shape of the system is the headline: **four channels and an MCP server all funnel into one shared tool layer**, so booking / reschedule / cancel / escalation behave identically everywhere and write once to Postgres (the source of truth) while mirroring to Google Calendar. Decay-weighted pgvector memory feeds both the text graph and the voice worker; clinic config set in the onboarding wizard is read live by both.
 
 | Layer | Tech |
 |---|---|
@@ -76,6 +136,10 @@ flowchart TB
 | Voice TTS | ElevenLabs Flash v2.5 |
 | Voice runtime | LiveKit Agents 1.5 |
 | WhatsApp transport | Evolution API v2 (`evoapicloud/evolution-api`) |
+| Email transport | Provider webhook + send (Postmark-shaped, swappable) |
+| Calendar | Google Calendar v3 — free/busy + booking mirror; local fallback |
+| Clinic config | Self-serve onboarding wizard → `clinic_settings`, read at runtime |
+| External tool access | MCP server (7 clinic tools, any MCP client) |
 | Background jobs | n8n (reminders, follow-ups) |
 | Persistence | Postgres 16 + pgvector |
 
@@ -202,13 +266,18 @@ docker-compose.yml         app + postgres(pgvector) + n8n
 
 The same clinic tools the agent uses are exposed over the [Model Context
 Protocol](https://modelcontextprotocol.io), so any MCP client — Claude
-Desktop, Cursor, etc. — can work the front desk without touching the web UI:
+Desktop, Cursor, etc. — can work the front desk without touching the web UI.
+This is aimed at **staff/admin "copilot" use** (ask an LLM client to check the
+schedule, move a booking, page a nurse), not at patients — patients stay on
+voice / WhatsApp / email.
 
 | Tool | Does |
 |---|---|
-| `suggest_slots` | next open 30-min slots in the clinic timezone |
+| `suggest_slots` | next open slots within business hours (calendar free/busy aware) |
 | `lookup_patient` | resolve a patient profile by phone |
 | `book_appointment` | book a confirmed slot (double-booking guarded) |
+| `reschedule_appointment` | move a booking atomically (slot-taken safe) |
+| `cancel_appointment` | cancel a booking (patient-scoped) |
 | `get_appointment_history` | upcoming + past appointments |
 | `escalate_to_staff` | page staff; lands in the `/staff` dashboard queue |
 
@@ -266,11 +335,15 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | WhatsApp | live (Evolution v2) | live | ✅ | ✅ | ✅ |
 | Web | live | live | ✅ | ✅ | ✅ |
 | Voice | live (LiveKit Cloud) | live | ✅ | ✅ | ✅ |
+| Email | live (provider webhook) | live (threaded reply) | ✅ (by email) | ✅ | ✅ |
 
 | Capability | Status |
 |---|---|
-| Three-channel parity | ✅ |
-| MCP server (5 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
+| Channel parity (voice · WhatsApp · web · email) | ✅ one orchestrator graph + shared tool layer across all four |
+| After-hours mode | ✅ `ANSWER_MODE=after_hours` auto-handles only when closed; hands off to staff during open hours |
+| Self-serve onboarding wizard (`/onboarding`) | ✅ set hours, working days, timezone, answer mode, persona & FAQs from a web form; agent applies them live (no restart) |
+| Real calendar backend (Google) | ✅ business-hours availability + free/busy + booking mirror; falls back to local scheduler when unconfigured |
+| MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
 | Multilingual replies (language auto-detected in triage) | ✅ text channels + voice STT code-switching |
 | pgvector memory + decay re-rank | ✅ |

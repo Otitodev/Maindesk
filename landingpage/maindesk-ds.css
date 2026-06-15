@@ -1,10 +1,10 @@
 /* ================================================================
-   HEALTHDESK AI — DESIGN SYSTEM v1.0
+   MAINDESK — DESIGN SYSTEM v1.0
    Import order: link fonts first, then this file.
    All assets are vendored locally — no CDN or Google Fonts call.
 
    <link rel="stylesheet" href="vendor/fonts.css" />
-   <link rel="stylesheet" href="healthdesk-ds.css" />
+   <link rel="stylesheet" href="maindesk-ds.css" />
 ================================================================ */
 
 
@@ -518,10 +518,9 @@ a { color: inherit; }
 }
 
 /* Scroll spacer: non-last cards need margin to create scroll distance.
-   Last card gets its own runway so its dwell time matches the others
-   (otherwise it un-sticks as soon as the .features-cta enters view). */
+   Last card has no margin — the .features-cta below provides the
+   natural push-out so we don't end up with dead space before the CTA. */
 .feat-card:not(:last-child) { margin-bottom: 44vh; }
-.feat-card:last-child       { margin-bottom: 32vh; }
 
 /* Stacking z-index — set per card, or use nth-child pattern */
 .feat-card:nth-child(1) { z-index: 1; }
@@ -654,7 +653,6 @@ a { color: inherit; }
   .card-body { grid-template-columns: 1fr; gap: 20px 0; }
   .card-meta { grid-column: 1; }
   .feat-card:not(:last-child) { margin-bottom: 36vh; }
-  .feat-card:last-child       { margin-bottom: 24vh; }
 }
 
 
@@ -738,7 +736,7 @@ a { color: inherit; }
 /* ────────────────────────────────────────────────────────────────
    6. VANTA HERO SHELL
    Requires three.js r134 + vanta.fog.min.js loaded before use.
-   Copy the VANTA.FOG() config from healthdesk-ds.html.
+   Copy the VANTA.FOG() config from maindesk-ds.html.
 ──────────────────────────────────────────────────────────────── */
 
 .hd-hero {

@@ -16,6 +16,8 @@ Architecture (livekit-agents 1.x):
         │   • find_open_slots(date)
         │   • book_appointment(slot_iso)
         │   • find_my_appointments()
+        │   • cancel_appointment(starts_at_iso)
+        │   • reschedule_appointment(current_starts_at_iso, new_starts_at_iso)
         │   • escalate_to_staff(reason)
         ▼
     ElevenLabs TTS
@@ -55,13 +57,22 @@ from livekit.agents import (
 )
 from livekit.plugins import deepgram, elevenlabs, openai, silero
 
+from app import clinic_config
+from app.agents.hours import should_defer_to_staff
 from app.config import get_settings
 from app.gateway.schema import PatientMessage
 from app.memory.profile import resolve_by_phone, upsert_profile
 from app.memory.recall import recall_memories
 from app.memory.write import persist_turn
-from app.tools.appointments import book, find_existing, suggest_slots
+from app.tools.appointments import book, cancel, find_existing, reschedule, suggest_slots
 from app.tools.escalation import notify_staff
+
+
+def _parse_iso(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
 
 # Minimum number of items in the conversation log to bother persisting.
 # Greeting + one short exchange is 3 items; we want at least 2 full
@@ -76,8 +87,9 @@ You are speaking out loud — keep sentences short and natural.
 
 Filler rule — VERY IMPORTANT for natural conversation:
 - Before calling ANY tool (find_open_slots, book_appointment,
-  find_my_appointments, escalate_to_staff), say a short filler sentence
-  FIRST so the caller hears you and doesn't think the line went dead.
+  find_my_appointments, cancel_appointment, reschedule_appointment,
+  escalate_to_staff), say a short filler sentence FIRST so the caller hears
+  you and doesn't think the line went dead.
 - Vary the filler. Use phrases like:
     "One moment, let me check that for you..."
     "Sure, let me pull that up..."
@@ -108,12 +120,22 @@ GREETING_INSTRUCTIONS = (
     'How can I help today?"'
 )
 
+# Used in after-hours mode when the clinic is actually open: staff are in, so
+# offer to connect/take a message rather than handling everything solo.
+GREETING_DEFERRAL = (
+    "Greet the caller warmly and let them know the clinic is open and staff can "
+    "help directly. Offer to take a quick message or connect them, and if they "
+    "need anything call escalate_to_staff. Keep it brief and friendly."
+)
+
 
 class HealthDeskAgent(Agent):
     """Voice persona with proactive memory recall and reactive tools."""
 
     def __init__(self, patient_id: str | None, patient_phone: str | None) -> None:
-        super().__init__(instructions=SYSTEM_PROMPT)
+        block = clinic_config.knowledge_block()
+        instructions = f"{SYSTEM_PROMPT}\n\n{block}" if block else SYSTEM_PROMPT
+        super().__init__(instructions=instructions)
         self._patient_id = patient_id
         self._patient_phone = patient_phone
         # Session id used by tools and memory write-back.
@@ -128,7 +150,9 @@ class HealthDeskAgent(Agent):
         # Wire turn capture so we can write a session memory on exit.
         # Bound method works as a sync handler — pyee-style emitter.
         self.session.on("conversation_item_added", self._capture_conversation_item)
-        self.session.generate_reply(instructions=GREETING_INSTRUCTIONS)
+        # In after-hours mode during open hours, greet as a staffed front desk.
+        greeting = GREETING_DEFERRAL if should_defer_to_staff() else GREETING_INSTRUCTIONS
+        self.session.generate_reply(instructions=greeting)
 
     async def on_exit(self) -> None:
         await self._persist_session()
@@ -301,6 +325,68 @@ class HealthDeskAgent(Agent):
         await notify_staff(self._voice_msg(reason), reason=reason)
         return "I have notified staff — they will be with you shortly."
 
+    async def _resolve_appointment_id(self, starts_at_iso: str) -> str | None:
+        """Resolve a spoken appointment time back to its row id by matching
+        against the caller's booked appointments. Compares parsed timestamps
+        so trailing-zero / offset formatting differences don't cause a miss."""
+        target = _parse_iso(starts_at_iso)
+        result = await find_existing(self._voice_msg(""))
+        for appt in result.get("appointments", []) or []:
+            if appt.get("status") != "booked":
+                continue
+            if appt["starts_at"] == starts_at_iso or (
+                target is not None and _parse_iso(appt["starts_at"]) == target
+            ):
+                return appt["id"]
+        return None
+
+    @function_tool
+    async def cancel_appointment(self, starts_at_iso: str) -> str:
+        """Cancel the caller's appointment at the given time. `starts_at_iso`
+        is the ISO 8601 start time of an existing appointment — use the exact
+        value returned by find_my_appointments.
+
+        BEFORE calling this, say a brief filler out loud — e.g.
+        "One moment, cancelling that for you...". Do not call silently."""
+        if not self._patient_id:
+            return "I do not have you on file yet."
+        appt_id = await self._resolve_appointment_id(starts_at_iso)
+        if not appt_id:
+            return "I could not find a booked appointment at that time."
+        result = await cancel(self._patient_id, appt_id)
+        if result.get("error"):
+            return "I could not cancel that — let me get a colleague to help."
+        return f"Done — your appointment on {result['starts_at']} is cancelled."
+
+    @function_tool
+    async def reschedule_appointment(
+        self, current_starts_at_iso: str, new_starts_at_iso: str
+    ) -> str:
+        """Move the caller's existing appointment to a new time.
+        `current_starts_at_iso` is the appointment's current start time (from
+        find_my_appointments); `new_starts_at_iso` is a slot you confirmed via
+        find_open_slots.
+
+        BEFORE calling this, say a brief filler out loud — e.g.
+        "Sure, let me move that for you...". Do not call silently."""
+        if not self._patient_id:
+            return "I do not have you on file yet."
+        new_ts = _parse_iso(new_starts_at_iso)
+        if new_ts is None:
+            return f"That new time did not parse: {new_starts_at_iso}"
+        appt_id = await self._resolve_appointment_id(current_starts_at_iso)
+        if not appt_id:
+            return "I could not find your current appointment to move."
+        result = await reschedule(self._patient_id, appt_id, new_ts)
+        if result.get("error") == "slot_taken":
+            return (
+                "Sorry, that new time was just taken. "
+                "Would you like me to find another available slot?"
+            )
+        if result.get("error"):
+            return "I could not move that — let me get a colleague to help."
+        return f"Done — moved to {result['starts_at']}."
+
 
 # ── LLM / VAD wiring ────────────────────────────────────────────────────
 
@@ -359,6 +445,7 @@ async def entrypoint(ctx: JobContext) -> None:
         return
 
     await ctx.connect()
+    await clinic_config.refresh()  # load clinic persona/hours for this worker
 
     patient_id, patient_phone = await _resolve_caller(ctx)
     log.info(

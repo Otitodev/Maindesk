@@ -30,12 +30,14 @@ def known_patient(monkeypatch):
     monkeypatch.setattr(mcp_mod, "resolve_by_phone", fake_resolve)
 
 
-async def test_all_five_tools_registered():
+async def test_all_tools_registered():
     tools = {t.name for t in await mcp_mod.mcp.list_tools()}
     assert tools == {
         "suggest_slots",
         "lookup_patient",
         "book_appointment",
+        "cancel_appointment",
+        "reschedule_appointment",
         "get_appointment_history",
         "escalate_to_staff",
     }
@@ -95,6 +97,72 @@ async def test_book_appointment_slot_taken(known_patient, monkeypatch):
     out = await mcp_mod.book_appointment(PATIENT["phone"], "2026-06-20T14:00:00+00:00")
     assert out["error"] == "slot_taken"
     assert "booked" not in out
+
+
+async def test_cancel_appointment_happy_path(known_patient, monkeypatch):
+    captured = {}
+
+    async def fake_cancel(patient_id, appointment_id):
+        captured["args"] = (patient_id, appointment_id)
+        return {"tool": "cancel", "id": appointment_id, "status": "cancelled",
+                "starts_at": "2026-06-20T14:00:00+00:00"}
+
+    monkeypatch.setattr(mcp_mod.appointments, "cancel", fake_cancel)
+    out = await mcp_mod.cancel_appointment(PATIENT["phone"], "appt-1")
+    assert out["cancelled"] is True
+    assert out["appointment_id"] == "appt-1"
+    assert captured["args"] == (str(PATIENT["id"]), "appt-1")
+
+
+async def test_cancel_appointment_unknown_patient(known_patient):
+    out = await mcp_mod.cancel_appointment("2340000000000", "appt-1")
+    assert out["error"] == "unknown_patient"
+
+
+async def test_cancel_appointment_not_found(known_patient, monkeypatch):
+    async def fake_cancel(patient_id, appointment_id):
+        return {"tool": "cancel", "error": "not_found", "appointment_id": appointment_id}
+
+    monkeypatch.setattr(mcp_mod.appointments, "cancel", fake_cancel)
+    out = await mcp_mod.cancel_appointment(PATIENT["phone"], "missing")
+    assert out["error"] == "not_found"
+    assert "cancelled" not in out
+
+
+async def test_reschedule_appointment_happy_path(known_patient, monkeypatch):
+    captured = {}
+
+    async def fake_reschedule(patient_id, appointment_id, new_ts):
+        captured["args"] = (patient_id, appointment_id, new_ts)
+        return {"tool": "reschedule", "id": "new-1", "old_appointment_id": appointment_id,
+                "starts_at": new_ts.isoformat()}
+
+    monkeypatch.setattr(mcp_mod.appointments, "reschedule", fake_reschedule)
+    out = await mcp_mod.reschedule_appointment(
+        PATIENT["phone"], "appt-1", "2026-06-21T09:00:00+00:00"
+    )
+    assert out["rescheduled"] is True
+    assert out["appointment_id"] == "new-1"
+    assert out["old_appointment_id"] == "appt-1"
+    assert captured["args"][0] == str(PATIENT["id"])
+    assert captured["args"][1] == "appt-1"
+
+
+async def test_reschedule_appointment_bad_timestamp(known_patient):
+    out = await mcp_mod.reschedule_appointment(PATIENT["phone"], "appt-1", "tomorrow-ish")
+    assert out["error"] == "bad_timestamp"
+
+
+async def test_reschedule_appointment_slot_taken(known_patient, monkeypatch):
+    async def fake_reschedule(patient_id, appointment_id, new_ts):
+        return {"tool": "reschedule", "error": "slot_taken", "starts_at": new_ts.isoformat()}
+
+    monkeypatch.setattr(mcp_mod.appointments, "reschedule", fake_reschedule)
+    out = await mcp_mod.reschedule_appointment(
+        PATIENT["phone"], "appt-1", "2026-06-21T09:00:00+00:00"
+    )
+    assert out["error"] == "slot_taken"
+    assert "rescheduled" not in out
 
 
 async def test_history_includes_upcoming_and_past(known_patient, monkeypatch):
