@@ -31,6 +31,11 @@ asyncpg==0.31.0           # latest stable, Nov 2025; Py3.9+, PG 9.5–18
 openai==2.41.0
 httpx==0.28.1             # last 0.x release; supabase 2.31 + openai 2.x both OK
 
+# ── Google Calendar (optional real-calendar backend) ────────────────────
+# Only used to mint a service-account token; Calendar v3 is called over httpx.
+# No google-api-python-client needed.
+google-auth==2.35.0
+
 # ── Supabase / pgvector ─────────────────────────────────────────────────
 supabase==2.31.0          # latest stable, Jun 2026
 

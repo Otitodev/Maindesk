@@ -209,7 +209,7 @@ voice / WhatsApp / email.
 
 | Tool | Does |
 |---|---|
-| `suggest_slots` | next open 30-min slots in the clinic timezone |
+| `suggest_slots` | next open slots within business hours (calendar free/busy aware) |
 | `lookup_patient` | resolve a patient profile by phone |
 | `book_appointment` | book a confirmed slot (double-booking guarded) |
 | `reschedule_appointment` | move a booking atomically (slot-taken safe) |
@@ -275,6 +275,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Capability | Status |
 |---|---|
 | Three-channel parity | ✅ |
+| Real calendar backend (Google) | ✅ business-hours availability + free/busy + booking mirror; falls back to local scheduler when unconfigured |
 | MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
 | Multilingual replies (language auto-detected in triage) | ✅ text channels + voice STT code-switching |
