@@ -1,3 +1,5 @@
+> **中文摘要** · 面向诊所的多渠道自主前台 AI 助手。同一套智能体覆盖 **WhatsApp、网页、语音电话、电子邮件** 四个渠道,具备跨渠道患者记忆、严格的事实约束(不编造)、以及营业时间外自动接待模式。基于 **Qwen-Plus + Qwen-Turbo + text-embedding-v3**(均通过 DashScope 调用)构建。Qwen Cloud 黑客松 Track 4 参赛作品。
+
 # HealthDesk AI
 
 A multi-channel autonomous front-desk agent for clinics. Patients reach it on **WhatsApp**, the **web**, or by **voice**, and the same brain answers across all three — with patient-specific memory carried across channels.
