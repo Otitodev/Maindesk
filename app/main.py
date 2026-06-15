@@ -6,6 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app import clinic_config
 from app.agents.orchestrator import build_graph
+from app.chat.router import router as chat_router
 from app.config import get_settings
 from app.dashboard.router import router as staff_router
 from app.gateway.adapters.email import router as email_router
@@ -41,6 +42,7 @@ app.include_router(web_router)
 app.include_router(email_router)
 app.include_router(staff_router)
 app.include_router(onboarding_router)
+app.include_router(chat_router)
 
 
 @app.get("/health")

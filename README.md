@@ -236,6 +236,9 @@ app/
     store.py               escalation queue persistence + staff actions
     events.py              in-process pub/sub for live updates
     templates/index.html   single-page staff console
+  chat/
+    router.py              /chat patient-facing widget (light theme)
+    templates/index.html   self-contained chat UI -> /webhooks/web
   mcp/
     server.py              FastMCP stdio server — clinic tools for MCP clients
   voice/
@@ -344,6 +347,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Channel parity (voice · WhatsApp · web · email) | ✅ one orchestrator graph + shared tool layer across all four |
 | After-hours mode | ✅ `ANSWER_MODE=after_hours` auto-handles only when closed; hands off to staff during open hours |
 | Self-serve onboarding wizard (`/onboarding`) | ✅ set hours, working days, timezone, answer mode, persona & FAQs from a web form; agent applies them live (no restart) |
+| Patient chat widget (`/chat`) | ✅ self-contained light-theme web UI that talks to the same orchestrator graph as every other channel |
 | Real calendar backend (Google) | ✅ business-hours availability + free/busy + booking mirror; falls back to local scheduler when unconfigured |
 | MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |
