@@ -59,9 +59,13 @@
 </head>
 <body hx-ext="sse" sse-connect="/staff/events?key=__KEY__">
   <header>
-    <h1>HealthDesk — Staff Console</h1>
+    <h1>MainDesk — Staff Console</h1>
     <span class="sub">human-in-the-loop checkpoints</span>
     <span class="live">● live</span>
+    <nav style="margin-left: auto; display: flex; gap: 20px; font-size: 13px;">
+      <a href="/staff?key=__KEY__" style="color: var(--text); text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 4px;">Queue</a>
+      <a href="/staff/analytics?key=__KEY__" style="color: var(--muted); text-decoration: none;">Analytics</a>
+    </nav>
   </header>
   <main>
     <section>

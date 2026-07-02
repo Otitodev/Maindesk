@@ -143,6 +143,106 @@ async def bookings(request: Request) -> HTMLResponse:
     return HTMLResponse(items)
 
 
+@router.get("/analytics", response_class=HTMLResponse)
+async def analytics(request: Request) -> HTMLResponse:
+    """Ops-facing analytics page — shows the ROI story to a clinic owner."""
+    key = _check_key(request)
+    try:
+        m = await store.month_analytics()
+    except Exception:
+        log.warning("analytics query failed", exc_info=True)
+        m = {
+            "bookings_this_month": 0, "bookings_last_month": 0, "growth_pct": None,
+            "escalations_this_month": 0, "escalations_open": 0,
+            "avg_resolve_seconds": 0.0, "hours_replaced": 0.0,
+        }
+    qkey = urllib.parse.quote(key)
+    avg_min = int(round(m["avg_resolve_seconds"] / 60)) if m["avg_resolve_seconds"] else 0
+    growth_bit = (
+        f'<span class="delta {"up" if m["growth_pct"] >= 0 else "down"}">'
+        f'{m["growth_pct"]:+d}%</span>'
+        if m["growth_pct"] is not None
+        else '<span class="delta">—</span>'
+    )
+    page = f"""<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MainDesk — Analytics</title>
+<style>
+:root {{
+  --bg: #0f1419; --panel: #1a2129; --border: #2c3640;
+  --text: #e6edf3; --muted: #8b98a5; --accent: #4fc3f7;
+  --up: #34d399; --down: #f87171;
+}}
+* {{ box-sizing: border-box; }}
+body {{ margin: 0; background: var(--bg); color: var(--text);
+       font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }}
+header {{ display: flex; align-items: baseline; gap: 12px;
+         padding: 18px 28px; border-bottom: 1px solid var(--border); }}
+header h1 {{ font-size: 18px; margin: 0; }}
+header .sub {{ color: var(--muted); font-size: 13px; }}
+header nav {{ margin-left: auto; display: flex; gap: 20px; font-size: 13px; }}
+header nav a {{ color: var(--muted); text-decoration: none; }}
+header nav a.active {{ color: var(--text); border-bottom: 2px solid var(--accent); padding-bottom: 4px; }}
+main {{ padding: 32px 28px; max-width: 1100px; }}
+.eyebrow {{ font-size: 12px; text-transform: uppercase; letter-spacing: .1em;
+            color: var(--muted); margin: 0 0 24px; }}
+.grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+         gap: 16px; margin-bottom: 32px; }}
+.tile {{ background: var(--panel); border: 1px solid var(--border);
+         border-radius: 12px; padding: 22px 20px; }}
+.tile .label {{ font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+                color: var(--muted); margin: 0 0 8px; }}
+.tile .value {{ font-size: 34px; font-weight: 700; margin: 0; line-height: 1.1; }}
+.tile .footnote {{ font-size: 12px; color: var(--muted); margin: 8px 0 0; }}
+.delta {{ font-size: 14px; font-weight: 600; margin-left: 10px; vertical-align: middle; }}
+.delta.up   {{ color: var(--up); }}
+.delta.down {{ color: var(--down); }}
+.callout {{ background: var(--panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px 28px; }}
+.callout h2 {{ font-size: 15px; margin: 0 0 8px; color: var(--accent); }}
+.callout p {{ margin: 0; color: var(--muted); font-size: 14px; }}
+</style></head>
+<body><header>
+  <h1>MainDesk</h1><span class="sub">operator analytics</span>
+  <nav>
+    <a href="/staff?key={qkey}">Queue</a>
+    <a href="/staff/analytics?key={qkey}" class="active">Analytics</a>
+  </nav>
+</header>
+<main>
+  <p class="eyebrow">This month · so far</p>
+  <div class="grid">
+    <div class="tile">
+      <p class="label">Bookings handled</p>
+      <p class="value">{m["bookings_this_month"]} {growth_bit}</p>
+      <p class="footnote">vs {m["bookings_last_month"]} last month</p>
+    </div>
+    <div class="tile">
+      <p class="label">Escalations to a human</p>
+      <p class="value">{m["escalations_this_month"]}</p>
+      <p class="footnote">{m["escalations_open"]} currently open</p>
+    </div>
+    <div class="tile">
+      <p class="label">Avg. time to human</p>
+      <p class="value">{avg_min}<span style="font-size:16px;color:var(--muted);"> min</span></p>
+      <p class="footnote">from escalation to clinician reply</p>
+    </div>
+    <div class="tile">
+      <p class="label">Reception time replaced</p>
+      <p class="value">{m["hours_replaced"]}<span style="font-size:16px;color:var(--muted);"> hrs</span></p>
+      <p class="footnote">est. at 4 min per autonomous booking</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h2>What this tells you</h2>
+    <p>Every escalation in that middle tile is a moment MainDesk chose humility — a case where confidence dipped or a red-flag intent surfaced. Every booking in the left tile is a call your team didn't have to take. The right tile compounds: for a $299/mo plan, an autonomous booking costs roughly $0.30 — a receptionist call costs $3–7.</p>
+  </div>
+</main></body></html>"""
+    return HTMLResponse(page)
+
+
 @router.get("/events")
 async def sse(request: Request) -> StreamingResponse:
     _check_key(request)
