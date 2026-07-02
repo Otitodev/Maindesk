@@ -7,12 +7,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Qwen / DashScope
-    qwen_api_key: str = ""
-    qwen_api_base: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    qwen_model_turbo: str = "qwen-turbo"
-    qwen_model_plus: str = "qwen-plus"
-    qwen_embed_model: str = "text-embedding-v3"
+    # Qwen Cloud (DashScope international endpoint).
+    # Docs: https://docs.qwencloud.com/developer-guides/getting-started/introduction
+    dashscope_api_key: str = ""
+    qwen_api_base: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    qwen_model_turbo: str = "qwen3.6-flash"
+    qwen_model_plus: str = "qwen3.7-plus"
+    qwen_embed_model: str = "text-embedding-v4"
     qwen_embed_dim: int = 1024
 
     # Postgres / Supabase
