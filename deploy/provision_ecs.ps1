@@ -152,11 +152,10 @@ $run = Ali @(
 $InstanceId = $run.InstanceIdSets.InstanceIdSet[0]
 Say "Instance $InstanceId launching. Waiting for Running state..."
 
-$idsJson = '["' + $InstanceId + '"]'
 $PublicIp = $null
 for ($i=0; $i -lt 60; $i++) {
-    $d = Ali @('ecs','DescribeInstances','--InstanceIds',$idsJson)
-    $inst = $d.Instances.Instance[0]
+    # DescribeInstanceAttribute takes InstanceId singular (no JSON array).
+    $inst = Ali @('ecs','DescribeInstanceAttribute','--InstanceId',$InstanceId)
     if ($inst.Status -eq 'Running') {
         $PublicIp = $inst.PublicIpAddress.IpAddress[0]
         break
