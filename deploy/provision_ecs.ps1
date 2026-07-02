@@ -33,7 +33,16 @@ $Bandwidth         = 5
 # ================================
 
 function Say { param($msg) Write-Host "[provision] $msg" -ForegroundColor Cyan }
-function Ali { param([string[]]$args) aliyun @args --region $Region | ConvertFrom-Json }
+function Ali {
+    param([string[]]$args)
+    $raw = aliyun @args --RegionId $Region 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0 -or $raw.TrimStart() -notmatch '^\{') {
+        Write-Host "[aliyun error] args: $($args -join ' ')" -ForegroundColor Red
+        Write-Host $raw -ForegroundColor Red
+        throw "aliyun call failed"
+    }
+    $raw | ConvertFrom-Json
+}
 
 # --- 0. sanity ---
 Say "Checking CLI and credentials..."
@@ -93,7 +102,6 @@ if (Test-Path $KeyOutPath) {
 Say "Launching $InstanceType with $ImageId..."
 $run = Ali @(
     'ecs','RunInstances',
-    '--RegionId',$Region,
     '--ImageId',$ImageId,
     '--InstanceType',$InstanceType,
     '--SecurityGroupId',$SgId,
