@@ -162,7 +162,7 @@ The shape of the system is the headline: **four channels and an MCP server all f
 ```bash
 # 1. Copy and fill the environment file
 cp .env.example .env
-# At minimum: QWEN_API_KEY, QWEN_API_BASE
+# At minimum: DASHSCOPE_API_KEY, QWEN_API_BASE
 # For full demo: + DATABASE_URL, EVOLUTION_*, LIVEKIT_*, DEEPGRAM_*, ELEVENLABS_*
 
 # 2. Bring up Postgres on host port 5433 (avoids collisions with a native install)

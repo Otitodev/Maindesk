@@ -394,7 +394,7 @@ def _qwen_llm() -> openai.LLM:
     s = get_settings()
     return openai.LLM(
         model=s.qwen_model_plus,
-        api_key=s.qwen_api_key,
+        api_key=s.dashscope_api_key,
         base_url=s.qwen_api_base,
         temperature=0.3,
     )
