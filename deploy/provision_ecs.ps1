@@ -110,11 +110,19 @@ Ali @('ecs','AuthorizeSecurityGroup','--SecurityGroupId',$SgId,'--IpProtocol','t
 Ali @('ecs','AuthorizeSecurityGroup','--SecurityGroupId',$SgId,'--IpProtocol','tcp','--PortRange','443/443','--SourceCidrIp','0.0.0.0/0') | Out-Null
 
 # --- 4. Key pair ---
-Say "Creating key pair ($KeyPairName) -> $KeyOutPath"
+Say "Setting up key pair ($KeyPairName) -> $KeyOutPath"
 if (Test-Path $KeyOutPath) {
     Write-Host "  Key file already exists locally. Skipping key creation." -ForegroundColor Yellow
 } else {
     if (-not (Test-Path "$HOME\.ssh")) { New-Item -ItemType Directory "$HOME\.ssh" | Out-Null }
+    # Delete any stale server-side key with the same name; we can't recover the private key otherwise.
+    $namesJson = '["' + $KeyPairName + '"]'
+    try {
+        Ali @('ecs','DeleteKeyPairs','--KeyPairNames',$namesJson) | Out-Null
+        Say "Removed stale server-side key with same name"
+    } catch {
+        # Fine if it didn't exist
+    }
     $kp = Ali @('ecs','CreateKeyPair','--KeyPairName',$KeyPairName)
     $kp.PrivateKeyBody | Out-File -FilePath $KeyOutPath -Encoding ascii -NoNewline
     icacls $KeyOutPath /inheritance:r /grant:r "$($env:USERNAME):(R)" | Out-Null
