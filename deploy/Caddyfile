@@ -1,27 +1,11 @@
-{
-	# Global options. auto_https on by default.
-	email {$ACME_EMAIL:hello@maindesk.ai}
-}
+# Demo-mode Caddyfile: plain HTTP on :80, no TLS.
+# The Alibaba Cloud ECS instance is reached by public IP for the hackathon demo.
+# For a domain + Let's Encrypt setup, replace with a site block scoped to the domain.
 
-# If DOMAIN is set (e.g. maindesk.ai), Caddy will provision Let's Encrypt automatically.
-# If DOMAIN is empty, this site block matches "empty string" and never binds;
-# the :443 fallback below serves any hostname with a self-signed cert.
-{$DOMAIN} {
+:80 {
 	encode gzip
 	reverse_proxy healthdesk:8000 {
-		# Streaming for /webhooks/web + SSE on /staff
+		# Streaming for SSE on /staff and any long-poll routes.
 		flush_interval -1
 	}
-}
-
-# IP-only / no-domain fallback. Serves plain HTTP on port 80 so judges can
-# reach http://<ecs-ip>/chat without cert warnings during hackathon eval.
-:80 {
-	@nodomain expression `{$DOMAIN} == ""`
-	handle @nodomain {
-		reverse_proxy healthdesk:8000 {
-			flush_interval -1
-		}
-	}
-	# When DOMAIN is set, Caddy handles :80 → :443 redirect automatically.
 }

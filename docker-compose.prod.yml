@@ -9,20 +9,16 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
   postgres:
     image: pgvector/pgvector:pg16
     container_name: healthdesk-pg
-    env_file: .env
+    # Credentials hardcoded to match .env.example's DATABASE_URL.
+    # Postgres is network-internal only (no port mapping), never exposed publicly.
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: healthdesk
+      POSTGRES_PASSWORD: healthdesk
+      POSTGRES_DB: healthdesk
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
@@ -33,13 +29,10 @@ services:
     container_name: healthdesk-caddy
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    environment:
-      DOMAIN: ${DOMAIN:-}
     depends_on:
       - healthdesk
     restart: unless-stopped
