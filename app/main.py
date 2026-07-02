@@ -1,6 +1,8 @@
 from contextlib import AsyncExitStack, asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -48,3 +50,11 @@ app.include_router(chat_router)
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+# Serve the marketing landing page at `/` and its static assets under the
+# same origin as the app. Mount LAST so all API routers above take priority.
+# `html=True` makes StaticFiles serve `index.html` when a directory is hit.
+_landing_dir = Path(__file__).resolve().parent.parent / "landingpage"
+if _landing_dir.is_dir():
+    app.mount("/", StaticFiles(directory=_landing_dir, html=True), name="landing")

@@ -18,6 +18,7 @@ COPY requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY app ./app
+COPY landingpage ./landingpage
 COPY deploy/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ENV HEALTHDESK_VOICE=true
