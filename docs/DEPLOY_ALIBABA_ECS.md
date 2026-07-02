@@ -59,7 +59,7 @@ sudo mv ./aliyun /usr/local/bin/
    - **Language** → `en`
    - **Output** → `json`
 
-Verify: `aliyun ecs DescribeRegions --output json | head`
+Verify: `aliyun ecs DescribeRegions` (JSON is the default output; `--output` is only for table formatting)
 
 **Run the provisioning script**:
 

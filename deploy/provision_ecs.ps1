@@ -32,7 +32,7 @@ $Bandwidth       = 5                         # Mbps peak, pay-by-traffic
 # ================================
 
 function Say { param($msg) Write-Host "[provision] $msg" -ForegroundColor Cyan }
-function Ali { param([string[]]$args) aliyun @args --region $Region --output json | ConvertFrom-Json }
+function Ali { param([string[]]$args) aliyun @args --region $Region | ConvertFrom-Json }
 
 # --- 0. sanity ---
 Say "Checking CLI and credentials…"
