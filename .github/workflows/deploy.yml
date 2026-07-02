@@ -1,0 +1,48 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # manual trigger from the Actions tab
+
+concurrency:
+  # If a new push lands while a deploy is in flight, cancel the older run.
+  # Prevents two docker-compose ups from racing on the same box.
+  group: deploy-ecs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: SSH to ECS and redeploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: root
+          key: ${{ secrets.ECS_SSH_KEY }}
+          port: 22
+          command_timeout: 12m
+          script: |
+            set -euo pipefail
+            cd /opt/maindesk
+            echo "[deploy] fetching from origin"
+            git fetch origin
+            git checkout main
+            git pull --ff-only origin main
+            echo "[deploy] rebuilding + restarting stack"
+            docker compose -f docker-compose.prod.yml up -d --build
+            echo "[deploy] waiting for /health"
+            for i in $(seq 1 45); do
+              if curl -fsS http://localhost/health >/dev/null 2>&1; then
+                echo "[deploy] healthy after ${i} attempt(s)"
+                docker compose -f docker-compose.prod.yml ps
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "[deploy] FAILED — /health never returned 200"
+            docker compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml logs healthdesk --tail=80
+            exit 1
