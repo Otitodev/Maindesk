@@ -20,7 +20,59 @@ Estimated time: **45 – 90 minutes**, most of that waiting for the instance to 
 
 ---
 
-## 1 · Create the ECS instance (Console)
+## 1a · Create the ECS instance — CLI path (recommended, faster)
+
+Skip the console entirely. One PowerShell script provisions VPC + VSwitch + security group + key pair + instance, tags everything `Project=maindesk`, and prints the SSH command.
+
+**Install the CLI** (one time, on your laptop):
+
+**Windows (ZIP, safest):**
+```powershell
+$url = "https://aliyuncli.alicdn.com/aliyun-cli-windows-latest-amd64.zip"
+$out = "$env:TEMP\aliyun-cli.zip"
+Invoke-WebRequest $url -OutFile $out
+Expand-Archive $out -DestinationPath "$env:USERPROFILE\aliyun-cli" -Force
+# Add to PATH for this session; for permanent, edit User env vars.
+$env:Path = "$env:USERPROFILE\aliyun-cli;$env:Path"
+aliyun version   # verify
+```
+
+**macOS:**
+```bash
+brew install aliyun-cli
+```
+
+**Linux:**
+```bash
+curl -o aliyun-cli.tgz https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
+tar xzvf aliyun-cli.tgz
+sudo mv ./aliyun /usr/local/bin/
+```
+
+**Configure credentials** (one time):
+
+1. Console → your avatar → *AccessKey Management* → **Create AccessKey**. Copy the pair.
+2. Better: create a RAM user with `AliyunECSFullAccess` + `AliyunVPCFullAccess`, use *its* AccessKey pair. Never use the root account keys.
+3. Run `aliyun configure` and paste:
+   - **AccessKey ID** / **Secret** — from step 1
+   - **Default Region ID** → `ap-southeast-1`
+   - **Language** → `en`
+   - **Output** → `json`
+
+Verify: `aliyun ecs DescribeRegions --output json | head`
+
+**Run the provisioning script**:
+
+```powershell
+cd C:\Users\DELL\Qwen_desk\healthdesk-ai
+powershell -ExecutionPolicy Bypass -File .\deploy\provision_ecs.ps1
+```
+
+The script prints the public IP and SSH command when done. Skip to §2.
+
+---
+
+## 1b · Create the ECS instance — Console path (fallback)
 
 **Console path**: [ecs.console.aliyun.com](https://ecs.console.aliyun.com) → Overview → *Create Instance*.
 
