@@ -107,7 +107,7 @@ These are quick to add but will cause disqualification if missing.
 | Item | Status | Action |
 |---|---|---|
 | `LICENSE` file | ❌ Missing | Add MIT license — two minutes |
-| Architecture diagram | ❌ ASCII art only | Add Mermaid diagram to README or PNG to `docs/` |
+| Architecture diagram | ✅ Mermaid in README (channels → shared tool layer → data/calendar) | — |
 | Alibaba Cloud deployment proof | ⚠️ Mentioned in README, no URL/screenshot | Deploy to ECS + commit evidence to `docs/deploy/` |
 | PRD / TRD in repo | ❌ Referenced as `../Qwen_prd.md` (outside repo) | Move into `docs/` |
 | Public repo | ✓ Branch pushed | Ensure repo visibility is public before submission |

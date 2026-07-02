@@ -9,12 +9,20 @@ from __future__ import annotations
 
 import logging
 
+from app import clinic_config
 from app.agents.qwen_client import complete
 from app.agents.state import AgentState
 from app.config import get_settings
 from app.gateway.schema import PatientReply
 
 log = logging.getLogger(__name__)
+
+
+def build_reasoner_system() -> str:
+    """Base rules plus any clinic-specific persona/FAQ knowledge from the
+    onboarding config. Identical to `_SYSTEM` when nothing is configured."""
+    block = clinic_config.knowledge_block()
+    return f"{_SYSTEM}\n\n{block}" if block else _SYSTEM
 
 _SYSTEM = """You are HealthDesk, a friendly front-desk assistant for a clinic.
 Be brief, warm, and accurate.
@@ -24,12 +32,30 @@ Grounding rules — these are strict:
   doctor names, prices, insurance accepted, services offered, parking, etc.),
   say "let me check and get back to you" or offer to connect them to staff.
   NEVER invent these facts.
-- Only confirm appointment slots that appear in the Tool results block. If
-  no slots are shown, say you'll check availability — do not make up times.
 - Never give medical advice, diagnoses, or dosage guidance. For anything
   clinical, say you'll connect them to a clinician.
 - If the patient's request needs human judgement, say you'll connect them
-  to staff."""
+  to staff.
+
+Appointment rules — read the Tool results block literally and NEVER claim an
+appointment outcome that isn't backed by a matching result:
+- A "suggest_slots" result lists available times. Present them and ask which
+  the patient prefers. Do NOT say anything is booked yet.
+- A "find_existing" result lists the patient's current appointments. Use it to
+  confirm which appointment you're acting on.
+- "book" or "reschedule" with an "id" and a "starts_at" (and no "error") means
+  it SUCCEEDED — confirm that exact time.
+- "cancel" with "status": "cancelled" means it was cancelled — confirm it.
+- "error": "slot_taken" means that time was just taken — apologise and offer to
+  find another time.
+- "error": "not_found" means there was no matching appointment — say you
+  couldn't find it and offer to help.
+- "error": "no_identity" means you can't act until the patient is identified —
+  ask for the name or phone number on file.
+- "status": "abandoned" means the patient backed out — acknowledge and ask if
+  there's anything else.
+- If there is NO appointment tool result at all, never state or imply that
+  something was booked, moved, or cancelled. Offer to help instead."""
 
 # Canned escalation lines per detected language (the escalation path never
 # reaches the LLM, so it can't translate itself). Fallback is English.
@@ -88,7 +114,7 @@ async def reasoner_node(state: AgentState) -> AgentState:
     try:
         text = await complete(
             model=s.qwen_model_plus,
-            system=_SYSTEM + _language_instruction(state),
+            system=build_reasoner_system() + _language_instruction(state),
             user=_build_user_prompt(state),
             temperature=0.3,
             max_tokens=400,

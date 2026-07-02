@@ -124,7 +124,7 @@ async def entrypoint(ctx):
         llm=lk_openai.LLM(
             model="qwen-plus",
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-            api_key=os.getenv("QWEN_API_KEY"),
+            api_key=os.getenv("DASHSCOPE_API_KEY"),
         ),
         stt=deepgram.STT(model="nova-3"),
         tts=elevenlabs.TTS(model="eleven_flash_v2_5"),
@@ -625,7 +625,7 @@ events=PROCESS_STATE_FATAL
 ### 12.4 Environment variables
 
 ```
-QWEN_API_KEY=
+DASHSCOPE_API_KEY=
 QWEN_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1
 DATABASE_URL=postgresql://...
 SUPABASE_URL=

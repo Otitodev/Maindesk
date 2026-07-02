@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import pytest
 
+from app import clinic_config
 from app.config import get_settings
 
 
 @pytest.fixture(autouse=True)
 def _clear_settings_cache():
     get_settings.cache_clear()
+    clinic_config.clear_cache()
     yield
     get_settings.cache_clear()
+    clinic_config.clear_cache()

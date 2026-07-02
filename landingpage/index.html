@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HealthDesk AI — Your clinic's front desk, on autopilot</title>
-  <meta name="description" content="HealthDesk AI answers calls, books appointments, and follows up with patients — across voice, WhatsApp, and email — 24/7, in under 2 seconds." />
+  <title>MainDesk — Your clinic's front desk, on autopilot</title>
+  <meta name="description" content="MainDesk answers calls, books appointments, and follows up with patients — across voice, WhatsApp, and email — 24/7, in under 2 seconds." />
 
   <!-- Open Graph / social -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="HealthDesk AI — Your clinic's front desk, on autopilot" />
+  <meta property="og:title" content="MainDesk — Your clinic's front desk, on autopilot" />
   <meta property="og:description" content="Voice, WhatsApp, and email — one agent, 24/7, in under two seconds." />
-  <meta property="og:image" content="https://healthdesk.ai/og.png" />
+  <meta property="og:image" content="https://maindesk.ai/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="HealthDesk AI" />
+  <meta name="twitter:title" content="MainDesk" />
   <meta name="twitter:description" content="Voice, WhatsApp, and email — one agent, 24/7." />
 
   <!-- Inline SVG favicon: teal dot on white -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ffffff'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23008c97'/%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="vendor/fonts.css" />
-  <link rel="stylesheet" href="healthdesk-ds.css" />
+  <link rel="stylesheet" href="maindesk-ds.css" />
 
   <style>
   /* ─────────────────────────────────────────────────────────────
@@ -60,9 +60,12 @@
     margin: 0 auto;
   }
   .features-cta {
+    /* lives inside .stack-container as its last child — its height
+       determines how long Card 3 stays pinned at the top, so the
+       top-padding is intentionally generous to match Cards 1 & 2 dwell. */
     max-width: 760px;
     margin: 0 auto;
-    padding: 64px 0 100px;
+    padding: 160px 0 100px;
     display: flex;
     align-items: center;
     gap: 32px;
@@ -98,27 +101,31 @@
     position: relative;
     margin-top: 64px;
   }
+  /* Connector geometry: circles sit at the left of each 1fr column, so
+     circle 1's centre is at 32px (half the 64px circle) and circle 3's
+     centre is at calc(66.67% + 32px). The line spans between them. */
   /* Dashed connector track — full width, always visible */
   .hiw-steps::before {
     content: '';
     position: absolute;
     top: 32px;
-    left: calc(16.67% + 24px);
-    right: calc(16.67% + 24px);
+    left: 32px;
+    right: calc(33.33% - 32px);
     height: 2px;
     background-image: linear-gradient(to right, var(--teal-pale) 50%, transparent 0%);
     background-size: 12px 2px;
     background-repeat: repeat-x;
     z-index: 0;
   }
-  /* Drawn solid line — width tied to --line-progress; sits above the track */
+  /* Drawn solid line — width tied to --line-progress; sits above the track.
+     Track length is 66.67% of the container (from circle 1 to circle 3). */
   .hiw-steps::after {
     content: '';
     position: absolute;
     top: 32px;
-    left: calc(16.67% + 24px);
+    left: 32px;
     height: 2px;
-    width: calc((100% - 2 * (16.67% + 24px)) * var(--line-progress));
+    width: calc(66.67% * var(--line-progress));
     background: linear-gradient(90deg, var(--teal-ui), var(--teal-vivid));
     box-shadow: 0 0 10px rgba(0, 180, 188, 0.45);
     z-index: 1;
@@ -180,7 +187,7 @@
     color: var(--teal-text);
   }
 
-  /* ── STATS (dark) ── */
+  /* ── STATS BENTO (dark) ── */
   .stats-section {
     background: var(--ink);
     padding: 96px var(--space-7);
@@ -190,47 +197,239 @@
   .stats-section::after {
     content: '';
     position: absolute;
-    bottom: -120px; right: -80px;
-    width: 500px; height: 500px;
+    bottom: -160px; right: -120px;
+    width: 600px; height: 600px;
     border-radius: 50%;
     background: radial-gradient(ellipse at center, rgba(0,180,188,0.1) 0%, transparent 65%);
     pointer-events: none;
   }
-  .stats-inner {
-    max-width: 1100px;
+
+  /* 12-column grid with a 2-row asymmetric pinwheel layout:
+     ┌─────────────── hero (8) ───────────────┬─── accent (4) ──┐
+     ├──── small (4) ────┬──────── wide (8) ──────────────────┤  */
+  .stats-bento {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(220px, auto);
+    gap: 16px;
   }
-  .stat-item {
-    padding: 0 40px;
-    border-left: 1px solid rgba(255,255,255,0.08);
+
+  .bento-card {
+    grid-column: span 12;
+    border-radius: 24px;
+    padding: 36px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
     position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, background 0.25s, transform 0.25s;
   }
-  .stat-item:first-child { padding-left: 0; border-left: none; }
-  .stat-value {
+  .bento-card:hover {
+    border-color: rgba(0,180,188,0.35);
+    background: rgba(0,180,188,0.04);
+    transform: translateY(-2px);
+  }
+
+  .bento-card--hero   { grid-column: span 8; }
+  .bento-card--accent { grid-column: span 4; }
+  .bento-card--small  { grid-column: span 4; }
+  .bento-card--wide   { grid-column: span 8; }
+
+  /* Hero card decoration: subtle radial teal glow top-right */
+  .bento-card--hero {
+    background: linear-gradient(135deg, rgba(0,180,188,0.06), rgba(255,255,255,0.015));
+  }
+  .bento-card--hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -90px;
+    width: 340px; height: 340px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0,180,188,0.22) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .bento-stat {
     font-family: var(--font-display);
-    font-size: clamp(2.8rem, 5vw, 4.2rem);
     font-weight: 700;
-    line-height: 1;
     letter-spacing: -0.04em;
+    line-height: 1;
     color: var(--teal-on-dark);
     display: block;
-    margin-bottom: 12px;
   }
-  .stat-label {
+  .bento-card--hero   .bento-stat { font-size: clamp(3.5rem, 7vw, 5.4rem); }
+  .bento-card--accent .bento-stat,
+  .bento-card--small  .bento-stat,
+  .bento-card--wide   .bento-stat { font-size: clamp(2.4rem, 5vw, 3.4rem); }
+
+  .bento-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .bento-card--hero .bento-title { font-size: 1.5rem; }
+
+  .bento-body {
     font-size: 0.875rem;
-    font-weight: 400;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.5;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.6);
   }
-  .stat-label strong {
-    display: block;
+
+  /* "Always available" pulse pill */
+  .bento-pulse {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
     font-weight: 600;
-    color: rgba(255,255,255,0.85);
-    font-size: 0.95rem;
-    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.5);
+  }
+  .bento-pulse__dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green-live);
+    box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
+    animation: hd-pulse 2s ease-in-out infinite;
+  }
+
+  /* Channel icon strip inside the "3 channels" wide card */
+  .bento-channels {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .bento-channels__icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: rgba(0,180,188,0.12);
+    border: 1px solid rgba(0,180,188,0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* sequential relay pulse — each icon lights up in turn */
+    animation: channel-relay 3s ease-in-out infinite;
+  }
+  .bento-channels__icon:nth-child(1) { animation-delay: 0s; }
+  .bento-channels__icon:nth-child(2) { animation-delay: 1s; }
+  .bento-channels__icon:nth-child(3) { animation-delay: 2s; }
+  .bento-channels__icon svg {
+    width: 18px; height: 18px;
+    stroke: var(--teal-on-dark);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Bento decorative glyphs ── */
+  /* Big SVGs anchored in each card corner, cut off by overflow:hidden,
+     low-opacity, slow motion — they reinforce each card's idea
+     (lightning = speed, star = rating, clock = always-on, network = 3 channels). */
+  .bento-glyph {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    stroke: var(--teal-on-dark);
+    color: var(--teal-on-dark);   /* for currentColor fills (pivot dot etc.) */
+    fill: none;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* keep card content above the glyph */
+  .bento-card > *:not(.bento-glyph) { position: relative; z-index: 1; }
+
+  /* Hero — lightning bolt, top-right, gentle hover */
+  .bento-card--hero .bento-glyph {
+    top: 10px;
+    right: -50px;
+    width: 260px;
+    height: 260px;
+    opacity: 0.16;
+    fill: rgba(0,180,188,0.05);
+    animation: bento-float 4.5s ease-in-out infinite;
+  }
+
+  /* Accent — star, bottom-right, soft pulse */
+  .bento-card--accent .bento-glyph {
+    bottom: -36px;
+    right: -28px;
+    width: 180px;
+    height: 180px;
+    opacity: 0.14;
+    fill: rgba(0,180,188,0.04);
+    animation: bento-pulse-fade 3.6s ease-in-out infinite;
+  }
+
+  /* Small — clock, top-right, ticking second hand */
+  .bento-card--small .bento-glyph {
+    top: -22px;
+    right: -22px;
+    width: 158px;
+    height: 158px;
+    opacity: 0.20;
+  }
+  .bento-glyph .clock-second {
+    transform-origin: 50px 50px;
+    animation: clock-tick 4s linear infinite;
+  }
+  .bento-glyph .clock-minute {
+    transform-origin: 50px 50px;
+    animation: clock-tick 60s linear infinite;
+  }
+
+  /* Wide — 3-node network, vertical center right, slow drift */
+  .bento-card--wide .bento-glyph {
+    top: 50%;
+    right: -56px;
+    width: 260px;
+    height: 260px;
+    opacity: 0.13;
+    fill: rgba(0,180,188,0.04);
+    animation: bento-drift 6.5s ease-in-out infinite;
+  }
+
+  @keyframes bento-float {
+    0%, 100% { transform: translateY(0)      rotate(-5deg); }
+    50%       { transform: translateY(-10px) rotate(-2deg); }
+  }
+  @keyframes bento-pulse-fade {
+    0%, 100% { opacity: 0.12; }
+    50%       { opacity: 0.22; }
+  }
+  @keyframes bento-drift {
+    0%, 100% { transform: translateY(-50%) translateX(0);    }
+    50%       { transform: translateY(-50%) translateX(-10px); }
+  }
+  @keyframes clock-tick {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes channel-relay {
+    0%, 100% {
+      background: rgba(0,180,188,0.12);
+      border-color: rgba(0,180,188,0.22);
+      box-shadow: 0 0 0 0 rgba(0,180,188,0);
+    }
+    15% {
+      background: rgba(0,180,188,0.32);
+      border-color: rgba(0,180,188,0.65);
+      box-shadow: 0 0 16px rgba(0,180,188,0.45);
+    }
   }
 
   /* ── TESTIMONIALS ── */
@@ -616,12 +815,11 @@
   }
   .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr;
     gap: 48px;
     padding-bottom: 64px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .footer-brand {}
   .footer-logo {
     display: flex;
     align-items: center;
@@ -639,29 +837,6 @@
     color: rgba(255,255,255,0.38);
     line-height: 1.6;
     max-width: 240px;
-    margin-bottom: 28px;
-  }
-  .footer-socials {
-    display: flex;
-    gap: 14px;
-  }
-  .footer-social-link {
-    width: 34px; height: 34px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-  }
-  .footer-social-link:hover { background: rgba(255,255,255,0.12); }
-  .footer-social-link svg {
-    width: 15px; height: 15px;
-    stroke: rgba(255,255,255,0.5);
-    fill: none;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
   .footer-col-title {
     font-family: var(--font-display);
@@ -687,27 +862,11 @@
   .footer-links a:hover { color: rgba(255,255,255,0.85); }
   .footer-bottom {
     padding: 24px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
   }
   .footer-copy {
     font-size: 0.78rem;
     color: rgba(255,255,255,0.22);
   }
-  .footer-legal {
-    display: flex;
-    gap: 20px;
-  }
-  .footer-legal a {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.22);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .footer-legal a:hover { color: rgba(255,255,255,0.55); }
 
   /* anchor offset so #pricing etc. don't land under the fixed nav */
   section[id], div[id="hero"] { scroll-margin-top: 96px; }
@@ -715,6 +874,23 @@
   /* small layout helpers (replace inline styles) */
   .hero-sub { max-width: 560px; text-align: center; }
   .hero-cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .hero-powered {
+    margin-top: 28px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-align: center;
+    opacity: 0.85;
+  }
+  .hero-powered strong { font-weight: 700; color: var(--ink-mid); }
+  .hero-powered .zh {
+    text-transform: none;
+    letter-spacing: 0.04em;
+    font-weight: 400;
+    margin-left: 6px;
+  }
   .scroll-hint--anchored { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); }
   .pricing-card a.btn { width: 100%; text-align: center; }
   .pricing-price--custom .amount { font-size: 2rem; }
@@ -736,8 +912,9 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 1024px) {
-    .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 48px 0; }
-    .stat-item:nth-child(3) { border-left: none; }
+    /* Bento collapses to a 2-col grid: hero + wide stay full row, others halve */
+    .bento-card--hero, .bento-card--wide { grid-column: span 12; }
+    .bento-card--accent, .bento-card--small { grid-column: span 6; }
     /* let the third testimonial wrap to row 2 instead of being hidden */
     .testi-grid { grid-template-columns: 1fr 1fr; }
     .testi-grid .testi-card:last-child { grid-column: 1 / -1; max-width: 540px; margin-inline: auto; }
@@ -765,12 +942,9 @@
   }
 
   @media (max-width: 640px) {
-    .stats-inner { grid-template-columns: 1fr 1fr; }
-    .stat-item { padding: 0 20px; }
-    .stat-item:nth-child(1), .stat-item:nth-child(2) { margin-bottom: 40px; }
-    .stat-item:nth-child(3) { border-left: 1px solid rgba(255,255,255,0.08); }
+    .bento-card { grid-column: span 12 !important; padding: 28px; }
+    .bento-card--hero .bento-stat { font-size: clamp(3rem, 12vw, 4rem); }
     .cta-trust-row { flex-direction: column; gap: 14px; }
-    .footer-bottom { flex-direction: column; align-items: flex-start; }
   }
   </style>
 </head>
@@ -785,7 +959,7 @@
 <nav class="hd-nav" id="main-nav" aria-label="Primary">
   <a href="#hero" class="hd-nav__logo">
     <span class="hd-nav__logo-dot"></span>
-    HealthDesk AI
+    MainDesk
   </a>
   <ul class="hd-nav__links">
     <li><a href="#features">Channels</a></li>
@@ -806,33 +980,23 @@
   <div class="hd-hero__bg" id="vanta-bg"></div>
 
   <div class="hd-hero__content">
-    <div class="badge">
-      <span class="badge__dot"></span>
-      Voice · WhatsApp · Email — one agent
-    </div>
-
     <h1 class="text-hero">
       Your front desk,<br />running on <em class="accent draw">autopilot</em>
     </h1>
 
     <p class="text-sub hero-sub">
-      HealthDesk AI answers calls, books appointments, and follows up with patients —
+      MainDesk answers calls, books appointments, and follows up with patients —
       around the clock, in under two seconds, without hiring another person.
     </p>
 
     <div class="hero-cta-row">
-      <a href="#cta" class="btn btn--primary">See it live →</a>
+      <a href="https://maindesk.otito.site/chat" target="_blank" rel="noopener" class="btn btn--primary">Try it live →</a>
       <a href="#how-it-works" class="btn btn--ghost">How it works</a>
     </div>
 
-    <div class="trust">
-      <div class="trust__avatars">
-        <span class="trust__avatar">HD</span>
-        <span class="trust__avatar">CF</span>
-        <span class="trust__avatar">HM</span>
-      </div>
-      In private beta with launch partner clinics
-    </div>
+    <p class="hero-powered">
+      Powered by <strong>Qwen</strong><span class="zh">· 通义千问</span>
+    </p>
   </div>
 
   <div class="scroll-hint scroll-hint--anchored">
@@ -850,7 +1014,7 @@
   <div class="features-inner">
     <p class="section-eyebrow">What it handles</p>
     <h2 class="section-headline">One agent.<br/>Every channel.</h2>
-    <p class="section-sub">HealthDesk AI works across voice, WhatsApp, and email simultaneously — so no patient falls through the cracks, whatever channel they use.</p>
+    <p class="section-sub">MainDesk works across voice, WhatsApp, and email simultaneously — so no patient falls through the cracks, whatever channel they use.</p>
 
     <!-- STICKY STACK -->
     <div class="stack-container">
@@ -924,12 +1088,14 @@
         </div>
       </div>
 
-    </div><!-- /stack-container -->
+      <!-- CTA lives inside stack-container so it acts as the "pushing content"
+           that pins Card 3 at the top until it scrolls up into view. -->
+      <div class="features-cta">
+        <a href="#cta" class="btn btn--primary">Book a walkthrough →</a>
+        <p><strong>Three channels.</strong> One agent. One dashboard.</p>
+      </div>
 
-    <div class="features-cta">
-      <a href="#cta" class="btn btn--primary">Book a walkthrough →</a>
-      <p><strong>Three channels.</strong> One agent. One dashboard.</p>
-    </div>
+    </div><!-- /stack-container -->
 
   </div>
 </section>
@@ -982,42 +1148,104 @@
 
 
 <!-- ═══════════════════════════════════════════════
-     STATS (dark)
+     STATS — bento
 ═══════════════════════════════════════════════ -->
-<section class="stats-section">
-  <div class="stats-inner">
+<section class="stats-section" aria-label="By the numbers">
+  <div class="stats-bento">
 
-    <div class="stat-item">
-      <span class="stat-value">&lt; 2s</span>
-      <span class="stat-label">
-        <strong>Average response</strong>
-        Every call, message, and email answered near-instantly — before patients consider going elsewhere.
-      </span>
-    </div>
+    <!-- Hero (8 cols): response time -->
+    <article class="bento-card bento-card--hero">
+      <!-- Lightning bolt glyph -->
+      <svg class="bento-glyph" viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="58 6 18 56 48 56 42 94 84 40 54 40 58 6"/>
+      </svg>
+      <span class="bento-stat">&lt; 2s</span>
+      <div>
+        <h3 class="bento-title">Every reply, in seconds</h3>
+        <p class="bento-body">
+          Average response across voice, WhatsApp, and email — before patients
+          consider going elsewhere.
+        </p>
+      </div>
+    </article>
 
-    <div class="stat-item">
-      <span class="stat-value">24/7</span>
-      <span class="stat-label">
-        <strong>Always available</strong>
-        Bank holidays, weekends, 3am emergencies. The agent never sleeps, never takes lunch.
-      </span>
-    </div>
+    <!-- Accent (4 cols): beta feedback -->
+    <article class="bento-card bento-card--accent">
+      <!-- Star glyph -->
+      <svg class="bento-glyph" viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="50 8 62 37 92 40 69 60 76 90 50 73 24 90 31 60 8 40 38 37 50 8"/>
+      </svg>
+      <span class="bento-stat">9 / 10</span>
+      <div>
+        <h3 class="bento-title">Beta feedback</h3>
+        <p class="bento-body">
+          Patients rate their interaction as on par with — or better than —
+          speaking to a person.
+        </p>
+      </div>
+    </article>
 
-    <div class="stat-item">
-      <span class="stat-value">3</span>
-      <span class="stat-label">
-        <strong>Channels in one agent</strong>
-        Voice, WhatsApp, and email managed from a single dashboard with one unified view.
-      </span>
-    </div>
+    <!-- Small (4 cols): always available -->
+    <article class="bento-card bento-card--small">
+      <!-- Clock glyph with ticking second hand -->
+      <svg class="bento-glyph" viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="42" stroke-width="2"/>
+        <!-- hour ticks at 12/3/6/9 -->
+        <line x1="50" y1="12" x2="50" y2="18" stroke-width="2.2"/>
+        <line x1="82" y1="50" x2="88" y2="50" stroke-width="2.2"/>
+        <line x1="50" y1="82" x2="50" y2="88" stroke-width="2.2"/>
+        <line x1="12" y1="50" x2="18" y2="50" stroke-width="2.2"/>
+        <!-- minute hand -->
+        <line class="clock-minute" x1="50" y1="50" x2="50" y2="24" stroke-width="2.6"/>
+        <!-- second hand -->
+        <line class="clock-second" x1="50" y1="50" x2="50" y2="18" stroke-width="1.4"/>
+        <!-- pivot dot -->
+        <circle cx="50" cy="50" r="3" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="bento-stat">24/7</span>
+      <div>
+        <h3 class="bento-title">Always available</h3>
+        <p class="bento-body">
+          Bank holidays, weekends, 3am emergencies. The agent never sleeps,
+          never takes lunch.
+        </p>
+        <span class="bento-pulse"><span class="bento-pulse__dot"></span> Live now</span>
+      </div>
+    </article>
 
-    <div class="stat-item">
-      <span class="stat-value">9 / 10</span>
-      <span class="stat-label">
-        <strong>Beta feedback</strong>
-        Patients rate their interaction with HealthDesk AI as on par with — or better than — speaking to a person.
-      </span>
-    </div>
+    <!-- Wide (8 cols): three channels -->
+    <article class="bento-card bento-card--wide">
+      <!-- 3-node network glyph (three channels, one hub) -->
+      <svg class="bento-glyph" viewBox="0 0 100 100" aria-hidden="true">
+        <line x1="22" y1="42" x2="52" y2="22" stroke-width="1.2"/>
+        <line x1="52" y1="22" x2="78" y2="60" stroke-width="1.2"/>
+        <line x1="78" y1="60" x2="22" y2="42" stroke-width="1.2"/>
+        <circle cx="22" cy="42" r="8" stroke-width="2"/>
+        <circle cx="52" cy="22" r="8" stroke-width="2"/>
+        <circle cx="78" cy="60" r="8" stroke-width="2"/>
+      </svg>
+      <div>
+        <span class="bento-stat">3</span>
+        <div class="bento-channels" aria-hidden="true">
+          <span class="bento-channels__icon" title="Voice">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </span>
+          <span class="bento-channels__icon" title="WhatsApp">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          </span>
+          <span class="bento-channels__icon" title="Email">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+        </div>
+      </div>
+      <div>
+        <h3 class="bento-title">Channels in one agent</h3>
+        <p class="bento-body">
+          Voice, WhatsApp, and email — managed from a single dashboard with one
+          unified view.
+        </p>
+      </div>
+    </article>
 
   </div>
 </section>
@@ -1038,7 +1266,7 @@
           <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
         </div>
         <p class="testi-quote">
-          We used to miss roughly 30% of calls during peak hours. HealthDesk answered every single one from day one. Our receptionist now focuses entirely on the patients physically in the room — which is where she should be.
+          We used to miss roughly 30% of calls during peak hours. MainDesk answered every single one from day one. Our receptionist now focuses entirely on the patients physically in the room — which is where she should be.
         </p>
         <div class="testi-author">
           <div class="testi-avatar">SO</div>
@@ -1148,7 +1376,7 @@
           <li>SLA guarantee</li>
           <li>Custom integrations</li>
         </ul>
-        <a href="mailto:hello@healthdesk.ai" class="btn btn--ghost">Talk to us →</a>
+        <a href="mailto:hello@maindesk.ai" class="btn btn--ghost">Talk to us →</a>
       </div>
 
     </div>
@@ -1248,7 +1476,7 @@
     </p>
 
     <div class="cta-btn-row">
-      <a href="mailto:hello@healthdesk.ai" class="btn btn--teal btn--lg">Book a walkthrough →</a>
+      <a href="mailto:hello@maindesk.ai" class="btn btn--teal btn--lg">Book a walkthrough →</a>
       <a href="#features" class="btn btn--ghost--on-dark btn--lg">See how it works</a>
     </div>
 
@@ -1272,27 +1500,13 @@
 
       <!-- Brand col -->
       <div class="footer-brand">
-        <a href="#" class="footer-logo">
+        <a href="#hero" class="footer-logo">
           <span class="status-dot"></span>
-          HealthDesk AI
+          MainDesk
         </a>
         <p class="footer-tagline">
           Your clinic's front desk — always on, always human-sounding, never on hold.
         </p>
-        <div class="footer-socials">
-          <!-- X / Twitter -->
-          <a href="https://x.com" class="footer-social-link" aria-label="X">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </a>
-          <!-- LinkedIn -->
-          <a href="https://linkedin.com" class="footer-social-link" aria-label="LinkedIn">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-          </a>
-          <!-- GitHub -->
-          <a href="https://github.com" class="footer-social-link" aria-label="GitHub">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
-          </a>
-        </div>
       </div>
 
       <!-- Product -->
@@ -1302,42 +1516,21 @@
           <li><a href="#features">Channels</a></li>
           <li><a href="#how-it-works">How it works</a></li>
           <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#">Integrations</a></li>
-          <li><a href="#">Changelog</a></li>
         </ul>
       </div>
 
-      <!-- Company -->
+      <!-- Contact -->
       <div>
-        <p class="footer-col-title">Company</p>
+        <p class="footer-col-title">Contact</p>
         <ul class="footer-links">
-          <li><a href="#">About</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Careers</a></li>
-          <li><a href="mailto:hello@healthdesk.ai">Contact</a></li>
-        </ul>
-      </div>
-
-      <!-- Legal -->
-      <div>
-        <p class="footer-col-title">Legal</p>
-        <ul class="footer-links">
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
-          <li><a href="#">Security</a></li>
-          <li><a href="#">Data Processing</a></li>
+          <li><a href="mailto:hello@maindesk.ai">hello@maindesk.ai</a></li>
         </ul>
       </div>
 
     </div>
 
     <div class="footer-bottom">
-      <p class="footer-copy">© 2026 HealthDesk AI. All rights reserved.</p>
-      <div class="footer-legal">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Security</a>
-      </div>
+      <p class="footer-copy">© 2026 MainDesk. All rights reserved.</p>
     </div>
   </div>
 </footer>
@@ -1373,11 +1566,47 @@
     }
   }
 
-  /* ── Single scroll handler: nav frosting + sticky-stack burial ── */
+  /* ── Single scroll handler: nav frosting + sticky-stack burial
+        + "How it works" connector-line draw ── */
   const nav = document.getElementById('main-nav');
   const STICKY_TOP = 96;
   const stackCards = document.querySelectorAll('.feat-card');
+  const hiwSteps = document.querySelector('.hiw-steps');
+  const hiwStepNodes = document.querySelectorAll('.hiw-step');
   let scrollScheduled = false;
+  let lastHiwProgress = -1;
+
+  function updateHiwProgress() {
+    if (!hiwSteps) return;
+    const rect = hiwSteps.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    /* progress = 0 when the step row first enters from the bottom 75% mark
+       progress = 1 when it has risen to the 30% mark — that range covers
+       a natural one-or-two-screen scroll through the section. */
+    const start = vh * 0.75;
+    const end = vh * 0.30;
+    let p = (start - rect.top) / (start - end);
+    if (p < 0) p = 0;
+    else if (p > 1) p = 1;
+    if (Math.abs(p - lastHiwProgress) < 0.005) return;
+    lastHiwProgress = p;
+    hiwSteps.style.setProperty('--line-progress', p.toFixed(3));
+    /* Light up steps as the line passes through their centres:
+       step 1 → active immediately when the row enters
+       step 2 → active at the midpoint (0.5)
+       step 3 → active when the line completes (1.0) */
+    hiwStepNodes.forEach((step, i) => {
+      const threshold = i * 0.5;
+      step.classList.toggle('active', p >= threshold - 0.001);
+    });
+  }
+
+  /* prefers-reduced-motion: skip the draw, snap straight to "done" */
+  if (reduceMotion && hiwSteps) {
+    hiwSteps.style.setProperty('--line-progress', 1);
+    hiwStepNodes.forEach(s => s.classList.add('active'));
+  }
+
   window.addEventListener('scroll', () => {
     if (scrollScheduled) return;
     scrollScheduled = true;
@@ -1388,9 +1617,13 @@
         if (!next) return;
         card.classList.toggle('buried', next.getBoundingClientRect().top <= STICKY_TOP + 2);
       });
+      if (!reduceMotion) updateHiwProgress();
       scrollScheduled = false;
     });
   }, { passive: true });
+
+  /* run once on load so the first paint matches the current scroll position */
+  if (!reduceMotion) updateHiwProgress();
 
   /* ── FAQ accordion ── */
   document.querySelectorAll('.faq-question').forEach(btn => {

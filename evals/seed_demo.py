@@ -34,6 +34,7 @@ class Patient(TypedDict):
 DEMO_PATIENTS: list[Patient] = [
     {
         # Mapped to the demo phone so WhatsApp-driven recall works.
+        # Placeholder number — must match HEALTHDESK_DEMO_PATIENT_PHONE in .env.
         "phone": "2340000000000",
         "full_name": "Adaeze Okafor",
         "memories": [
@@ -65,6 +66,20 @@ DEMO_PATIENTS: list[Patient] = [
              "memory_type": "accessibility", "importance": 0.9},
             {"content": "Patient prefers female physicians.",
              "memory_type": "preference", "importance": 0.7},
+        ],
+    },
+    {
+        # Mandarin-script memories exercise the multilingual recall path —
+        # the same pgvector + decay re-rank pipeline runs across languages.
+        "phone": "8613800000000",
+        "full_name": "李伟",
+        "memories": [
+            {"content": "患者偏好上午预约,工作日下午通常不方便。",
+             "memory_type": "preference", "importance": 0.7},
+            {"content": "患者对青霉素过敏。",
+             "memory_type": "medical", "importance": 0.95},
+            {"content": "上次就诊是2026年5月做高血压复查。",
+             "memory_type": "history", "importance": 0.6},
         ],
     },
 ]
