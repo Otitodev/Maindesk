@@ -1,8 +1,8 @@
-# Demo-mode Caddyfile: plain HTTP on :80, no TLS.
-# The Alibaba Cloud ECS instance is reached by public IP for the hackathon demo.
-# For a domain + Let's Encrypt setup, replace with a site block scoped to the domain.
+{
+	email otitodrichukwu@gmail.com
+}
 
-:80 {
+maindesk.otito.site {
 	encode gzip
 	reverse_proxy healthdesk:8000 {
 		# Streaming for SSE on /staff and any long-poll routes.
