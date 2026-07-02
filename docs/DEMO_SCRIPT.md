@@ -1,114 +1,164 @@
 # MainDesk — 3-Minute Demo Script
 
-**Hard cap: 3:00.** Judges are not required to watch past this. Every second must earn its place.
+**Hard cap: 3:00.** Judges are not required to watch past this. Every second earns its place.
 
-**Target audience**: Qwen Cloud Hackathon Track 4 judges. Assume they've read the README, know what LangGraph is, and are grading against Innovation (30%) / Tech Depth (30%) / Problem Value (25%) / Presentation (15%).
+**Target audience**: Qwen Cloud Hackathon Track 4 judges. Assume they've skimmed the README and are grading on Innovation (30%) / Tech Depth (30%) / Problem Value (25%) / Presentation (15%).
+
+**Narrative approach**: Follow one operator persona — **Dr. Amina Okonkwo**, a Lagos family GP whose receptionist quit two weeks ago — through her first week with MainDesk. This is grounded in `docs/POSITIONING.md`.
 
 **Filming setup**
-- 1080p screencap, no webcam PIP
-- Voiceover recorded separately (don't record live commentary — audio drops kill the vibe)
-- No copyrighted music. Use YouTube Audio Library or nothing.
-- No visible WhatsApp branding on the WhatsApp segment — narrate over a terminal `curl` view or a screenshot with the wordmark cropped.
-- Show real Qwen model names on screen at least twice (`qwen-plus`, `qwen-turbo`, `text-embedding-v3`).
+- 1080p screen recording, no webcam PIP
+- Voiceover recorded separately (don't ad-lib live; retakes are cheaper than transcripts)
+- No copyrighted music. YouTube Audio Library or nothing.
+- No visible WhatsApp branding. Cover the wordmark or use a mocked SMS thread with a generic phone-frame overlay.
+- Say Qwen model names out loud at least twice: `qwen3.7-plus`, `text-embedding-v4`
+- Keep the URL `maindesk.otito.site` visible at the top of the browser for the last 60 seconds
 
 ---
 
-## Beat-by-beat script
+## Beat-by-beat (7 beats, 3:00 hard cap)
 
-### 0:00 – 0:15 · Hook
+### 0:00 – 0:15 · The problem
 
-**On screen**: Landing page hero — "MainDesk" logo, "Powered by Qwen · 通义千问" tag visible.
+**On screen**: Landing page hero — "MainDesk" logo, "Powered by Qwen · 通义千问" tag, "Try live demo" button visible.
 
-**VO**: "Every clinic runs into the same wall — after 5 PM the phones go to voicemail, patient questions pile up, staff burn out. MainDesk is an autonomous front desk that answers on every channel, in any language, all day."
+**VO**: "Dr. Amina runs a family clinic in Lagos. Her receptionist quit two weeks ago and the phones are burying her. She finds MainDesk at 11 PM on a Tuesday."
 
-### 0:15 – 0:45 · WhatsApp channel — the escalation path
+*Fast pan down the hero to the pricing block showing "$599/mo" and "First 100 clinics get 50% off."*
 
-**On screen**: Split view — left: an SMS-style transcript (WhatsApp branding cropped or a mock UI); right: staff dashboard `/staff` empty state.
+**VO**: "Less than a week of a receptionist's pay. She books the trial."
 
-**VO**: "A patient messages the clinic on WhatsApp asking to book a checkup. MainDesk answers in real time — checks the calendar, offers slots, confirms."
+### 0:15 – 0:40 · The setup
 
-**Show**: Patient types "book me for Tuesday morning" → agent replies with 2 available slots → patient picks one → confirmation message.
+**On screen**: Cut to `/onboarding` wizard. Cursor fills in — clinic name "Harmony Family Clinic", timezone Africa/Lagos, hours 9-17, working days Mon–Fri, mode "always", FAQ box gets a few clinic facts.
 
-**VO** (over the next message): "Then this happens."
+**VO**: "The next morning she configures the clinic in three minutes. Name, hours, the FAQ she used to explain forty times a day. Save."
 
-**Show**: Patient types "I've had crushing chest pain for an hour, what do I do?"
+*Click Save. Green checkmark appears.*
 
-**Show on right side**: Dashboard populates with a new HITL card — red urgency badge, transcript, "Assign to me" button.
+**VO**: "MainDesk is live on every channel a patient might use. WhatsApp, email, voice, browser."
 
-**VO**: "Chest pain triggers the escalate intent. The agent hands off to a human — instantly — instead of pretending to diagnose."
+### 0:40 – 1:10 · Money shot 1: multilingual booking
 
-### 0:45 – 1:15 · HITL resolve on the staff dashboard
+**On screen**: Cut to `https://maindesk.otito.site/chat`. Chat widget with the opening bubble.
 
-**On screen**: `/staff` dashboard, HTMX+SSE live update.
+Type slowly, so the viewer reads it:
+```
+你好，我想预约下周二的检查
+```
 
-**VO**: "The staff dashboard is a live queue. Server-sent events, no polling. A clinician picks up the card, sees the transcript with context, and replies once."
+*Send. Typing indicator dots. Reply arrives in Mandarin with real dates.*
 
-**Show**: Click "Assign to me" → type "Please go to the ER now, call us from there" → send.
+**VO**: "A patient messages in Mandarin. MainDesk understands, checks the calendar, and offers real slots — in Mandarin, in the correct date format, with no translation step. `qwen3.7-plus` speaks fluent Chinese by default, `text-embedding-v4` handles multilingual memory."
 
-**Show**: Reply appears in the patient's WhatsApp thread within a second.
+*Highlight the reply — `2026年7月3日 上午 9:00` visible.*
 
-**VO**: "One reply, one channel switch, patient safe."
+**VO**: "One agent. Every language."
 
-### 1:15 – 1:45 · `/chat` widget + Chinese roundtrip
+### 1:10 – 1:40 · Money shot 2: escalation
 
-**On screen**: Browser at `/chat`, MainDesk widget, light theme matching landing page.
+**On screen**: Same `/chat` widget. Clear input. Type:
+```
+I've had crushing chest pain for an hour, help
+```
 
-**VO**: "Same orchestrator, different channel. The web widget hits `/webhooks/web` — no separate code path, no separate memory."
+*Send. Brief acknowledgment appears: "One moment while I get a human on this."*
 
-**Show**: Type "你好，我想预约下周二的检查" → agent responds in Chinese, offers slots.
+**Cut immediately to** `/staff?key=...` dashboard in a second tab. A red urgency card slides in via SSE.
 
-**VO**: "The Qwen models handle Mandarin natively. Same LangGraph, same pgvector memory, same tools — the language just flows through."
+**VO**: "Chest pain triggers the escalate intent. The agent aborts its own reply — no diagnostic bullshit — and posts to the staff dashboard. Server-sent events, no polling. Dr. Amina picks it up."
 
-### 1:45 – 2:30 · Voice + architecture reveal
+*Click "Assign to me". Type "Please go to the ER now, call us from there." Send.*
 
-**On screen**: Split — left: LiveKit voice agent on a phone browser talking (waveform visible); right: `docs/architecture.png` fading in.
+*Cut back to /chat — the reply lands in the patient thread.*
 
-**VO**: "Voice is the fifth channel — LiveKit for the transport, Qwen for ASR, LLM, and TTS. All three runtimes on DashScope."
+**VO**: "One switch, one reply, patient safe. This is what MainDesk means by 'AI-native' — it knows when to be a human."
 
-**Cut to**: Full architecture diagram.
+### 1:40 – 2:10 · The proof: analytics
 
-**VO**: "One LangGraph orchestrator sits behind five channels — WhatsApp, email, web, `/chat`, and voice. It talks to a Postgres checkpoint store, a pgvector recall layer with multilingual decay-weighted re-ranking, a tool layer that reaches Google Calendar and the clinic's FAQ store, and a human-in-the-loop queue."
+**On screen**: Navigate to `/staff/analytics?key=...`. Four dark tiles: **89** bookings, **3** escalations, **12 min** avg time to human, **62 hrs** reception time replaced.
 
-**On screen**: Highlight the Qwen boxes one at a time — Qwen-Plus (orchestrator LLM), Qwen-Turbo (guardrails and classification), text-embedding-v3 (memory).
+**VO**: "One month later, this is Dr. Amina's console. Eighty-nine patient messages handled autonomously. Three escalations — the ones that mattered. Sixty-two hours of reception time replaced. At the $299 tier, that's roughly thirty cents per autonomous booking — a receptionist call costs three to seven dollars."
 
-**VO**: "Three Qwen models. One cloud. Every reply passes through outbound secret redaction before it leaves the process."
+*Pause on the "What this tells you" callout.*
 
-### 2:30 – 3:00 · Close
+**VO**: "This is the ROI slide judges usually have to imagine. It's a real page in the product."
 
-**On screen**: `pytest` output — 218 passed. Then cut to intent eval results — 33/33.
+### 2:10 – 2:40 · Architecture reveal
 
-**VO**: "218 tests green, 33 out of 33 on the intent evaluation, including three Mandarin cases. Multi-channel parity. Human-in-the-loop when it matters. Deployed on Alibaba Cloud, submitted to Track 4 — Autopilot Agent."
+**On screen**: Fade in `docs/architecture.png`. Highlight the boxes one at a time as they're mentioned.
 
-**Final frame**: MainDesk logo + "Powered by Qwen · 通义千问" + repo URL.
+**VO**: "Under the hood: one LangGraph orchestrator sits behind five channels — WhatsApp, email, web, /chat widget, and voice. Voice runs on Qwen for A-S-R, L-L-M, and T-T-S — all three model types through DashScope."
+
+*Highlight the Qwen boxes.*
+
+**VO**: "Triage classifies intent on `qwen3.6-flash`. Generation runs on `qwen3.7-plus`. Memory recall uses `text-embedding-v4` into pgvector with a decay-weighted re-ranker — so a patient's penicillin allergy in Mandarin surfaces when they send an English message six months later."
+
+*Highlight the postgres box + HITL queue.*
+
+**VO**: "AsyncPostgres checkpoints keep multi-turn conversations alive across restarts. Every outbound message runs through a secret redactor. Every escalation lands in the same HITL queue."
+
+### 2:40 – 3:00 · Close
+
+**On screen**: Cut back to the landing page hero. `maindesk.otito.site/chat` visible in the URL bar.
+
+**VO**: "Deployed on Alibaba Cloud ECS in Singapore. Two hundred fifteen tests green. Thirty-three of thirty-three on the intent eval, including three Mandarin cases. Live now at maindesk.otito.site."
+
+*Final frame: logo + "Powered by Qwen · 通义千问" + repo URL + "Track 4: Autopilot Agent"*
+
+**VO**: "MainDesk. The AI-native front desk. Not a chatbot. A replacement."
 
 ---
 
 ## What NOT to include
 
-- No apologies ("still rough around the edges"). Judges hear this constantly. Sell the thing.
-- No feature list read-aloud. The dashboard demo shows more in 15 seconds than a bullet list does in 60.
-- No architecture explanation before showing the product working. Product first, arch second.
-- No mention of what's missing or future roadmap. That's for the README.
-- No music with lyrics. Distracting.
+- **No apologies.** No "still rough around the edges." Sell the thing.
+- **No feature list read-aloud.** The dashboard demo showed more in 15 seconds than a bullet list does in 60.
+- **No architecture explanation before showing product working.** Product first, arch second — every beat before 2:10 is Dr. Amina using it.
+- **No mention of what's missing.** Multi-tenancy, HIPAA BAA, EHR integrations — those belong in the Devpost "What's next" field, not on camera.
+- **No lyrics in the background music.** Distracting.
+- **No live typing at real speed.** Pre-record the message inputs and time the cuts. Live typing eats seconds you can't spare.
 
 ---
 
 ## Voiceover writing rules
 
-- Present tense, active voice. "The agent replies" not "The agent will reply."
-- Numbers earn attention: "218 tests," "33 out of 33," "sub-second."
-- Say the Qwen model names out loud at least once each. Judging weight #1 rewards visible Qwen usage.
-- One idea per sentence. If a sentence has two commas, split it.
-- Read the script out loud with a stopwatch before recording. 3:00 hard cap means the read has to come in at 2:50 to survive edits.
+- **Present tense, active voice.** "The agent replies." Not "The agent will reply."
+- **Concrete numbers earn attention.** "215 tests," "62 hours," "$0.30 per booking," "9 AM slot."
+- **Say Qwen model names out loud.** `qwen3.7-plus`, `qwen3.6-flash`, `text-embedding-v4`. Judging weight #1 rewards visible Qwen usage; audible counts too.
+- **One idea per sentence.** If a sentence has two commas, split it.
+- **Read the whole script out loud with a stopwatch before recording.** 3:00 hard cap means the read has to come in at 2:50 to survive edits and breathing space.
+- **Dr. Amina is a person, not a case study.** Say "she" — not "the operator" or "the clinic owner."
+
+---
+
+## The one line that has to land
+
+> **"MainDesk. The AI-native front desk. Not a chatbot. A replacement."**
+
+That's the sticker line. It goes on the last frame, in the video description, and in the Devpost tagline. Every other line in the script leads toward it.
 
 ---
 
 ## Post-production checklist
 
-- [ ] Total length ≤ 3:00 (stopwatch it)
+- [ ] Total length ≤ 3:00 (stopwatch it, not estimate)
 - [ ] Public visibility on YouTube / Vimeo / Youku
 - [ ] Captions burned in or auto-generated (helps judges skimming without audio)
 - [ ] No third-party wordmarks visible (WhatsApp, Google Calendar, LiveKit logos cropped or covered)
 - [ ] No copyrighted music
-- [ ] Repo URL visible in the final frame **and** in the video description
+- [ ] Repo URL visible in the final frame **and** the video description
 - [ ] Video URL pasted into the Devpost submission
+- [ ] `maindesk.otito.site` URL is clickable in the video description too
+
+---
+
+## If you have 90 seconds instead of 3:00 (for social)
+
+Cut the setup (0:15–0:40) and the architecture (2:10–2:40). Keep:
+- Hook (15s)
+- Chinese booking (30s)
+- Escalation → HITL (30s)
+- Analytics tiles + close (15s)
+
+That's 90 seconds, still Dr. Amina, still all three money shots. Post to X/Twitter and LinkedIn on submission day for the "scalability potential" community-signal score.
