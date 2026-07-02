@@ -34,10 +34,10 @@ $Bandwidth         = 5
 
 function Say { param($msg) Write-Host "[provision] $msg" -ForegroundColor Cyan }
 function Ali {
-    param([string[]]$args)
-    $raw = aliyun @args --RegionId $Region 2>&1 | Out-String
+    param([string[]]$CmdArgs)
+    $raw = aliyun @CmdArgs --RegionId $Region 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0 -or $raw.TrimStart() -notmatch '^\{') {
-        Write-Host "[aliyun error] args: $($args -join ' ')" -ForegroundColor Red
+        Write-Host "[aliyun error] args: $($CmdArgs -join ' ')" -ForegroundColor Red
         Write-Host $raw -ForegroundColor Red
         throw "aliyun call failed"
     }
