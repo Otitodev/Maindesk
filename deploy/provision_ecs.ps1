@@ -21,7 +21,7 @@ $ErrorActionPreference = 'Stop'
 # ============ CONFIG ============
 $Region            = 'ap-southeast-1'
 $InstanceType      = 'ecs.e-c1m2.large'
-$ImageId           = 'ubuntu_22_04_x64_20G_alibase_20240220.vhd'
+$ImageId           = ''  # auto-discovered below; override to pin
 $SystemDiskSize    = 40
 $KeyPairName       = 'maindesk-key'
 $KeyOutPath        = "$HOME\.ssh\$KeyPairName.pem"
@@ -35,13 +35,36 @@ $Bandwidth         = 5
 function Say { param($msg) Write-Host "[provision] $msg" -ForegroundColor Cyan }
 function Ali {
     param([string[]]$CmdArgs)
-    $raw = aliyun @CmdArgs --RegionId $Region 2>&1 | Out-String
+    # Avoid PS 5.1's stderr-as-terminating-error behavior so we can capture the message.
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $raw = & aliyun @CmdArgs --RegionId $Region 2>&1 | Out-String
+    } finally {
+        $ErrorActionPreference = $prev
+    }
     if ($LASTEXITCODE -ne 0 -or $raw.TrimStart() -notmatch '^\{') {
         Write-Host "[aliyun error] args: $($CmdArgs -join ' ')" -ForegroundColor Red
         Write-Host $raw -ForegroundColor Red
-        throw "aliyun call failed"
+        throw "aliyun call failed (exit=$LASTEXITCODE)"
     }
     $raw | ConvertFrom-Json
+}
+
+function Get-LatestUbuntuImage {
+    $imgs = Ali @('ecs','DescribeImages','--OSType','linux','--ImageOwnerAlias','system','--ImageName','ubuntu_22_04_x64*','--PageSize','50')
+    if (-not $imgs.Images.Image -or $imgs.Images.Image.Count -eq 0) {
+        throw "No Ubuntu 22.04 x64 images found in $Region"
+    }
+    ($imgs.Images.Image | Sort-Object -Property CreationTime -Descending | Select-Object -First 1).ImageId
+}
+
+function Get-ZoneForInstanceType {
+    param([string]$Type)
+    $res = Ali @('ecs','DescribeAvailableResource','--DestinationResource','InstanceType','--InstanceType',$Type)
+    $zoneObj = $res.AvailableZones.AvailableZone | Where-Object { $_.Status -eq 'Available' } | Select-Object -First 1
+    if (-not $zoneObj) { throw "No zone in $Region has $Type available" }
+    $zoneObj.ZoneId
 }
 
 # --- 0. sanity ---
@@ -65,10 +88,10 @@ for ($i=0; $i -lt 30; $i++) {
 }
 
 # --- 2. VSwitch ---
-Say "Creating VSwitch ($VSwitchName)..."
-$zones = Ali @('ecs','DescribeZones')
-$ZoneId = $zones.Zones.Zone[0].ZoneId
+Say "Picking a zone that supports $InstanceType..."
+$ZoneId = Get-ZoneForInstanceType -Type $InstanceType
 Say "Zone: $ZoneId"
+Say "Creating VSwitch ($VSwitchName)..."
 $vsw = Ali @('vpc','CreateVSwitch','--VpcId',$VpcId,'--CidrBlock','172.16.1.0/24','--ZoneId',$ZoneId,'--VSwitchName',$VSwitchName)
 $VSwitchId = $vsw.VSwitchId
 for ($i=0; $i -lt 30; $i++) {
@@ -99,6 +122,11 @@ if (Test-Path $KeyOutPath) {
 }
 
 # --- 5. Run the instance ---
+if (-not $ImageId) {
+    Say "Discovering latest Ubuntu 22.04 x64 image..."
+    $ImageId = Get-LatestUbuntuImage
+    Say "Image: $ImageId"
+}
 Say "Launching $InstanceType with $ImageId..."
 $run = Ali @(
     'ecs','RunInstances',
