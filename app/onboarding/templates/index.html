@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthDesk AI — Clinic Setup</title>
+  <style>
+    :root { --ink:#0c1c2e; --teal:#008c97; --line:#e2e8ec; --soft:#5b7185; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+           background:#f0fafb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:680px; margin:40px auto; padding:0 20px; }
+    h1 { font-size:1.5rem; margin:0 0 4px; }
+    p.sub { color:var(--soft); margin:0 0 28px; }
+    form { background:#fff; border:1px solid var(--line); border-radius:14px; padding:28px; }
+    label.field { display:block; font-weight:600; font-size:.85rem; margin:18px 0 6px; }
+    input[type=text], input[type=number], select, textarea {
+      width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+      font:inherit; color:var(--ink); background:#fff; }
+    textarea { min-height:120px; resize:vertical; }
+    .row { display:flex; gap:16px; }
+    .row > div { flex:1; }
+    .days { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+    .day { display:inline-flex; align-items:center; gap:5px; font-weight:400; font-size:.9rem;
+           background:#f0fafb; border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+    .hint { color:var(--soft); font-size:.8rem; margin-top:4px; }
+    .bar { display:flex; align-items:center; gap:14px; margin-top:26px; }
+    button { background:var(--ink); color:#fff; border:none; border-radius:8px;
+             padding:12px 26px; font:inherit; font-weight:600; cursor:pointer; }
+    button:hover { background:#1b3550; }
+    .saved { color:var(--teal); font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Clinic setup</h1>
+    <p class="sub">Configure how the front-desk agent answers. Changes take effect immediately.</p>
+    <form method="post" action="/onboarding?key=__KEY__">
+      <div class="row">
+        <div>
+          <label class="field" for="clinic_name">Clinic name</label>
+          <input type="text" id="clinic_name" name="clinic_name" value="__CLINIC_NAME__" placeholder="Harmony Dental" />
+        </div>
+        <div>
+          <label class="field" for="agent_name">Agent name</label>
+          <input type="text" id="agent_name" name="agent_name" value="__AGENT_NAME__" placeholder="HealthDesk" />
+        </div>
+      </div>
+
+      <label class="field" for="timezone">Timezone</label>
+      <select id="timezone" name="timezone">__TZ_OPTIONS__</select>
+
+      <div class="row">
+        <div>
+          <label class="field" for="open_hour">Opens (hour, 0–24)</label>
+          <input type="number" id="open_hour" name="open_hour" min="0" max="24" value="__OPEN_HOUR__" />
+        </div>
+        <div>
+          <label class="field" for="close_hour">Closes (hour, 0–24)</label>
+          <input type="number" id="close_hour" name="close_hour" min="0" max="24" value="__CLOSE_HOUR__" />
+        </div>
+      </div>
+
+      <label class="field">Working days</label>
+      <div class="days">__DAYS__</div>
+
+      <label class="field" for="answer_mode">Answering mode</label>
+      <select id="answer_mode" name="answer_mode">
+        <option value="always"__MODE_ALWAYS__>Always — handle every contact 24/7</option>
+        <option value="after_hours"__MODE_AFTER__>After-hours only — hand off to staff during open hours</option>
+      </select>
+
+      <label class="field" for="faqs">Clinic knowledge / FAQs</label>
+      <textarea id="faqs" name="faqs" placeholder="Hours, address, parking, insurance accepted, services, doctor names…">__FAQS__</textarea>
+      <div class="hint">The agent answers from these facts and won't invent anything not listed here.</div>
+
+      <div class="bar">
+        <button type="submit">Save</button>
+        <span class="saved">__SAVED__</span>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

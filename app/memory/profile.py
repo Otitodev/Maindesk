@@ -25,6 +25,20 @@ async def resolve_by_phone(phone: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+async def resolve_by_email(email: str) -> dict[str, Any] | None:
+    """Look up a patient by email. Email isn't unique in the schema, so the
+    oldest matching profile wins (deterministic). Returns None on no match —
+    the email channel then runs without identity, like the web widget."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT id, full_name, phone, email, preferences "
+            "FROM patients WHERE email = $1 ORDER BY created_at LIMIT 1",
+            email,
+        )
+    return dict(row) if row else None
+
+
 async def upsert_profile(
     *,
     phone: str,

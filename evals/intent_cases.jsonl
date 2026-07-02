@@ -28,3 +28,6 @@
 {"text": "Have a great day!", "expected": "smalltalk"}
 {"text": "Connect me with Dr. Lee directly", "expected": "escalate"}
 {"text": "What's your phone number for the lab?", "expected": "ask_question"}
+{"text": "你好，我想预约下周二的检查", "expected": "book_appointment"}
+{"text": "请帮我取消明天的预约", "expected": "cancel"}
+{"text": "我胸口剧烈疼痛，怎么办", "expected": "escalate"}

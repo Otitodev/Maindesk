@@ -32,10 +32,10 @@ class _StubCtx:
 @pytest.fixture
 def settings_demo_phone(monkeypatch):
     """Set HEALTHDESK_DEMO_PATIENT_PHONE + HEALTHDESK_ENV=demo for one test."""
-    monkeypatch.setenv("HEALTHDESK_DEMO_PATIENT_PHONE", "2348127052315")
+    monkeypatch.setenv("HEALTHDESK_DEMO_PATIENT_PHONE", "2340000000000")
     monkeypatch.setenv("HEALTHDESK_ENV", "demo")
     get_settings.cache_clear()
-    yield "2348127052315"
+    yield "2340000000000"
     get_settings.cache_clear()
 
 
@@ -134,7 +134,7 @@ async def test_unknown_phone_upserts_new_profile(monkeypatch, settings_no_demo_p
 
 
 async def test_demo_fallback_blocked_in_production(monkeypatch, stub_resolve_by_phone):
-    monkeypatch.setenv("HEALTHDESK_DEMO_PATIENT_PHONE", "2348127052315")
+    monkeypatch.setenv("HEALTHDESK_DEMO_PATIENT_PHONE", "2340000000000")
     monkeypatch.setenv("HEALTHDESK_ENV", "production")
     get_settings.cache_clear()
     ctx = _StubCtx(metadata="")

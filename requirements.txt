@@ -31,6 +31,11 @@ asyncpg==0.31.0           # latest stable, Nov 2025; Py3.9+, PG 9.5–18
 openai==2.41.0
 httpx==0.28.1             # last 0.x release; supabase 2.31 + openai 2.x both OK
 
+# ── Google Calendar (optional real-calendar backend) ────────────────────
+# Only used to mint a service-account token; Calendar v3 is called over httpx.
+# No google-api-python-client needed.
+google-auth==2.35.0
+
 # ── Supabase / pgvector ─────────────────────────────────────────────────
 supabase==2.31.0          # latest stable, Jun 2026
 
@@ -51,9 +56,9 @@ livekit-plugins-silero==1.5.17        # silero.VAD.load() unchanged
 mcp==1.27.2
 
 # ── Caching ─────────────────────────────────────────────────────────────
-# cachetools 7.x; TLRUCache(maxsize, ttu, timer=time.monotonic, getsizeof=None)
-# signature confirmed on cachetools.readthedocs.io. No code change.
-cachetools==7.1.4
+# cachetools 5.x; TLRUCache signature is stable across 5.x/6.x/7.x.
+# Pinned <6.0 because google-auth 2.35.0 caps at cachetools<6.0.
+cachetools==5.5.2
 
 # ── Dev / eval ──────────────────────────────────────────────────────────
 pytest==9.0.3

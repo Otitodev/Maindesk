@@ -1,0 +1,44 @@
+services:
+  healthdesk:
+    build: .
+    image: healthdesk-ai:latest
+    container_name: healthdesk
+    env_file: .env
+    expose:
+      - "8000"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: healthdesk-pg
+    # Credentials hardcoded to match .env.example's DATABASE_URL.
+    # Postgres is network-internal only (no port mapping), never exposed publicly.
+    environment:
+      POSTGRES_USER: healthdesk
+      POSTGRES_PASSWORD: healthdesk
+      POSTGRES_DB: healthdesk
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: healthdesk-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - healthdesk
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
