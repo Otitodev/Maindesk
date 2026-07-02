@@ -1,0 +1,11 @@
+{
+	email otitodrichukwu@gmail.com
+}
+
+maindesk.otito.site {
+	encode gzip
+	reverse_proxy healthdesk:8000 {
+		# Streaming for SSE on /staff and any long-poll routes.
+		flush_interval -1
+	}
+}

@@ -1,3 +1,5 @@
+> **中文摘要** · 面向诊所的多渠道自主前台 AI 助手。同一套智能体覆盖 **WhatsApp、网页、语音电话、电子邮件** 四个渠道,具备跨渠道患者记忆、严格的事实约束(不编造)、以及营业时间外自动接待模式。基于 **Qwen-Plus + Qwen-Turbo + text-embedding-v3**(均通过 DashScope 调用)构建。Qwen Cloud 黑客松 Track 4 参赛作品。
+
 # HealthDesk AI
 
 A multi-channel autonomous front-desk agent for clinics. Patients reach it on **WhatsApp**, the **web**, or by **voice**, and the same brain answers across all three — with patient-specific memory carried across channels.
@@ -160,7 +162,7 @@ The shape of the system is the headline: **four channels and an MCP server all f
 ```bash
 # 1. Copy and fill the environment file
 cp .env.example .env
-# At minimum: QWEN_API_KEY, QWEN_API_BASE
+# At minimum: DASHSCOPE_API_KEY, QWEN_API_BASE
 # For full demo: + DATABASE_URL, EVOLUTION_*, LIVEKIT_*, DEEPGRAM_*, ELEVENLABS_*
 
 # 2. Bring up Postgres on host port 5433 (avoids collisions with a native install)
@@ -234,6 +236,9 @@ app/
     store.py               escalation queue persistence + staff actions
     events.py              in-process pub/sub for live updates
     templates/index.html   single-page staff console
+  chat/
+    router.py              /chat patient-facing widget (light theme)
+    templates/index.html   self-contained chat UI -> /webhooks/web
   mcp/
     server.py              FastMCP stdio server — clinic tools for MCP clients
   voice/
@@ -342,6 +347,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 | Channel parity (voice · WhatsApp · web · email) | ✅ one orchestrator graph + shared tool layer across all four |
 | After-hours mode | ✅ `ANSWER_MODE=after_hours` auto-handles only when closed; hands off to staff during open hours |
 | Self-serve onboarding wizard (`/onboarding`) | ✅ set hours, working days, timezone, answer mode, persona & FAQs from a web form; agent applies them live (no restart) |
+| Patient chat widget (`/chat`) | ✅ self-contained light-theme web UI that talks to the same orchestrator graph as every other channel |
 | Real calendar backend (Google) | ✅ business-hours availability + free/busy + booking mirror; falls back to local scheduler when unconfigured |
 | MCP server (7 clinic tools, any MCP client) | ✅ `python -m app.mcp.server` |
 | Human-in-the-loop staff dashboard (`/staff`) | ✅ live escalation queue, approve/redirect/close |

@@ -1,7 +1,8 @@
-"""Qwen / DashScope client wrapper (TRD §11).
+"""Qwen Cloud client wrapper (TRD §11).
 
-Uses the OpenAI-compatible DashScope endpoint so we can lean on the
-`openai` SDK rather than maintain a bespoke HTTP client.
+Uses the OpenAI-compatible endpoint published at
+https://docs.qwencloud.com/developer-guides/getting-started/introduction
+so we can lean on the `openai` SDK rather than maintain a bespoke HTTP client.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from app.config import get_settings
 @lru_cache
 def qwen_client() -> AsyncOpenAI:
     s = get_settings()
-    return AsyncOpenAI(api_key=s.qwen_api_key, base_url=s.qwen_api_base)
+    return AsyncOpenAI(api_key=s.dashscope_api_key, base_url=s.qwen_api_base)
 
 
 async def complete(
@@ -40,17 +41,15 @@ async def complete(
 
 
 async def embed(text: str) -> list[float]:
-    """Generate a vector embedding via DashScope's OpenAI-compatible API.
+    """Generate a vector embedding via Qwen Cloud's OpenAI-compatible API.
 
-    DashScope accepts the OpenAI `dimensions` parameter through
+    The endpoint accepts the OpenAI `dimensions` parameter through
     `/compatible-mode/v1/embeddings`. Allowed values per model:
 
-      * text-embedding-v3: {1024 (default), 768, 512}  — FIXED set only
-      * text-embedding-v4: {2048, 1536, 1024, 768, 512, 256, 128, 64}
+      * text-embedding-v4 (current default): {2048, 1536, 1024, 768, 512, 256, 128, 64}
+      * text-embedding-v3 (legacy):          {1024, 768, 512}
 
-    If you need a non-standard dimension (e.g. 256), pin
-    `QWEN_EMBED_MODEL=text-embedding-v4` in your .env. Passing an
-    unsupported value to v3 will raise InvalidParameter from DashScope.
+    Pin QWEN_EMBED_MODEL and QWEN_EMBED_DIM in .env to override.
     """
     s = get_settings()
     resp = await qwen_client().embeddings.create(

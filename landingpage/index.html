@@ -874,6 +874,23 @@
   /* small layout helpers (replace inline styles) */
   .hero-sub { max-width: 560px; text-align: center; }
   .hero-cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .hero-powered {
+    margin-top: 28px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-align: center;
+    opacity: 0.85;
+  }
+  .hero-powered strong { font-weight: 700; color: var(--ink-mid); }
+  .hero-powered .zh {
+    text-transform: none;
+    letter-spacing: 0.04em;
+    font-weight: 400;
+    margin-left: 6px;
+  }
   .scroll-hint--anchored { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); }
   .pricing-card a.btn { width: 100%; text-align: center; }
   .pricing-price--custom .amount { font-size: 2rem; }
@@ -973,9 +990,13 @@
     </p>
 
     <div class="hero-cta-row">
-      <a href="#cta" class="btn btn--primary">See it live →</a>
+      <a href="https://maindesk.otito.site/chat" target="_blank" rel="noopener" class="btn btn--primary">Try it live →</a>
       <a href="#how-it-works" class="btn btn--ghost">How it works</a>
     </div>
+
+    <p class="hero-powered">
+      Powered by <strong>Qwen</strong><span class="zh">· 通义千问</span>
+    </p>
   </div>
 
   <div class="scroll-hint scroll-hint--anchored">
