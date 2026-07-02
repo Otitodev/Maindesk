@@ -56,9 +56,9 @@ livekit-plugins-silero==1.5.17        # silero.VAD.load() unchanged
 mcp==1.27.2
 
 # ── Caching ─────────────────────────────────────────────────────────────
-# cachetools 7.x; TLRUCache(maxsize, ttu, timer=time.monotonic, getsizeof=None)
-# signature confirmed on cachetools.readthedocs.io. No code change.
-cachetools==7.1.4
+# cachetools 5.x; TLRUCache signature is stable across 5.x/6.x/7.x.
+# Pinned <6.0 because google-auth 2.35.0 caps at cachetools<6.0.
+cachetools==5.5.2
 
 # ── Dev / eval ──────────────────────────────────────────────────────────
 pytest==9.0.3
