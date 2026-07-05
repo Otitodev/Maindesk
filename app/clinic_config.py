@@ -44,7 +44,7 @@ def _defaults() -> dict[str, Any]:
     s = get_settings()
     return {
         "clinic_name": "",
-        "agent_name": "HealthDesk",
+        "agent_name": "MainDesk",
         "greeting": "",
         "timezone": s.clinic_timezone,
         "open_hour": s.clinic_open_hour,
