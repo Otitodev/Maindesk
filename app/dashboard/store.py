@@ -119,10 +119,11 @@ async def month_analytics() -> dict[str, Any]:
                 WHERE status = 'open'
               )                                              AS escalations_open,
               COALESCE(
-                EXTRACT(EPOCH FROM AVG(resolved_at - created_at))
-                FILTER (
-                  WHERE resolved_at IS NOT NULL
-                    AND created_at >= date_trunc('month', NOW())
+                EXTRACT(EPOCH FROM
+                  AVG(resolved_at - created_at) FILTER (
+                    WHERE resolved_at IS NOT NULL
+                      AND created_at >= date_trunc('month', NOW())
+                  )
                 ),
                 0
               )                                              AS avg_resolve_seconds
