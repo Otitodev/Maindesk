@@ -392,8 +392,11 @@ class HealthDeskAgent(Agent):
 
 def _qwen_llm() -> openai.LLM:
     s = get_settings()
+    # qwen-turbo shaves ~1–2s off first-token latency vs qwen-plus and is
+    # accurate enough for short receptionist turns. Switch to plus only if
+    # accuracy on long, multi-intent turns becomes the bottleneck.
     return openai.LLM(
-        model=s.qwen_model_plus,
+        model=s.qwen_model_turbo,
         api_key=s.dashscope_api_key,
         base_url=s.qwen_api_base,
         temperature=0.3,
@@ -461,6 +464,12 @@ async def entrypoint(ctx: JobContext) -> None:
         stt=deepgram.STT(api_key=s.deepgram_api_key, model="nova-3", language="multi"),
         llm=_qwen_llm(),
         tts=elevenlabs.TTS(api_key=s.elevenlabs_api_key, model="eleven_flash_v2_5"),
+        # preemptive_generation begins the LLM call the moment endpointing
+        # triggers rather than waiting for the transcript-final ACK — shaves
+        # ~300ms off perceived first-token latency. min_endpointing_delay
+        # trades a bit of interruption robustness for faster turn-taking.
+        preemptive_generation=True,
+        min_endpointing_delay=0.3,
     )
     agent = HealthDeskAgent(patient_id=patient_id, patient_phone=patient_phone)
     await session.start(agent=agent, room=ctx.room)

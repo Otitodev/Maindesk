@@ -1,0 +1,21 @@
+{
+  "sip_dispatch_rule_id": "SDR_7fpdJ5UnGwX8",
+  "dispatch_rule": {
+    "name": "MainDesk inbound",
+    "rule": {
+      "dispatchRuleIndividual": {
+        "roomPrefix": "maindesk-"
+      }
+    },
+    "roomConfig": {
+      "agents": [
+        {
+          "agentName": "healthdesk",
+          "metadata": "inbound_call"
+        }
+      ]
+    },
+    "trunk_ids": [],
+    "inbound_numbers": ["+14842707025"]
+  }
+}

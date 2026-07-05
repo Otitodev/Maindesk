@@ -1,0 +1,20 @@
+{
+  "dispatch_rule": {
+    "name": "MainDesk inbound",
+    "rule": {
+      "dispatchRuleIndividual": {
+        "roomPrefix": "maindesk-"
+      }
+    },
+    "roomConfig": {
+      "agents": [
+        {
+          "agentName": "healthdesk",
+          "metadata": "inbound_call"
+        }
+      ]
+    },
+    "trunk_ids": [],
+    "numbers": ["+14842707025"]
+  }
+}

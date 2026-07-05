@@ -92,7 +92,11 @@ async def receive(
     settings = get_settings()
     body = await request.body()
 
-    if settings.evolution_auth_mode == "hmac":
+    if settings.healthdesk_demo_mode:
+        # Demo mode: accept unsigned POSTs so the loop is exercisable
+        # without a real Evolution instance. Never enable in production.
+        pass
+    elif settings.evolution_auth_mode == "hmac":
         if not _verify_hmac(body, x_signature, settings.evolution_webhook_secret):
             log.warning("whatsapp webhook hmac rejected")
             raise HTTPException(status_code=401, detail="invalid signature")

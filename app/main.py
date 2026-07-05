@@ -18,6 +18,8 @@ from app.gateway.adapters.evolution_client import close_client as close_evolutio
 from app.gateway.adapters.web import router as web_router
 from app.gateway.adapters.whatsapp import router as whatsapp_router
 from app.gateway.limiter import limiter
+from app.gateway.demo_inbox import router as demo_inbox_router
+from app.gateway.readiness import router as readiness_router
 
 
 @asynccontextmanager
@@ -45,6 +47,8 @@ app.include_router(email_router)
 app.include_router(staff_router)
 app.include_router(onboarding_router)
 app.include_router(chat_router)
+app.include_router(readiness_router)
+app.include_router(demo_inbox_router)
 
 
 @app.get("/health")
