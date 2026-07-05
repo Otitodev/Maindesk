@@ -181,9 +181,19 @@ async def act(esc_id: str, request: Request) -> HTMLResponse:
     if action not in store.ACTION_TO_STATUS:
         raise HTTPException(status_code=422, detail=f"unknown action {action!r}")
     try:
-        applied = await store.resolve_escalation(esc_id, action=action, note=note)
-        if not applied:
+        resolved = await store.resolve_escalation(esc_id, action=action, note=note)
+        if not resolved:
             log.info("escalation %s already resolved or missing", esc_id)
+        else:
+            # Fire the staff's note back to the patient on their original
+            # channel. Best-effort — the queue row is already resolved and
+            # the staff UI must not stall on an outbound provider hiccup.
+            from app.tools.escalation import deliver_staff_note
+            try:
+                outcome = await deliver_staff_note(resolved)
+                log.info("resume outbound esc=%s outcome=%s", esc_id, outcome)
+            except Exception:
+                log.warning("resume outbound failed esc=%s", esc_id, exc_info=True)
     except Exception:
         log.warning("dashboard action failed", exc_info=True)
     return HTMLResponse(await _queue_fragment(key))

@@ -72,21 +72,33 @@ async def list_escalations(*, limit: int = 25) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-async def resolve_escalation(esc_id: str, *, action: str, note: str = "") -> bool:
-    """Apply a staff action to an open escalation. Returns False if already handled."""
+async def resolve_escalation(
+    esc_id: str, *, action: str, note: str = ""
+) -> dict[str, Any] | None:
+    """Apply a staff action to an open escalation.
+
+    Returns the resolved row (with channel, session_id, patient_id, note, status,
+    and the patient's phone/email) so callers can push an outbound resume back
+    to the patient. Returns None if the escalation was already handled.
+    """
     status = ACTION_TO_STATUS.get(action)
     if status is None or _as_uuid(esc_id) is None:
-        return False
+        return None
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "UPDATE escalations SET status = $2, note = NULLIF($3, ''), resolved_at = NOW() "
-            "WHERE id = $1 AND status = 'open' RETURNING id",
+            "WITH updated AS ("
+            "  UPDATE escalations SET status = $2, note = NULLIF($3, ''), resolved_at = NOW() "
+            "  WHERE id = $1 AND status = 'open' "
+            "  RETURNING id, session_id, channel, patient_id, note, status"
+            ") "
+            "SELECT u.*, p.full_name, p.phone, p.email "
+            "FROM updated u LEFT JOIN patients p ON p.id = u.patient_id",
             uuid.UUID(esc_id),
             status,
             note.strip(),
         )
-    return row is not None
+    return dict(row) if row is not None else None
 
 
 async def month_analytics() -> dict[str, Any]:
