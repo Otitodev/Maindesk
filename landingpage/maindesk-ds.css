@@ -1049,3 +1049,194 @@ a { color: inherit; }
   align-self: flex-start;
   max-width: 78%;
 }
+
+
+/* ────────────────────────────────────────────────────────────────
+   10. APP SHELL (shared operator chrome)
+   Sidebar + content columns used across /staff, /onboarding, and
+   /staff/analytics so the internal pages read as one app.
+──────────────────────────────────────────────────────────────── */
+.md-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-mist);
+}
+.md-shell__sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--border-soft);
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.md-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.md-shell__mark {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 30% 30%, var(--teal-vivid), var(--teal-text));
+  box-shadow: 0 4px 12px rgba(0,140,151,0.25);
+  flex-shrink: 0;
+}
+.md-shell__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.md-shell__nav-group-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  font-weight: 700;
+  padding: 8px 12px 4px;
+}
+.md-shell__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  color: var(--ink-mid);
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: background 0.15s, color 0.15s;
+}
+.md-shell__link:hover { background: var(--border-soft); color: var(--ink); }
+.md-shell__link.is-active {
+  background: var(--teal-pale);
+  color: var(--teal-text);
+  font-weight: 600;
+}
+.md-shell__link-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+  min-width: 22px;
+  text-align: center;
+}
+.md-shell__link.is-active .md-shell__link-count { background: var(--teal-text); }
+.md-shell__foot {
+  border-top: 1px solid var(--border-soft);
+  padding-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.md-shell__status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green-live);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+}
+.md-shell__content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6) var(--space-6);
+}
+.md-shell__content-header { margin-bottom: var(--space-5); }
+.md-shell__content-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-1);
+}
+.md-shell__content-sub { color: var(--ink-soft); margin: 0; }
+
+@media (max-width: 780px) {
+  .md-shell { flex-direction: column; }
+  .md-shell__sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+    gap: var(--space-4);
+    overflow-x: auto;
+  }
+  .md-shell__nav { flex-direction: row; gap: var(--space-1); flex-wrap: nowrap; }
+  .md-shell__nav-group-label { display: none; }
+  .md-shell__link { padding: 6px 10px; font-size: 0.85rem; }
+  .md-shell__foot { border-top: 0; padding-top: 0; margin-left: auto; }
+  .md-shell__content { padding: var(--space-4); }
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   11. OVERVIEW TILES (default /staff landing)
+──────────────────────────────────────────────────────────────── */
+.md-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.md-tile {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.md-tile__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin: 0;
+}
+.md-tile__value {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  margin: 0;
+}
+.md-tile__foot {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.md-tile__foot a { color: var(--teal-text); font-weight: 600; text-decoration: none; }
+.md-tile__foot a:hover { text-decoration: underline; }
+
+.md-panel {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-5);
+}
+.md-panel__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-3);
+  color: var(--ink);
+}
+.md-panel__link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  color: var(--teal-text);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.md-panel__link:hover { text-decoration: underline; }

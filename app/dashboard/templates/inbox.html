@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MainDesk — Conversations</title>
+<link rel="stylesheet" href="/vendor/fonts.css" />
+<link rel="stylesheet" href="/maindesk-ds.css" />
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<script src="https://unpkg.com/htmx-ext-sse@2.2.2"></script>
+<style>
+  /* Queue-card internals: layout too niche to promote into the DS.
+     All colors/spacing come from DS tokens so a token change propagates. */
+  .md-esc-card {
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .md-esc-card .row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .md-esc-card .who { font-weight: 600; }
+  .md-esc-card .chip {
+    font-size: 12px; color: var(--teal-text);
+    border: 1px solid var(--border-soft);
+    padding: 1px 8px; border-radius: var(--radius-pill);
+  }
+  .md-esc-card .session, .md-esc-card .when { color: var(--ink-soft); font-size: 12px; }
+  .md-esc-card .reason { margin: 8px 0 2px; }
+  .md-esc-card .preview { color: var(--ink-soft); font-size: 13px; font-style: italic; }
+  .md-esc-card .note-line { color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
+  .md-esc-card .actions {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .md-esc-card .actions input {
+    flex: 1; min-width: 140px;
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    padding: 6px 10px; font-size: 13px;
+  }
+  .md-esc-card .actions button {
+    border: 0; border-radius: var(--radius-md);
+    padding: 6px 14px; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+    background: var(--ink); color: var(--white);
+  }
+  .md-esc-card .actions button.redirect { background: var(--teal-ui); }
+  .md-esc-card .actions button.close { background: var(--ink-soft); }
+  .md-esc-card .actions button:hover { filter: brightness(1.05); }
+
+  .md-empty {
+    color: var(--ink-soft); padding: 24px; text-align: center;
+    border: 1px dashed var(--border-soft); border-radius: var(--radius-md);
+    background: var(--white);
+  }
+  .md-booking {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px;
+  }
+  .md-booking:last-child { border-bottom: 0; }
+  .md-booking .when { color: var(--ink-soft); }
+
+  .inbox-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  @media (max-width: 900px) { .inbox-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body hx-ext="sse" sse-connect="/staff/events?key=__KEY__">
+<div class="md-shell">
+  <aside class="md-shell__sidebar">
+    <a href="/" class="md-shell__brand">
+      <span class="md-shell__mark"></span>
+      <span>MainDesk</span>
+    </a>
+    <nav class="md-shell__nav">
+      <span class="md-shell__nav-group-label">Operate</span>
+      <a href="/staff?key=__KEY__" class="md-shell__link">Overview</a>
+      <a href="/staff/inbox?key=__KEY__" class="md-shell__link is-active">Conversations
+        __QUEUE_BADGE__
+      </a>
+      <a href="/staff/analytics?key=__KEY__" class="md-shell__link">Analytics</a>
+      <span class="md-shell__nav-group-label">Setup</span>
+      <a href="/onboarding?key=__KEY__" class="md-shell__link">Configure</a>
+      <a href="/chat" class="md-shell__link" target="_blank">Preview chat ↗</a>
+    </nav>
+    <div class="md-shell__foot">
+      <span class="md-shell__status-dot"></span>Live
+    </div>
+  </aside>
+  <main class="md-shell__content">
+    <div class="md-shell__content-header">
+      <h1 class="md-shell__content-title">Conversations</h1>
+      <p class="md-shell__content-sub">Moments MainDesk paused so you could weigh in.</p>
+    </div>
+    <div class="inbox-grid">
+      <section>
+        <h2 class="md-sectionhead">Needs you</h2>
+        <div id="queue"
+             hx-get="/staff/queue?key=__KEY__"
+             hx-trigger="load, sse:escalation, every 10s"
+             hx-swap="innerHTML">
+          <div class="md-empty">Loading…</div>
+        </div>
+      </section>
+      <aside>
+        <h2 class="md-sectionhead">Upcoming bookings</h2>
+        <div id="bookings"
+             hx-get="/staff/bookings?key=__KEY__"
+             hx-trigger="load, every 15s"
+             hx-swap="innerHTML">
+          <div class="md-empty">Loading…</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>
