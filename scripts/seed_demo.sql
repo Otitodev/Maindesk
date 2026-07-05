@@ -44,7 +44,7 @@ INSERT INTO patients (full_name, phone, email) VALUES
   ('Priya Ramanathan',               '+6593456703', 'priya.ramanathan@gmail.com'),
   ('Muhammad Faizal bin Rashid',     '+6584567804', 'faizal.rashid@outlook.sg'),
   ('Cheng Yi Xuan',                  '+6595678905', 'yixuan.cheng@gmail.com'),
-  ('Aravind Kumar',                  '+6586789006', NULL),
+  ('Aravind Kumar',                  '+6586789006', 'aravind.kumar@gmail.com'),
   ('Nur Aisyah binti Ismail',        '+6597890107', 'nur.aisyah@gmail.com'),
   ('Wong Jia Le',                    '+6588901208', 'jiale.wong@gmail.com')
 ON CONFLICT (phone) DO UPDATE
