@@ -154,9 +154,14 @@ class HealthDeskAgent(Agent):
         if should_defer_to_staff():
             self.session.generate_reply(instructions=GREETING_DEFERRAL)
         else:
-            # Static line — session.say() skips the LLM roundtrip and starts
-            # TTS immediately, cutting ~1s off perceived time-to-first-audio.
-            self.session.say("Hi — you have reached the front desk. How can I help today?")
+            # Prefer the clinic-configured greeting from /onboarding; fall
+            # back to a generic line if unset. session.say() skips the LLM
+            # roundtrip so TTS starts immediately.
+            configured = (clinic_config.current().get("greeting") or "").strip()
+            self.session.say(
+                configured
+                or "Hi — you have reached the front desk. How can I help today?"
+            )
 
     async def on_exit(self) -> None:
         await self._persist_session()

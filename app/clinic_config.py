@@ -28,6 +28,7 @@ log = logging.getLogger(__name__)
 EDITABLE_FIELDS = (
     "clinic_name",
     "agent_name",
+    "greeting",
     "timezone",
     "open_hour",
     "close_hour",
@@ -44,6 +45,7 @@ def _defaults() -> dict[str, Any]:
     return {
         "clinic_name": "",
         "agent_name": "HealthDesk",
+        "greeting": "",
         "timezone": s.clinic_timezone,
         "open_hour": s.clinic_open_hour,
         "close_hour": s.clinic_close_hour,

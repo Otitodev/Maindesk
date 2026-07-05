@@ -71,6 +71,7 @@ def _parse_form(form: dict[str, list[str]]) -> dict:
     return {
         "clinic_name": one("clinic_name"),
         "agent_name": one("agent_name", "HealthDesk") or "HealthDesk",
+        "greeting": one("greeting"),
         "timezone": tz,
         "open_hour": open_hour,
         "close_hour": close_hour,
@@ -102,6 +103,7 @@ def _render(cfg: dict, key: str, *, saved: bool = False) -> str:
         page.replace("__KEY__", urllib.parse.quote(key))
         .replace("__CLINIC_NAME__", html.escape(cfg["clinic_name"]))
         .replace("__AGENT_NAME__", html.escape(cfg["agent_name"]))
+        .replace("__GREETING__", html.escape(cfg.get("greeting", "")))
         .replace("__OPEN_HOUR__", str(cfg["open_hour"]))
         .replace("__CLOSE_HOUR__", str(cfg["close_hour"]))
         .replace("__DAYS__", days)
