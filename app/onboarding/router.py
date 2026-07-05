@@ -84,7 +84,7 @@ def _parse_form(form: dict[str, list[str]]) -> dict:
 def _render(cfg: dict, key: str, *, saved: bool = False) -> str:
     page = _TEMPLATE_PATH.read_text(encoding="utf-8")
     days = "".join(
-        '<label class="day"><input type="checkbox" name="working_days" value="{v}"{chk}> {label}</label>'.format(
+        '<label class="md-chip"><input type="checkbox" name="working_days" value="{v}"{chk}> {label}</label>'.format(
             v=v, label=label, chk=" checked" if v in cfg["working_days"] else ""
         )
         for v, label in _DAY_LABELS

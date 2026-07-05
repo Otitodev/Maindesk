@@ -3,87 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HealthDesk — Staff Console</title>
+<title>MainDesk — Staff Console</title>
+<link rel="stylesheet" href="/maindesk-ds.css" />
 <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 <script src="https://unpkg.com/htmx-ext-sse@2.2.2"></script>
 <style>
-  :root {
-    --bg: #0f1419; --panel: #1a2129; --border: #2c3640;
-    --text: #e6edf3; --muted: #8b98a5; --accent: #4fc3f7;
-    --open: #f59e0b; --approved: #34d399; --redirected: #818cf8; --closed: #6b7280;
+  /* Queue-card internals: layout too niche to promote into the DS.
+     All colors/spacing come from DS tokens so a token change still
+     propagates here. */
+  .md-esc-card {
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  header { display: flex; align-items: baseline; gap: 12px;
-           padding: 18px 28px; border-bottom: 1px solid var(--border); }
-  header h1 { font-size: 18px; margin: 0; }
-  header .sub { color: var(--muted); font-size: 13px; }
-  .live { margin-left: auto; color: var(--approved); font-size: 13px; }
-  main { display: grid; grid-template-columns: 1fr 320px; gap: 20px;
-         padding: 20px 28px; max-width: 1200px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
-       color: var(--muted); margin: 0 0 12px; }
-  .card { background: var(--panel); border: 1px solid var(--border);
-          border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
-  .card .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .badge { font-size: 11px; font-weight: 600; text-transform: uppercase;
-           letter-spacing: .05em; padding: 2px 8px; border-radius: 99px; }
-  .badge.open       { background: #3b2a08; color: var(--open); }
-  .badge.approved   { background: #0a2e22; color: var(--approved); }
-  .badge.redirected { background: #1d2050; color: var(--redirected); }
-  .badge.closed     { background: #262b31; color: var(--closed); }
-  .chip { font-size: 12px; color: var(--accent); border: 1px solid var(--border);
-          padding: 1px 8px; border-radius: 99px; }
-  .who { font-weight: 600; }
-  .when, .session { color: var(--muted); font-size: 12px; }
-  .reason { margin: 8px 0 2px; }
-  .preview { color: var(--muted); font-size: 13px; font-style: italic; }
-  .note-line { color: var(--muted); font-size: 13px; margin-top: 6px; }
-  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .actions input { flex: 1; min-width: 140px; background: var(--bg);
-                   border: 1px solid var(--border); border-radius: 6px;
-                   color: var(--text); padding: 6px 10px; font-size: 13px; }
-  button { border: 0; border-radius: 6px; padding: 6px 14px; font-size: 13px;
-           font-weight: 600; cursor: pointer; }
-  button.approve  { background: #115e45; color: #d1fae5; }
-  button.redirect { background: #312e81; color: #e0e7ff; }
-  button.close    { background: #374151; color: #e5e7eb; }
-  button:hover { filter: brightness(1.2); }
-  .empty { color: var(--muted); padding: 24px; text-align: center;
-           border: 1px dashed var(--border); border-radius: 10px; }
-  .booking { display: flex; justify-content: space-between; gap: 8px;
-             padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .booking:last-child { border-bottom: 0; }
+  .md-esc-card .row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .md-esc-card .who { font-weight: 600; }
+  .md-esc-card .chip {
+    font-size: 12px; color: var(--teal-text);
+    border: 1px solid var(--border-soft);
+    padding: 1px 8px; border-radius: var(--radius-pill);
+  }
+  .md-esc-card .session, .md-esc-card .when { color: var(--ink-soft); font-size: 12px; }
+  .md-esc-card .reason { margin: 8px 0 2px; }
+  .md-esc-card .preview { color: var(--ink-soft); font-size: 13px; font-style: italic; }
+  .md-esc-card .note-line { color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
+  .md-esc-card .actions {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .md-esc-card .actions input {
+    flex: 1; min-width: 140px;
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    padding: 6px 10px; font-size: 13px;
+  }
+  .md-esc-card .actions button {
+    border: 0; border-radius: var(--radius-md);
+    padding: 6px 14px; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+    background: var(--ink); color: var(--white);
+  }
+  .md-esc-card .actions button.redirect { background: var(--teal-ui); }
+  .md-esc-card .actions button.close { background: var(--ink-soft); }
+  .md-esc-card .actions button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+  .md-empty {
+    color: var(--ink-soft); padding: 24px; text-align: center;
+    border: 1px dashed var(--border-soft); border-radius: var(--radius-md);
+    background: var(--white);
+  }
+  .md-booking {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px;
+  }
+  .md-booking:last-child { border-bottom: 0; }
+  .md-booking .when { color: var(--ink-soft); }
+
+  .md-console-main {
+    display: grid; grid-template-columns: 1fr 320px; gap: 20px;
+    padding: 20px 28px; max-width: 1200px;
+  }
+  .md-live { margin-left: auto; color: var(--green-live); font-size: 13px; font-weight: 600; }
+  @media (max-width: 900px) {
+    .md-console-main { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
-<body hx-ext="sse" sse-connect="/staff/events?key=__KEY__">
-  <header>
-    <h1>MainDesk — Staff Console</h1>
-    <span class="sub">human-in-the-loop checkpoints</span>
-    <span class="live">● live</span>
-    <nav style="margin-left: auto; display: flex; gap: 20px; font-size: 13px;">
-      <a href="/staff?key=__KEY__" style="color: var(--text); text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 4px;">Queue</a>
-      <a href="/staff/analytics?key=__KEY__" style="color: var(--muted); text-decoration: none;">Analytics</a>
+<body class="md-page" hx-ext="sse" sse-connect="/staff/events?key=__KEY__">
+  <header class="md-topbar">
+    <h1 class="md-topbar__title">MainDesk</h1>
+    <span class="md-topbar__sub">Staff console — human-in-the-loop checkpoints</span>
+    <span class="md-topbar__spacer"></span>
+    <nav class="md-topbar__nav">
+      <a href="/staff?key=__KEY__" class="is-active">Queue</a>
+      <a href="/staff/analytics?key=__KEY__">Analytics</a>
     </nav>
+    <span class="md-live">● live</span>
   </header>
-  <main>
+  <main class="md-console-main">
     <section>
-      <h2>Escalation queue</h2>
+      <h2 class="md-sectionhead">Escalation queue</h2>
       <div id="queue"
            hx-get="/staff/queue?key=__KEY__"
            hx-trigger="load, sse:escalation, every 10s"
            hx-swap="innerHTML">
-        <div class="empty">Loading…</div>
+        <div class="md-empty">Loading…</div>
       </div>
     </section>
     <aside>
-      <h2>Upcoming bookings</h2>
+      <h2 class="md-sectionhead">Upcoming bookings</h2>
       <div id="bookings"
            hx-get="/staff/bookings?key=__KEY__"
            hx-trigger="load, every 15s"
            hx-swap="innerHTML">
-        <div class="empty">Loading…</div>
+        <div class="md-empty">Loading…</div>
       </div>
     </aside>
   </main>

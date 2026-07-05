@@ -817,3 +817,235 @@ a { color: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* ────────────────────────────────────────────────────────────────
+   9. PRODUCT UI CHROME
+   Shared component set for the app's internal pages: /onboarding,
+   /staff, /chat. Prefixed .md- so nothing collides with the
+   landing-page classes above. Consumes the same tokens (§1) so
+   any brand-level change stays a single-file edit.
+──────────────────────────────────────────────────────────────── */
+
+/* ── 9a. PAGE + CARD ────────────────────────────────────────── */
+.md-page {
+  min-height: 100vh;
+  background: var(--bg-mist);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+.md-page__container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+.md-page__container--wide { max-width: 1200px; }
+.md-page__header { margin-bottom: var(--space-5); }
+.md-page__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-1);
+}
+.md-page__sub { color: var(--ink-soft); font-size: 0.95rem; margin: 0; }
+
+.md-card {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── 9b. FORM CONTROLS ──────────────────────────────────────── */
+.md-field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  margin: var(--space-4) 0 var(--space-2);
+}
+.md-input, .md-select, .md-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.md-input:focus, .md-select:focus, .md-textarea:focus {
+  outline: none;
+  border-color: var(--teal-ui);
+  box-shadow: 0 0 0 3px rgba(0,140,151,0.15);
+}
+.md-textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+.md-hint { color: var(--ink-soft); font-size: 0.8rem; margin-top: var(--space-1); }
+
+.md-row { display: flex; gap: var(--space-4); }
+.md-row > * { flex: 1; }
+@media (max-width: 560px) { .md-row { flex-direction: column; } }
+
+.md-chip-group { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-1); }
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.md-chip input { accent-color: var(--teal-ui); }
+
+.md-form-actions {
+  display: flex; align-items: center; gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+.md-saved { color: var(--teal-text); font-weight: 600; font-size: 0.9rem; }
+
+/* ── 9c. TOPBAR (staff console header) ──────────────────────── */
+.md-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--white);
+  border-bottom: 1px solid var(--border-soft);
+}
+.md-topbar__title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; margin: 0; }
+.md-topbar__sub { color: var(--ink-soft); font-size: 0.85rem; }
+.md-topbar__spacer { flex: 1; }
+.md-topbar__nav { display: flex; gap: var(--space-5); font-size: 0.9rem; }
+.md-topbar__nav a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.md-topbar__nav a:hover { color: var(--ink); }
+.md-topbar__nav a.is-active { color: var(--ink); border-bottom-color: var(--teal-ui); }
+
+.md-sectionhead {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+}
+
+/* ── 9d. STATUS BADGE (queue items) ─────────────────────────── */
+.md-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+}
+.md-status--open       { background: #fff3d6; color: #8a5a04; }
+.md-status--approved   { background: #d6f5e5; color: #0f6b3f; }
+.md-status--redirected { background: #e7eaff; color: #3f47a6; }
+.md-status--closed     { background: #eef1f4; color: var(--ink-soft); }
+
+/* ── 9e. CHAT BUBBLES ───────────────────────────────────────── */
+.md-chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-1);
+}
+.md-bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.md-bubble--agent {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-bottom-left-radius: var(--radius-sm);
+  align-self: flex-start;
+}
+.md-bubble--user {
+  background: var(--ink);
+  color: var(--white);
+  border-bottom-right-radius: var(--radius-sm);
+  align-self: flex-end;
+}
+.md-typing {
+  display: inline-flex; gap: 5px; padding: 14px;
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-sm);
+  align-self: flex-start;
+}
+.md-typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-soft); opacity: 0.5;
+  animation: md-bounce 1.2s infinite;
+}
+.md-typing span:nth-child(2) { animation-delay: 0.15s; }
+.md-typing span:nth-child(3) { animation-delay: 0.30s; }
+@keyframes md-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Chat input bar — single-line default, grows via JS to a max */
+.md-chat-inputbar { display: flex; gap: var(--space-2); align-items: flex-end; }
+.md-chat-input {
+  flex: 1;
+  resize: none;
+  padding: 10px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  max-height: 140px;
+  min-height: 44px;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+.md-chat-input:focus {
+  outline: none;
+  border-color: var(--teal-ui);
+  box-shadow: 0 0 0 3px rgba(0,140,151,0.15);
+}
+.md-chat-send {
+  background: var(--ink);
+  color: var(--white);
+  border: 0;
+  border-radius: var(--radius-lg);
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 80px;
+  height: 44px;
+}
+.md-chat-send:hover:not(:disabled) { background: var(--ink-hover); }
+.md-chat-send:disabled { background: var(--ink-soft); cursor: not-allowed; }
+
+.md-chat-error {
+  font-size: 0.9rem;
+  color: #b32228;
+  padding: 8px 14px;
+  background: #fff4f4;
+  border: 1px solid #f5c2c5;
+  border-radius: var(--radius-md);
+  align-self: flex-start;
+  max-width: 78%;
+}

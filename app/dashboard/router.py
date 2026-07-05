@@ -57,7 +57,7 @@ def _esc_card(e: dict, key: str) -> str:
     when = _fmt(e.get("created_at"))
 
     head = (
-        f'<div class="row"><span class="badge {status}">{status}</span>'
+        f'<div class="row"><span class="md-status md-status--{status}">{status}</span>'
         f'<span class="who">{who}</span><span class="chip">{channel}</span>'
         f'<span class="session">{session}</span>'
         f'<span class="when">{when}</span></div>'
@@ -66,7 +66,7 @@ def _esc_card(e: dict, key: str) -> str:
     )
     if status != "open":
         note_line = f'<div class="note-line">note: {note}</div>' if note else ""
-        return f'<div class="card">{head}{note_line}</div>'
+        return f'<div class="md-esc-card">{head}{note_line}</div>'
 
     qkey = urllib.parse.quote(key)
     actions = "".join(
@@ -77,7 +77,7 @@ def _esc_card(e: dict, key: str) -> str:
         [("approve", "Approve"), ("redirect", "Redirect to doctor"), ("close", "Close")]
     )
     return (
-        f'<div class="card">{head}<div class="actions">'
+        f'<div class="md-esc-card">{head}<div class="actions">'
         f'<input id="note-{esc_id}" name="note" placeholder="optional note&hellip;">'
         f"{actions}</div></div>"
     )
@@ -88,9 +88,9 @@ async def _queue_fragment(key: str) -> str:
         escalations = await store.list_escalations()
     except Exception:
         log.warning("dashboard queue query failed", exc_info=True)
-        return '<div class="empty">Database not reachable — is Postgres up?</div>'
+        return '<div class="md-empty">Database not reachable — is Postgres up?</div>'
     if not escalations:
-        return '<div class="empty">No escalations yet. All quiet. 🎉</div>'
+        return '<div class="md-empty">No escalations yet. All quiet.</div>'
     return "".join(_esc_card(e, key) for e in escalations)
 
 
@@ -132,11 +132,11 @@ async def bookings(request: Request) -> HTMLResponse:
         rows = await store.recent_bookings()
     except Exception:
         log.warning("dashboard bookings query failed", exc_info=True)
-        return HTMLResponse('<div class="empty">Database not reachable.</div>')
+        return HTMLResponse('<div class="md-empty">Database not reachable.</div>')
     if not rows:
-        return HTMLResponse('<div class="empty">No upcoming bookings.</div>')
+        return HTMLResponse('<div class="md-empty">No upcoming bookings.</div>')
     items = "".join(
-        f'<div class="booking"><span>{html.escape(r.get("full_name") or "Unknown")}</span>'
+        f'<div class="md-booking"><span>{html.escape(r.get("full_name") or "Unknown")}</span>'
         f'<span class="when">{_fmt(r.get("starts_at"))} &middot; {html.escape(r.get("status") or "")}</span></div>'
         for r in rows
     )
@@ -168,78 +168,92 @@ async def analytics(request: Request) -> HTMLResponse:
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MainDesk — Analytics</title>
+<link rel="stylesheet" href="/maindesk-ds.css" />
 <style>
-:root {{
-  --bg: #0f1419; --panel: #1a2129; --border: #2c3640;
-  --text: #e6edf3; --muted: #8b98a5; --accent: #4fc3f7;
-  --up: #34d399; --down: #f87171;
-}}
-* {{ box-sizing: border-box; }}
-body {{ margin: 0; background: var(--bg); color: var(--text);
-       font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }}
-header {{ display: flex; align-items: baseline; gap: 12px;
-         padding: 18px 28px; border-bottom: 1px solid var(--border); }}
-header h1 {{ font-size: 18px; margin: 0; }}
-header .sub {{ color: var(--muted); font-size: 13px; }}
-header nav {{ margin-left: auto; display: flex; gap: 20px; font-size: 13px; }}
-header nav a {{ color: var(--muted); text-decoration: none; }}
-header nav a.active {{ color: var(--text); border-bottom: 2px solid var(--accent); padding-bottom: 4px; }}
-main {{ padding: 32px 28px; max-width: 1100px; }}
-.eyebrow {{ font-size: 12px; text-transform: uppercase; letter-spacing: .1em;
-            color: var(--muted); margin: 0 0 24px; }}
-.grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-         gap: 16px; margin-bottom: 32px; }}
-.tile {{ background: var(--panel); border: 1px solid var(--border);
-         border-radius: 12px; padding: 22px 20px; }}
-.tile .label {{ font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
-                color: var(--muted); margin: 0 0 8px; }}
-.tile .value {{ font-size: 34px; font-weight: 700; margin: 0; line-height: 1.1; }}
-.tile .footnote {{ font-size: 12px; color: var(--muted); margin: 8px 0 0; }}
-.delta {{ font-size: 14px; font-weight: 600; margin-left: 10px; vertical-align: middle; }}
-.delta.up   {{ color: var(--up); }}
-.delta.down {{ color: var(--down); }}
-.callout {{ background: var(--panel); border: 1px solid var(--border);
-            border-radius: 12px; padding: 24px 28px; }}
-.callout h2 {{ font-size: 15px; margin: 0 0 8px; color: var(--accent); }}
-.callout p {{ margin: 0; color: var(--muted); font-size: 14px; }}
+  .an-main {{ padding: 32px 28px; max-width: 1100px; margin: 0 auto; }}
+  .an-eyebrow {{
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-soft); margin: 0 0 24px; font-weight: 700;
+  }}
+  .an-grid {{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }}
+  .an-tile {{
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    box-shadow: var(--shadow-sm);
+  }}
+  .an-tile .label {{
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-soft); margin: 0 0 8px; font-weight: 600;
+  }}
+  .an-tile .value {{
+    font-family: var(--font-display);
+    font-size: 34px; font-weight: 700; margin: 0; line-height: 1.1;
+    color: var(--ink);
+  }}
+  .an-tile .footnote {{ font-size: 0.8rem; color: var(--ink-soft); margin: 8px 0 0; }}
+  .delta {{ font-size: 14px; font-weight: 600; margin-left: 10px; vertical-align: middle; }}
+  .delta.up   {{ color: var(--green-live); }}
+  .delta.down {{ color: #dc2626; }}
+  .an-callout {{
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-sm);
+  }}
+  .an-callout h2 {{
+    font-family: var(--font-display);
+    font-size: 1rem; margin: 0 0 8px; color: var(--teal-text);
+  }}
+  .an-callout p {{ margin: 0; color: var(--ink-soft); font-size: 0.95rem; }}
+  .an-value-unit {{ font-size: 16px; color: var(--ink-soft); font-weight: 500; }}
 </style></head>
-<body><header>
-  <h1>MainDesk</h1><span class="sub">operator analytics</span>
-  <nav>
-    <a href="/staff?key={qkey}">Queue</a>
-    <a href="/staff/analytics?key={qkey}" class="active">Analytics</a>
-  </nav>
-</header>
-<main>
-  <p class="eyebrow">This month · so far</p>
-  <div class="grid">
-    <div class="tile">
-      <p class="label">Bookings handled</p>
-      <p class="value">{m["bookings_this_month"]} {growth_bit}</p>
-      <p class="footnote">vs {m["bookings_last_month"]} last month</p>
+<body class="md-page">
+  <header class="md-topbar">
+    <h1 class="md-topbar__title">MainDesk</h1>
+    <span class="md-topbar__sub">Operator analytics</span>
+    <span class="md-topbar__spacer"></span>
+    <nav class="md-topbar__nav">
+      <a href="/staff?key={qkey}">Queue</a>
+      <a href="/staff/analytics?key={qkey}" class="is-active">Analytics</a>
+    </nav>
+  </header>
+  <main class="an-main">
+    <p class="an-eyebrow">This month · so far</p>
+    <div class="an-grid">
+      <div class="an-tile">
+        <p class="label">Bookings handled</p>
+        <p class="value">{m["bookings_this_month"]} {growth_bit}</p>
+        <p class="footnote">vs {m["bookings_last_month"]} last month</p>
+      </div>
+      <div class="an-tile">
+        <p class="label">Escalations to a human</p>
+        <p class="value">{m["escalations_this_month"]}</p>
+        <p class="footnote">{m["escalations_open"]} currently open</p>
+      </div>
+      <div class="an-tile">
+        <p class="label">Avg. time to human</p>
+        <p class="value">{avg_min}<span class="an-value-unit"> min</span></p>
+        <p class="footnote">from escalation to clinician reply</p>
+      </div>
+      <div class="an-tile">
+        <p class="label">Reception time replaced</p>
+        <p class="value">{m["hours_replaced"]}<span class="an-value-unit"> hrs</span></p>
+        <p class="footnote">est. at 4 min per autonomous booking</p>
+      </div>
     </div>
-    <div class="tile">
-      <p class="label">Escalations to a human</p>
-      <p class="value">{m["escalations_this_month"]}</p>
-      <p class="footnote">{m["escalations_open"]} currently open</p>
-    </div>
-    <div class="tile">
-      <p class="label">Avg. time to human</p>
-      <p class="value">{avg_min}<span style="font-size:16px;color:var(--muted);"> min</span></p>
-      <p class="footnote">from escalation to clinician reply</p>
-    </div>
-    <div class="tile">
-      <p class="label">Reception time replaced</p>
-      <p class="value">{m["hours_replaced"]}<span style="font-size:16px;color:var(--muted);"> hrs</span></p>
-      <p class="footnote">est. at 4 min per autonomous booking</p>
-    </div>
-  </div>
 
-  <div class="callout">
-    <h2>What this tells you</h2>
-    <p>Every escalation in that middle tile is a moment MainDesk chose humility — a case where confidence dipped or a red-flag intent surfaced. Every booking in the left tile is a call your team didn't have to take. The right tile compounds: for a $299/mo plan, an autonomous booking costs roughly $0.30 — a receptionist call costs $3–7.</p>
-  </div>
-</main></body></html>"""
+    <div class="an-callout">
+      <h2>What this tells you</h2>
+      <p>Every escalation in that middle tile is a moment MainDesk chose humility — a case where confidence dipped or a red-flag intent surfaced. Every booking in the left tile is a call your team didn't have to take. The right tile compounds: for a $299/mo plan, an autonomous booking costs roughly $0.30 — a receptionist call costs $3–7.</p>
+    </div>
+  </main>
+</body></html>"""
     return HTMLResponse(page)
 
 
