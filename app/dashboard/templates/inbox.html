@@ -9,62 +9,9 @@
 <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 <script src="https://unpkg.com/htmx-ext-sse@2.2.2"></script>
 <style>
-  /* Queue-card internals: layout too niche to promote into the DS.
-     All colors/spacing come from DS tokens so a token change propagates. */
-  .md-esc-card {
-    background: var(--white);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-sm);
-  }
-  .md-esc-card .row {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-  }
-  .md-esc-card .who { font-weight: 600; }
-  .md-esc-card .chip {
-    font-size: 12px; color: var(--teal-text);
-    border: 1px solid var(--border-soft);
-    padding: 1px 8px; border-radius: var(--radius-pill);
-  }
-  .md-esc-card .session, .md-esc-card .when { color: var(--ink-soft); font-size: 12px; }
-  .md-esc-card .reason { margin: 8px 0 2px; }
-  .md-esc-card .preview { color: var(--ink-soft); font-size: 13px; font-style: italic; }
-  .md-esc-card .note-line { color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
-  .md-esc-card .actions {
-    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
-  }
-  .md-esc-card .actions input {
-    flex: 1; min-width: 140px;
-    background: var(--white);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    color: var(--ink);
-    padding: 6px 10px; font-size: 13px;
-  }
-  .md-esc-card .actions button {
-    border: 0; border-radius: var(--radius-md);
-    padding: 6px 14px; font-size: 13px;
-    font-weight: 600; cursor: pointer;
-    background: var(--ink); color: var(--white);
-  }
-  .md-esc-card .actions button.redirect { background: var(--teal-ui); }
-  .md-esc-card .actions button.close { background: var(--ink-soft); }
-  .md-esc-card .actions button:hover { filter: brightness(1.05); }
-
-  .md-empty {
-    color: var(--ink-soft); padding: 24px; text-align: center;
-    border: 1px dashed var(--border-soft); border-radius: var(--radius-md);
-    background: var(--white);
-  }
-  .md-booking {
-    display: flex; justify-content: space-between; gap: 8px;
-    padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px;
-  }
-  .md-booking:last-child { border-bottom: 0; }
-  .md-booking .when { color: var(--ink-soft); }
-
+  /* Two-column inbox layout — page-specific, so it stays here. All
+     card/row/button/booking chrome comes from the design system so
+     the overview page's HTMX-loaded queue preview looks identical. */
   .inbox-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
   @media (max-width: 900px) { .inbox-grid { grid-template-columns: 1fr; } }
 </style>
