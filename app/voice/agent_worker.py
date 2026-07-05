@@ -408,7 +408,13 @@ def _qwen_llm() -> openai.LLM:
 
 
 def prewarm(proc: JobProcess) -> None:
-    proc.userdata["vad"] = silero.VAD.load()
+    # Tighter silence window — 250ms of quiet is enough to call end-of-turn
+    # for a phone conversation (defaults are 550/500 which feel laggy on
+    # a receptionist agent). prefix_padding trimmed to match.
+    proc.userdata["vad"] = silero.VAD.load(
+        min_silence_duration=0.25,
+        prefix_padding_duration=0.3,
+    )
 
 
 # ── Caller identity resolution ──────────────────────────────────────────
@@ -475,9 +481,17 @@ async def entrypoint(ctx: JobContext) -> None:
         # preemptive_generation begins the LLM call the moment endpointing
         # triggers rather than waiting for the transcript-final ACK — shaves
         # ~300ms off perceived first-token latency. min_endpointing_delay
-        # trades a bit of interruption robustness for faster turn-taking.
+        # kept tight because VAD's min_silence_duration already provides
+        # the meaningful gap; layering another 300ms on top felt sluggish.
         preemptive_generation=True,
-        min_endpointing_delay=0.3,
+        min_endpointing_delay=0.1,
+        # Barge-in: 300ms of speech interrupts the agent (default 500ms
+        # felt laggy — user had to lean in to cut it off). If they trail
+        # off without following through, resume the agent's speech after
+        # 1.2s of silence rather than the default 2.0.
+        min_interruption_duration=0.3,
+        resume_false_interruption=True,
+        false_interruption_timeout=1.2,
     )
     agent = HealthDeskAgent(patient_id=patient_id, patient_phone=patient_phone)
     await session.start(agent=agent, room=ctx.room)
