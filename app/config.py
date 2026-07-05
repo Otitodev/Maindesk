@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # Voice on/off (Week-1 exit gate, PRD §11)
     healthdesk_voice: bool = True
     healthdesk_env: Literal["production", "demo"] = "production"
+    # Demo mode: WhatsApp/email outbound routes to an in-memory inbox
+    # instead of external providers, and inbound webhooks accept unsigned
+    # POSTs so the end-to-end loop is testable without a live Evolution
+    # instance or Postmark server. Never enable in production.
+    healthdesk_demo_mode: bool = False
     # Phone used to identify the caller when LiveKit gives us no metadata
     # (e.g. browser-based Agents Playground sessions). Maps to a seeded
     # patient via memory.profile.resolve_by_phone so recall still works.

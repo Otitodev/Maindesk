@@ -62,7 +62,11 @@ async def receive(
     x_webhook_secret: str | None = Header(default=None, alias="X-Webhook-Secret"),
 ) -> dict[str, str]:
     settings = get_settings()
-    if settings.email_webhook_secret:
+    if settings.healthdesk_demo_mode:
+        # Demo mode: accept unsigned POSTs so the loop is exercisable
+        # without a real Postmark instance. Never enable in production.
+        pass
+    elif settings.email_webhook_secret:
         if not x_webhook_secret or not hmac.compare_digest(
             x_webhook_secret, settings.email_webhook_secret
         ):

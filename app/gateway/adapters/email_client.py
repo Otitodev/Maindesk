@@ -58,6 +58,11 @@ async def send_email(
     `in_reply_to` threads the reply under the patient's original email by
     setting the In-Reply-To / References headers to its Message-ID."""
     s = get_settings()
+    if s.healthdesk_demo_mode:
+        from app.gateway.demo_inbox import record_email
+        record_email(to=to, subject=subject, text=text)
+        log.info("email demo-mode delivery to=%s subject=%s len=%d", to, subject, len(text))
+        return True
     if not (s.email_api_token and s.email_from):
         log.warning("email outbound not configured; skipping send to=%s", to)
         return False

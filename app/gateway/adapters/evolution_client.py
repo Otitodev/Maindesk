@@ -71,6 +71,11 @@ async def send_text(*, chat_id: str, text: str) -> bool:
     acked, and a dropped outbound is preferable to crashing a turn.
     """
     s = get_settings()
+    if s.healthdesk_demo_mode:
+        from app.gateway.demo_inbox import record_whatsapp
+        record_whatsapp(chat_id=chat_id, text=text)
+        log.info("whatsapp demo-mode delivery chat=%s len=%d", chat_id, len(text))
+        return True
     if not (s.evolution_api_url and s.evolution_api_key and s.evolution_instance):
         log.warning("evolution outbound not configured; skipping send chat=%s", chat_id)
         return False

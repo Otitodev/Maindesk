@@ -104,6 +104,7 @@ def test_email_webhook_ignores_empty_body(stub_graph, stub_send):
 
 def test_email_webhook_rejects_bad_secret(stub_graph, stub_send, monkeypatch):
     monkeypatch.setenv("EMAIL_WEBHOOK_SECRET", "s3cret")
+    monkeypatch.setenv("HEALTHDESK_DEMO_MODE", "false")
     get_settings.cache_clear()
     with TestClient(main_mod.app) as client:
         r = client.post("/webhooks/email", json=_INBOUND, headers={"X-Webhook-Secret": "wrong"})
@@ -114,6 +115,7 @@ def test_email_webhook_rejects_bad_secret(stub_graph, stub_send, monkeypatch):
 
 def test_email_webhook_accepts_valid_secret(stub_graph, stub_send, monkeypatch):
     monkeypatch.setenv("EMAIL_WEBHOOK_SECRET", "s3cret")
+    monkeypatch.setenv("HEALTHDESK_DEMO_MODE", "false")
     get_settings.cache_clear()
     with TestClient(main_mod.app) as client:
         r = client.post("/webhooks/email", json=_INBOUND, headers={"X-Webhook-Secret": "s3cret"})
