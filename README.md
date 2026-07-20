@@ -122,7 +122,7 @@ flowchart TB
     class MCP,CAL ext;
 ```
 
-> Static render for slides/print: [`docs/architecture.png`](docs/architecture.png).
+> Diagram source for a static render (slides/print): [`docs/architecture.mmd`](docs/architecture.mmd) — paste into Excalidraw or any Mermaid renderer.
 >
 > **Legend:** 🟦 channels · ⬜ gateway · 🟪 agent brain (text graph + voice pipeline) · 🟩 shared tool layer · 🟨 Postgres/pgvector · 🟥 ops surfaces (`/staff`, `/onboarding`, n8n) · 🟧 external (MCP, Google Calendar).
 
