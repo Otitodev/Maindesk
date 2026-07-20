@@ -20,11 +20,11 @@
 
 ### 0:00 – 0:15 · The problem
 
-**On screen**: Landing page hero — headline "Your front desk, running on autopilot," "Powered by Qwen · 通义千问" tag, "Try it live →" button visible. **(Note: the pricing section previously in this beat was removed from the live landing page — don't pan to it, it no longer exists.)**
+**On screen**: Landing page hero — headline "Your front desk, running on autopilot," "Powered by Qwen · 通义千问" tag, the "Call the front desk: +1 (218) 307-4659" button visible. **(Note: the pricing section previously in this beat was removed from the live landing page — don't pan to it, it no longer exists.)**
 
 **VO**: "Dr. Amina runs a family clinic in Lagos. Her receptionist quit two weeks ago and the phones are burying her. She finds MainDesk at 11 PM on a Tuesday."
 
-*Cursor hovers over "Try it live →".*
+*Cursor hovers over "Call the front desk". Don't actually dial live — the point of this beat is the promise, not the call itself; the real phone demo (if you want one) is a separate, pre-tested clip, not something to risk inside a single continuous take.*
 
 **VO**: "At $299 a month, that's less than a week of a receptionist's pay. She books the trial." *(the $299 figure is the same one referenced live in the analytics page's ROI callout — keep it consistent)*
 
@@ -88,9 +88,9 @@ I've had crushing chest pain for an hour, help
 
 ### 2:10 – 2:40 · Architecture reveal
 
-**On screen**: Fade in `docs/architecture.png`. Highlight the boxes one at a time as they're mentioned.
+**On screen**: Fade in a PNG exported from `docs/architecture.mmd` (import the Mermaid source into Excalidraw and export — the old `docs/architecture.png` was deleted, it predated the Twilio/Pipecat migration). Highlight the boxes one at a time as they're mentioned.
 
-**VO**: "Under the hood: one LangGraph orchestrator sits behind four channels — WhatsApp, email, web, and voice. And voice itself works two ways: dial the clinic's real phone number, or click to call straight from the browser — no app, no download. Both hit the same Pipecat pipeline, reasoning on Qwen through DashScope."
+**VO**: "Under the hood: one LangGraph orchestrator sits behind four channels — WhatsApp, email, web, and voice, a real phone number over Twilio. Every channel hits the same Pipecat pipeline, reasoning on Qwen through DashScope."
 
 *Highlight the Qwen boxes.*
 
