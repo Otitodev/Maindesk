@@ -67,7 +67,7 @@ result = await graph.ainvoke(
 )
 ```
 
-Everything after that — triage, memory recall, tool calls, response generation, outbound secret redaction — runs identically across channels. The Chinese message that just booked an appointment in the web widget exercises exactly the same code path as a Nigerian patient's voice call over LiveKit.
+Everything after that — triage, memory recall, tool calls, response generation, outbound secret redaction — runs identically across channels. The Chinese message that just booked an appointment in the web widget exercises exactly the same code path as a Nigerian patient's voice call — whether they dialed the clinic's number or clicked to call from a browser tab.
 
 **The parity is not aesthetic; it's the point.** It means the HITL escalation works the same way for every channel. It means recall of "this patient is allergic to penicillin" surfaces whether they're on voice or email. It means when I ship a new tool — say, a "reschedule" — it works everywhere at once.
 
@@ -100,7 +100,7 @@ The multilingual part is free — the embedding model handles it. `患者对青�
 - **Orchestrator**: LangGraph 1.2 + `AsyncPostgresSaver` checkpoints
 - **LLM**: `qwen3.7-plus` for generation, `qwen3.6-flash` for classification, via DashScope OpenAI-compatible endpoint
 - **Embeddings**: `text-embedding-v4` at 1024 dims into pgvector on Postgres 16
-- **Voice**: LiveKit Agents 1.5 with `qwen3.7-plus` LLM + Deepgram STT + ElevenLabs TTS
+- **Voice**: Pipecat (Twilio phone + a self-hosted browser call widget) with `qwen3.7-plus` LLM + Deepgram STT + ElevenLabs TTS
 - **Ingress**: FastAPI + slowapi rate limiter + Caddy 2 TLS reverse proxy
 - **Deployment**: Docker Compose on Alibaba Cloud ECS `ecs.e-c1m2.large` in Singapore
 - **Human-in-loop**: FastAPI + HTMX + SSE dashboard at `/staff`
