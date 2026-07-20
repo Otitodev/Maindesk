@@ -1,8 +1,8 @@
 ---
-title: "One agent, five channels: notes from building on Qwen Cloud"
+title: "One agent, four channels: notes from building on Qwen Cloud"
 published: false
 tags: qwen, langgraph, hackathon, ai
-canonical_url: https://dev.to/otito/one-agent-five-channels
+canonical_url: https://dev.to/otito/one-agent-four-channels
 description: What I learned building a multilingual clinic front-desk agent for the Qwen Cloud hackathon — the gotchas, the design bet, the demo that works.
 ---
 
@@ -16,7 +16,7 @@ That's the demo I've spent the last week building for the [Qwen Cloud Hackathon]
 
 ## What MainDesk actually is
 
-A clinic's autonomous front desk that answers on **every channel a patient might use** — WhatsApp, email, web chat, browser voice, and a dedicated `/chat` widget — in English or Mandarin, all day. Books appointments against real Google Calendar free/busy. Escalates to a human dashboard when the model's confidence dips below `0.45` or the intent looks medical-urgent.
+A clinic's autonomous front desk that answers on **every channel a patient might use** — WhatsApp, email, web chat, and voice (a real phone number over Twilio, or a no-download browser call widget) — in English or Mandarin, all day. Books appointments against real Google Calendar free/busy. Escalates to a human dashboard when the model's confidence dips below `0.45` or the intent looks medical-urgent.
 
 The whole thing runs on a **$32/month Alibaba Cloud ECS box** in Singapore, with TLS via Let's Encrypt at [maindesk.otito.site](https://maindesk.otito.site/chat). Try `你好，我想预约下周二的检查` in the widget — it works, and it comes back in Mandarin with real appointment slots.
 
@@ -54,9 +54,9 @@ qwen_embed_dim:   int = 1024
 
 Yes, the env var is `DASHSCOPE_API_KEY` — the *platform* is called Qwen Cloud but the auth header inherits the DashScope name. I named my pydantic field `dashscope_api_key` to match the docs' convention, and the code started reading like it was written **for** Qwen Cloud rather than adapted to it. Small thing, matters when judges read your repo.
 
-## One orchestrator, five gateways
+## One orchestrator, four gateways
 
-The design bet was: **all five channels go through the same LangGraph orchestrator, the same tool layer, the same pgvector memory, the same secret redactor.** No per-channel business logic beyond parsing.
+The design bet was: **all four channels go through the same LangGraph orchestrator, the same tool layer, the same pgvector memory, the same secret redactor.** No per-channel business logic beyond parsing.
 
 WhatsApp adapter, email adapter, web adapter, voice adapter — each is ~30 lines. They normalize their inbound payload into a `{session_id, content, phone}` triple and shove it into:
 
@@ -104,7 +104,7 @@ The multilingual part is free — the embedding model handles it. `患者对青�
 - **Ingress**: FastAPI + slowapi rate limiter + Caddy 2 TLS reverse proxy
 - **Deployment**: Docker Compose on Alibaba Cloud ECS `ecs.e-c1m2.large` in Singapore
 - **Human-in-loop**: FastAPI + HTMX + SSE dashboard at `/staff`
-- **Tests**: 215 passing, plus a 33-case intent eval that includes three Mandarin cases
+- **Tests**: 217 passing, plus a 33-case intent eval (97% accuracy) that includes three Mandarin cases
 
 Six containers of complexity, ~7,200 lines of Python, one weekend's worth of Alibaba Cloud console clicks, and a small amount of yelling at PowerShell's argument parser.
 
@@ -121,4 +121,4 @@ That's the build.
 - Live demo: [maindesk.otito.site/chat](https://maindesk.otito.site/chat)
 - Docs: [DEPLOY_ALIBABA_ECS.md](https://github.com/Otitodev/healthdesk-ai/blob/main/docs/DEPLOY_ALIBABA_ECS.md), [DEMO_SCRIPT.md](https://github.com/Otitodev/healthdesk-ai/blob/main/docs/DEMO_SCRIPT.md)
 
-Questions in the comments. If you're grinding on the hackathon too, good luck — submissions close July 9.
+Questions in the comments. If you're grinding on the hackathon too, good luck — submissions close July 20.

@@ -55,7 +55,7 @@ That "channel-agnostic" only means something if the tool layer really is shared 
 
 ## What's next
 
-Multi-tenant self-serve signup (today it's one deployment per clinic), a signed HIPAA BAA for regulated US healthcare, EHR integrations (Epic/Cerner/Athena), and multi-location routing for clinic groups.
+Multi-tenant self-serve signup (today it's one deployment per clinic), a signed HIPAA BAA for regulated US healthcare, EHR integrations (Epic/Cerner/Athena), and multi-location routing for clinic groups. On the Qwen Cloud side specifically: voice STT/TTS currently run on Deepgram/ElevenLabs — DashScope's own Paraformer (ASR) and CosyVoice (TTS) are on the roadmap to make the entire voice stack, not just the reasoning layer, fully Qwen-native.
 
 ---
 
