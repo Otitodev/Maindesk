@@ -22,7 +22,7 @@
 
 **On screen**: Landing page hero — headline "Your front desk, running on autopilot," "Powered by Qwen · 通义千问" tag, the "Call the front desk: +1 (218) 307-4659" button visible. **(Note: the pricing section previously in this beat was removed from the live landing page — don't pan to it, it no longer exists.)**
 
-**VO**: "Dr. Amina runs a family clinic in Lagos. Her receptionist quit two weeks ago and the phones are burying her. She finds MainDesk at 11 PM on a Tuesday."
+**VO**: "Dr. Amina runs a family clinic in Lagos. Her receptionist quit two weeks ago. Every patient message still needs the same four steps by hand — understand it, check the calendar, book it, know when it needs a human instead. She finds MainDesk at 11 PM on a Tuesday: an agent that runs all four, on autopilot."
 
 *Cursor hovers over "Call the front desk". Don't actually dial live — the point of this beat is the promise, not the call itself; the real phone demo (if you want one) is a separate, pre-tested clip, not something to risk inside a single continuous take.*
 
@@ -84,7 +84,7 @@ I've had crushing chest pain for an hour, help
 
 *Pause on the "What this tells you" callout.*
 
-**VO**: "This is the ROI slide judges usually have to imagine. It's a real page in the product, showing real usage."
+**VO**: "This is the ROI slide most submissions have to imagine. Ours is a real page in the product."
 
 ### 2:10 – 2:40 · Architecture reveal
 
