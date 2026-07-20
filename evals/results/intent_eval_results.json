@@ -1,16 +1,16 @@
 {
-  "run_at": "2026-06-12T03:45:40+00:00",
+  "run_at": "2026-07-20T06:09:43+00:00",
   "model": "qwen-turbo",
-  "accuracy": 1.0,
-  "correct": 30,
-  "total": 30,
+  "accuracy": 0.9697,
+  "correct": 32,
+  "total": 33,
   "latency_ms": {
-    "p50": 882.3,
-    "p95": 5557.9
+    "p50": 725.1,
+    "p95": 963.0
   },
   "per_intent": {
     "book_appointment": {
-      "total": 5,
+      "total": 6,
       "correct": 5
     },
     "reschedule": {
@@ -18,16 +18,16 @@
       "correct": 5
     },
     "cancel": {
-      "total": 4,
-      "correct": 4
+      "total": 5,
+      "correct": 5
     },
     "ask_question": {
       "total": 7,
       "correct": 7
     },
     "escalate": {
-      "total": 5,
-      "correct": 5
+      "total": 6,
+      "correct": 6
     },
     "smalltalk": {
       "total": 4,
@@ -40,210 +40,231 @@
       "expected": "book_appointment",
       "predicted": "book_appointment",
       "correct": true,
-      "latency_ms": 5464.0
+      "latency_ms": 4057.8
     },
     {
       "text": "I need to change my Thursday slot to Friday morning",
       "expected": "reschedule",
       "predicted": "reschedule",
       "correct": true,
-      "latency_ms": 830.9
+      "latency_ms": 721.1
     },
     {
       "text": "Please cancel my appointment tomorrow",
       "expected": "cancel",
       "predicted": "cancel",
       "correct": true,
-      "latency_ms": 723.4
+      "latency_ms": 662.8
     },
     {
       "text": "What time does the clinic close on Saturdays?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 785.2
+      "latency_ms": 715.4
     },
     {
       "text": "I'm having severe chest pain right now",
       "expected": "escalate",
       "predicted": "escalate",
       "correct": true,
-      "latency_ms": 901.4
+      "latency_ms": 718.9
     },
     {
       "text": "Thanks so much, you're great!",
       "expected": "smalltalk",
       "predicted": "smalltalk",
       "correct": true,
-      "latency_ms": 700.9
+      "latency_ms": 710.7
     },
     {
       "text": "Do you accept Cigna insurance?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 1945.9
+      "latency_ms": 809.6
     },
     {
       "text": "Move my checkup to a later time please",
       "expected": "reschedule",
       "predicted": "reschedule",
       "correct": true,
-      "latency_ms": 699.6
+      "latency_ms": 684.6
     },
     {
       "text": "I need to speak to a human nurse immediately",
       "expected": "escalate",
       "predicted": "escalate",
       "correct": true,
-      "latency_ms": 957.5
+      "latency_ms": 716.1
     },
     {
       "text": "Can I get a 9am tomorrow?",
       "expected": "book_appointment",
       "predicted": "book_appointment",
       "correct": true,
-      "latency_ms": 796.6
+      "latency_ms": 843.7
     },
     {
       "text": "Where are you located?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 1633.3
+      "latency_ms": 727.9
     },
     {
       "text": "Cancel everything please",
       "expected": "cancel",
       "predicted": "cancel",
       "correct": true,
-      "latency_ms": 863.2
+      "latency_ms": 880.7
     },
     {
       "text": "Good morning!",
       "expected": "smalltalk",
       "predicted": "smalltalk",
       "correct": true,
-      "latency_ms": 1210.2
+      "latency_ms": 770.3
     },
     {
       "text": "What insurance do you take",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 953.0
+      "latency_ms": 799.1
     },
     {
       "text": "Reschedule please to next week same time",
       "expected": "reschedule",
       "predicted": "reschedule",
       "correct": true,
-      "latency_ms": 698.4
+      "latency_ms": 657.1
     },
     {
       "text": "Looking for the earliest appointment available",
       "expected": "book_appointment",
       "predicted": "book_appointment",
       "correct": true,
-      "latency_ms": 770.0
+      "latency_ms": 725.1
     },
     {
       "text": "I'm bleeding badly, what should I do?",
       "expected": "escalate",
       "predicted": "escalate",
       "correct": true,
-      "latency_ms": 1668.2
+      "latency_ms": 880.0
     },
     {
       "text": "Drop my Monday 3pm visit",
       "expected": "cancel",
       "predicted": "cancel",
       "correct": true,
-      "latency_ms": 1152.0
+      "latency_ms": 724.2
     },
     {
       "text": "How long is a typical visit?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 667.1
+      "latency_ms": 714.4
     },
     {
       "text": "Hello?",
       "expected": "smalltalk",
       "predicted": "smalltalk",
       "correct": true,
-      "latency_ms": 840.8
+      "latency_ms": 800.4
     },
     {
       "text": "I'd like to schedule a physical exam",
       "expected": "book_appointment",
       "predicted": "book_appointment",
       "correct": true,
-      "latency_ms": 820.5
+      "latency_ms": 706.3
     },
     {
       "text": "Push my appointment back two hours",
       "expected": "reschedule",
       "predicted": "reschedule",
       "correct": true,
-      "latency_ms": 2056.0
+      "latency_ms": 630.7
     },
     {
       "text": "Stop my reminders for tomorrow's slot",
       "expected": "cancel",
       "predicted": "cancel",
       "correct": true,
-      "latency_ms": 5634.8
+      "latency_ms": 809.6
     },
     {
       "text": "My daughter swallowed a battery",
       "expected": "escalate",
       "predicted": "escalate",
       "correct": true,
-      "latency_ms": 2348.1
+      "latency_ms": 959.8
     },
     {
       "text": "Do I need to fast before bloodwork?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 3163.7
+      "latency_ms": 967.8
     },
     {
       "text": "Could I get something for next month please",
       "expected": "book_appointment",
-      "predicted": "book_appointment",
-      "correct": true,
-      "latency_ms": 8612.2
+      "predicted": "ask_question",
+      "correct": false,
+      "latency_ms": 674.9
     },
     {
       "text": "Switch my visit to a virtual one",
       "expected": "reschedule",
       "predicted": "reschedule",
       "correct": true,
-      "latency_ms": 720.3
+      "latency_ms": 918.4
     },
     {
       "text": "Have a great day!",
       "expected": "smalltalk",
       "predicted": "smalltalk",
       "correct": true,
-      "latency_ms": 849.1
+      "latency_ms": 754.3
     },
     {
       "text": "Connect me with Dr. Lee directly",
       "expected": "escalate",
       "predicted": "escalate",
       "correct": true,
-      "latency_ms": 762.4
+      "latency_ms": 711.3
     },
     {
       "text": "What's your phone number for the lab?",
       "expected": "ask_question",
       "predicted": "ask_question",
       "correct": true,
-      "latency_ms": 916.0
+      "latency_ms": 935.7
+    },
+    {
+      "text": "你好，我想预约下周二的检查",
+      "expected": "book_appointment",
+      "predicted": "book_appointment",
+      "correct": true,
+      "latency_ms": 824.0
+    },
+    {
+      "text": "请帮我取消明天的预约",
+      "expected": "cancel",
+      "predicted": "cancel",
+      "correct": true,
+      "latency_ms": 720.2
+    },
+    {
+      "text": "我胸口剧烈疼痛，怎么办",
+      "expected": "escalate",
+      "predicted": "escalate",
+      "correct": true,
+      "latency_ms": 698.0
     }
   ]
 }

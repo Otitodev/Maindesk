@@ -20,13 +20,13 @@
 
 ### 0:00 – 0:15 · The problem
 
-**On screen**: Landing page hero — "MainDesk" logo, "Powered by Qwen · 通义千问" tag, "Try live demo" button visible.
+**On screen**: Landing page hero — headline "Your front desk, running on autopilot," "Powered by Qwen · 通义千问" tag, "Try it live →" button visible. **(Note: the pricing section previously in this beat was removed from the live landing page — don't pan to it, it no longer exists.)**
 
 **VO**: "Dr. Amina runs a family clinic in Lagos. Her receptionist quit two weeks ago and the phones are burying her. She finds MainDesk at 11 PM on a Tuesday."
 
-*Fast pan down the hero to the pricing block showing "$599/mo" and "First 100 clinics get 50% off."*
+*Cursor hovers over "Try it live →".*
 
-**VO**: "Less than a week of a receptionist's pay. She books the trial."
+**VO**: "At $299 a month, that's less than a week of a receptionist's pay. She books the trial." *(the $299 figure is the same one referenced live in the analytics page's ROI callout — keep it consistent)*
 
 ### 0:15 – 0:40 · The setup
 
@@ -76,19 +76,21 @@ I've had crushing chest pain for an hour, help
 
 ### 1:40 – 2:10 · The proof: analytics
 
-**On screen**: Navigate to `/staff/analytics?key=...`. Four dark tiles: **89** bookings, **3** escalations, **12 min** avg time to human, **62 hrs** reception time replaced.
+**On screen**: Navigate to `/staff/analytics?key=...`. Four tiles: bookings handled, escalations to a human, avg time to human, reception hours replaced.
 
-**VO**: "One month later, this is Dr. Amina's console. Eighty-nine patient messages handled autonomously. Three escalations — the ones that mattered. Sixty-two hours of reception time replaced. At the $299 tier, that's roughly thirty cents per autonomous booking — a receptionist call costs three to seven dollars."
+**IMPORTANT — do not hardcode numbers here.** These are real, live production counters that grow with every real booking/escalation — they will not match whatever number was true when this script was drafted. **Read the actual tile values off the screen at recording time.** As of 2026-07-20 they read 13 bookings, 7 escalations (3 open), 45 min avg, 0.9 hrs replaced — check again right before filming.
+
+**VO** *(fill in [N] with the live numbers on screen)*: "This isn't a mockup — it's the real production console, live right now. [N] patient messages handled autonomously this month. [N] escalations — the ones that mattered. At the $299 tier, that's roughly thirty cents per autonomous booking — a receptionist call costs three to seven dollars."
 
 *Pause on the "What this tells you" callout.*
 
-**VO**: "This is the ROI slide judges usually have to imagine. It's a real page in the product."
+**VO**: "This is the ROI slide judges usually have to imagine. It's a real page in the product, showing real usage."
 
 ### 2:10 – 2:40 · Architecture reveal
 
 **On screen**: Fade in `docs/architecture.png`. Highlight the boxes one at a time as they're mentioned.
 
-**VO**: "Under the hood: one LangGraph orchestrator sits behind five channels — WhatsApp, email, web, /chat widget, and voice. Voice runs on Qwen for A-S-R, L-L-M, and T-T-S — all three model types through DashScope."
+**VO**: "Under the hood: one LangGraph orchestrator sits behind four channels — WhatsApp, email, web, and voice. And voice itself works two ways: dial the clinic's real phone number, or click to call straight from the browser — no app, no download. Both hit the same Pipecat pipeline, reasoning on Qwen through DashScope."
 
 *Highlight the Qwen boxes.*
 
@@ -102,7 +104,9 @@ I've had crushing chest pain for an hour, help
 
 **On screen**: Cut back to the landing page hero. `maindesk.otito.site/chat` visible in the URL bar.
 
-**VO**: "Deployed on Alibaba Cloud ECS in Singapore. Two hundred fifteen tests green. Thirty-three of thirty-three on the intent eval, including three Mandarin cases. Live now at maindesk.otito.site."
+**VO**: "Deployed on Alibaba Cloud ECS in Singapore. Two hundred seventeen tests green. Thirty-two of thirty-three on the intent eval — including all three Mandarin cases. Live now at maindesk.otito.site."
+
+*(Test count verified via `pytest -q` and eval numbers via `python -m evals.run_intent_eval` on 2026-07-20 — re-run both right before recording if anything's changed since.)*
 
 *Final frame: logo + "Powered by Qwen · 通义千问" + repo URL + "Track 4: Autopilot Agent"*
 

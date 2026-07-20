@@ -1,0 +1,83 @@
+flowchart TB
+    VOICE["Voice: Twilio, Deepgram, ElevenLabs"]
+    WA["WhatsApp: Evolution API v2"]
+    WEB["Web chat"]
+    EMAIL["Email: provider webhook"]
+
+    subgraph GW["FastAPI gateway - async, single process"]
+        AUTH["webhook auth: HMAC / token / secret"]
+        REDACT["redact() on every outbound reply"]
+    end
+
+    subgraph LG["LangGraph orchestrator - AsyncPostgresSaver checkpoints"]
+        TRIAGE["triage: Qwen-Turbo intent + language"]
+        GATE{"after-hours gate"}
+        HANDOFF["handoff: acknowledge + escalate"]
+        RECALL["recall: top-k + decay re-rank"]
+        TOOLS["tools: booking state machine"]
+        REASONER["reasoner: Qwen-Plus, strict grounding"]
+        WRITER["writer: memory write-back"]
+        TRIAGE --> GATE
+        GATE -->|after-hours mode + open| HANDOFF
+        GATE -->|otherwise| RECALL
+        RECALL --> TOOLS --> REASONER --> WRITER
+        HANDOFF --> WRITER
+    end
+
+    subgraph VOICEW["Pipecat voice pipeline - in-process, per-call"]
+        LLMNODE["MemoryRecallProcessor: memory recall"]
+        FTOOLS["direct-function tools: find, book, reschedule, cancel, escalate"]
+    end
+
+    MCP["MCP server: 7 clinic tools (Claude Desktop / Cursor)"]
+
+    subgraph TOOLLAYER["Shared tool layer - one source of truth for every channel"]
+        APPTS["appointments: slots, book, reschedule, cancel"]
+        ESC["escalation: notify_staff"]
+    end
+
+    CAL["Google Calendar: free/busy + booking mirror (local fallback)"]
+
+    subgraph DB["Postgres 16 + pgvector"]
+        MEM[("memories: text-embedding-v3 @ 1024d")]
+        APPT[("appointments, patients")]
+        ESCT[("escalations")]
+        CFG[("clinic_settings")]
+    end
+
+    STAFF["Staff dashboard /staff: human-in-the-loop queue"]
+    ONB["Onboarding wizard /onboarding: hours, persona, FAQs"]
+    N8N["n8n crons: reminders, follow-ups"]
+
+    WA --> AUTH
+    WEB --> AUTH
+    EMAIL --> AUTH
+    VOICE --> VOICEW
+    AUTH --> TRIAGE
+    REASONER --> REDACT
+    HANDOFF --> REDACT
+    REDACT --> WA
+    REDACT --> WEB
+    REDACT --> EMAIL
+
+    TOOLS --> APPTS
+    TOOLS --> ESC
+    FTOOLS --> APPTS
+    FTOOLS --> ESC
+    MCP --> APPTS
+    MCP --> ESC
+
+    RECALL <--> MEM
+    WRITER --> MEM
+    LLMNODE <--> MEM
+
+    APPTS <--> APPT
+    APPTS <--> CAL
+    ESC --> ESCT
+
+    ESCT --> STAFF
+    APPT --> STAFF
+    ONB --> CFG
+    CFG -.->|read at runtime| LG
+    CFG -.->|persona, hours| VOICEW
+    N8N --> APPTS

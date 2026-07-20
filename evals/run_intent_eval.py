@@ -46,7 +46,7 @@ def _percentile(values: list[float], pct: float) -> float:
 
 
 async def main() -> int:
-    with CASES_PATH.open() as fp:
+    with CASES_PATH.open(encoding="utf-8") as fp:
         cases = [json.loads(line) for line in fp if line.strip()]
 
     correct = 0
@@ -104,8 +104,10 @@ async def main() -> int:
                 "cases": case_results,
             },
             indent=2,
+            ensure_ascii=False,
         )
-        + "\n"
+        + "\n",
+        encoding="utf-8",
     )
     print(f"Results written to {RESULTS_PATH.relative_to(pathlib.Path.cwd())}")
     return 0 if accuracy >= 0.85 else 1
