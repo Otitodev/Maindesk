@@ -62,17 +62,15 @@ Type slowly, so the viewer reads it:
 I've had crushing chest pain for an hour, help
 ```
 
-*Send. Brief acknowledgment appears: "One moment while I get a human on this."*
+*Send. Brief acknowledgment appears — LLM-generated, wording varies slightly, but it reads roughly like "Let me connect you with one of our staff — one moment."*
 
 **Cut immediately to** `/staff` dashboard in a second tab. A red urgency card slides in via SSE.
 
 **VO**: "Chest pain triggers the escalate intent. The agent aborts its own reply — no diagnostic bullshit — and posts to the staff dashboard. Server-sent events, no polling. Dr. Amina picks it up."
 
-*Click "Assign to me". Type "Please go to the ER now, call us from there." Send.*
+*Type a note in the card's input — "Please go to the ER now, call us from there." — and click "Redirect to doctor". The card leaves the open queue.* **(Note: there is no "Assign to me" step — resolving the card and delivering the note is one click. And today the note only actually reaches the patient on WhatsApp or email; web chat has no persistent connection to push a reply through yet, so don't cut back to /chat and claim the reply lands there — it won't.)**
 
-*Cut back to /chat — the reply lands in the patient thread.*
-
-**VO**: "One switch, one reply, patient safe. This is what MainDesk means by 'AI-native' — it knows when to be a human."
+**VO**: "One click, one human decision, patient safe. This is what MainDesk means by 'AI-native' — it knows when to be a human."
 
 ### 1:40 – 2:10 · The proof: analytics
 
