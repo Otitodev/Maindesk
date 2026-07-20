@@ -16,7 +16,7 @@ That's the demo I've spent the last week building for the [Qwen Cloud Hackathon]
 
 ## What MainDesk actually is
 
-A clinic's autonomous front desk that answers on **every channel a patient might use** — WhatsApp, email, web chat, and voice (a real phone number over Twilio, or a no-download browser call widget) — in English or Mandarin, all day. Books appointments against real Google Calendar free/busy. Escalates to a human dashboard when the model's confidence dips below `0.45` or the intent looks medical-urgent.
+A clinic's autonomous front desk that answers on **every channel a patient might use** — WhatsApp, email, web chat, and voice (a real phone number over Twilio, or a no-download browser call widget) — in English or Mandarin, all day. Books real appointments — Google Calendar integration is built in for real free/busy checks, with a local Postgres scheduler as the fallback for clinics that haven't connected a calendar yet (ours hasn't, in this demo). Escalates to a human dashboard when the model's confidence dips below `0.45` or the intent looks medical-urgent.
 
 The whole thing runs on a **$32/month Alibaba Cloud ECS box** in Singapore, with TLS via Let's Encrypt at [maindesk.otito.site](https://maindesk.otito.site/chat). Try `你好，我想预约下周二的检查` in the widget — it works, and it comes back in Mandarin with real appointment slots.
 

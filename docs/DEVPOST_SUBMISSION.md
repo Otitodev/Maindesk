@@ -18,7 +18,7 @@ Small clinics lose patients to voicemail. A solo GP running a small practice pay
 
 ### What it does
 
-One LangGraph orchestrator sits behind every channel a patient might use: WhatsApp, email, the web chat widget, and voice, both a real phone number over Twilio and a browser call widget we host ourselves. Same brain every time. It books real appointments against Google Calendar, remembers patients across channels and sessions, replies in whatever language the patient used, refuses to invent clinic facts it doesn't actually know, and hands off to a live staff dashboard the moment something looks medical or uncertain. Staff reply once and it routes straight back to the patient on whatever channel they used. The same tools are also exposed over MCP, so staff can manage the schedule from Claude Desktop or Cursor if they'd rather.
+One LangGraph orchestrator sits behind every channel a patient might use: WhatsApp, email, the web chat widget, and voice, both a real phone number over Twilio and a browser call widget we host ourselves. Same brain every time. It books real appointments, with a Google Calendar integration built in for real free and busy checks and a local Postgres scheduler as the fallback when a clinic hasn't connected a calendar yet, remembers patients across channels and sessions, replies in whatever language the patient used, refuses to invent clinic facts it doesn't actually know, and hands off to a live staff dashboard the moment something looks medical or uncertain. Staff reply once and it routes straight back to the patient on whatever channel they used. The same tools are also exposed over MCP, so staff can manage the schedule from Claude Desktop or Cursor if they'd rather.
 
 ### How we built it
 
