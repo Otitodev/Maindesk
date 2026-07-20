@@ -44,7 +44,7 @@ def _defaults() -> dict[str, Any]:
     s = get_settings()
     return {
         "clinic_name": "",
-        "agent_name": "MainDesk",
+        "agent_name": "Danny",
         "greeting": "",
         "timezone": s.clinic_timezone,
         "open_hour": s.clinic_open_hour,
@@ -112,7 +112,7 @@ def knowledge_block(cfg: dict[str, Any] | None = None) -> str:
     faqs = (cfg.get("faqs") or "").strip()
     if not name and not faqs:
         return ""
-    agent = (cfg.get("agent_name") or "MainDesk").strip()
+    agent = (cfg.get("agent_name") or "Danny").strip()
     lines = [
         f"You are {agent}, the front-desk assistant" + (f" for {name}" if name else "") + "."
     ]

@@ -116,9 +116,10 @@ async def test_book_appointment_handles_unparseable_iso():
 async def test_book_appointment_calls_book(monkeypatch):
     call_args: dict[str, Any] = {}
 
-    async def fake_book(patient_id, ts):
+    async def fake_book(patient_id, ts, *, reason=None):
         call_args["patient_id"] = patient_id
         call_args["ts"] = ts
+        call_args["reason"] = reason
         return {"tool": "book", "id": "appt-1", "starts_at": ts.isoformat()}
 
     monkeypatch.setattr(voice_mod, "book", fake_book)
@@ -127,11 +128,27 @@ async def test_book_appointment_calls_book(monkeypatch):
     assert "Booked" in captured["result"]
     assert call_args["patient_id"] == "p-1"
     assert call_args["ts"] == datetime(2026, 6, 12, 15, 0, tzinfo=timezone.utc)
+    assert call_args["reason"] is None  # not supplied by the LLM this time
+
+
+async def test_book_appointment_passes_reason_through(monkeypatch):
+    call_args: dict[str, Any] = {}
+
+    async def fake_book(patient_id, ts, *, reason=None):
+        call_args["reason"] = reason
+        return {"tool": "book", "id": "appt-1", "starts_at": ts.isoformat()}
+
+    monkeypatch.setattr(voice_mod, "book", fake_book)
+    params, captured = _call_params(_session(patient_id="p-1"))
+    await voice_mod.book_appointment(
+        params, slot_iso="2026-06-12T15:00:00+00:00", reason="annual checkup"
+    )
+    assert call_args["reason"] == "annual checkup"
 
 
 async def test_book_appointment_slot_taken_does_not_confirm_booking(monkeypatch):
     """When book() returns slot_taken, the caller must NOT hear 'Booked for...'."""
-    async def fake_book_taken(patient_id, ts):
+    async def fake_book_taken(patient_id, ts, *, reason=None):
         return {"tool": "book", "error": "slot_taken", "starts_at": ts.isoformat()}
 
     monkeypatch.setattr(voice_mod, "book", fake_book_taken)

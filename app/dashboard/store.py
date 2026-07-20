@@ -167,7 +167,7 @@ async def recent_bookings(*, limit: int = 8) -> list[dict[str, Any]]:
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT a.id, a.starts_at, a.status, a.created_at, p.full_name "
+            "SELECT a.id, a.starts_at, a.status, a.created_at, a.notes AS reason, p.full_name "
             "FROM appointments a LEFT JOIN patients p ON p.id = a.patient_id "
             "WHERE a.starts_at >= NOW() "
             "ORDER BY a.created_at DESC LIMIT $1",

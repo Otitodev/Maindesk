@@ -30,8 +30,11 @@ async def test_book_intent_offers_slots_and_sets_pending(monkeypatch):
         tn.appointments, "suggest_slots",
         AsyncMock(return_value={"tool": "suggest_slots", "slots": [_SLOT]}),
     )
-    out = await tn.tools_node({"message": _msg(), "intent": "book_appointment"})
-    assert out["pending"] == {"type": "book", "slots": [_SLOT]}
+    out = await tn.tools_node(
+        {"message": _msg("I need a checkup"), "intent": "book_appointment"}
+    )
+    # The triggering message doubles as the reason for visit.
+    assert out["pending"] == {"type": "book", "slots": [_SLOT], "reason": "I need a checkup"}
     assert out["tool_results"][0]["tool"] == "suggest_slots"
 
 
@@ -84,12 +87,14 @@ async def test_pending_book_select_books_and_clears(monkeypatch):
     monkeypatch.setattr(tn.appointments, "book", book_mock)
     out = await tn.tools_node({
         "message": _msg("9am"), "intent": "unknown",
-        "pending": {"type": "book", "slots": [_SLOT]},
+        "pending": {"type": "book", "slots": [_SLOT], "reason": "sore throat"},
     })
     assert out["pending"] is None
     assert out["tool_results"][0]["id"] == "b1"
     # Low-confidence reply must not trip the reasoner's escalation guard.
     assert out["intent_confidence"] == 1.0
+    # The reason captured when the flow started rides along to the booking.
+    book_mock.assert_awaited_once_with("p-1", tn._parse_iso(_SLOT), reason="sore throat")
     assert out["intent"] == "book_appointment"
     book_mock.assert_awaited_once()
 

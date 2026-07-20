@@ -94,14 +94,19 @@ async def find_existing(msg: PatientMessage) -> dict[str, Any]:
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT id, starts_at, status FROM appointments "
+            "SELECT id, starts_at, status, notes FROM appointments "
             "WHERE patient_id = $1 AND starts_at >= NOW() ORDER BY starts_at LIMIT 5",
             msg.patient_id,
         )
     return {
         "tool": "find_existing",
         "appointments": [
-            {"id": str(r["id"]), "starts_at": r["starts_at"].isoformat(), "status": r["status"]}
+            {
+                "id": str(r["id"]),
+                "starts_at": r["starts_at"].isoformat(),
+                "status": r["status"],
+                "reason": r["notes"],
+            }
             for r in rows
         ],
     }
@@ -112,13 +117,13 @@ async def history(patient_id: str, *, limit: int = 10) -> dict[str, Any]:
     pool = await get_pool()
     async with pool.acquire() as conn:
         upcoming = await conn.fetch(
-            "SELECT id, starts_at, status FROM appointments "
+            "SELECT id, starts_at, status, notes FROM appointments "
             "WHERE patient_id = $1 AND starts_at >= NOW() ORDER BY starts_at ASC LIMIT $2",
             patient_id,
             limit,
         )
         past = await conn.fetch(
-            "SELECT id, starts_at, status FROM appointments "
+            "SELECT id, starts_at, status, notes FROM appointments "
             "WHERE patient_id = $1 AND starts_at < NOW() ORDER BY starts_at DESC LIMIT $2",
             patient_id,
             limit,
@@ -126,7 +131,12 @@ async def history(patient_id: str, *, limit: int = 10) -> dict[str, Any]:
 
     def _rows(rows):
         return [
-            {"id": str(r["id"]), "starts_at": r["starts_at"].isoformat(), "status": r["status"]}
+            {
+                "id": str(r["id"]),
+                "starts_at": r["starts_at"].isoformat(),
+                "status": r["status"],
+                "reason": r["notes"],
+            }
             for r in rows
         ]
 
@@ -191,15 +201,18 @@ async def _mirror_cancel(event_id: str | None) -> None:
 # ── Mutations ────────────────────────────────────────────────────────────────
 
 
-async def book(patient_id: str, starts_at: datetime) -> dict[str, Any]:
+async def book(
+    patient_id: str, starts_at: datetime, *, reason: str | None = None
+) -> dict[str, Any]:
     pool = await get_pool()
     try:
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
-                "INSERT INTO appointments (patient_id, starts_at, status) "
-                "VALUES ($1, $2, 'booked') RETURNING id",
+                "INSERT INTO appointments (patient_id, starts_at, status, notes) "
+                "VALUES ($1, $2, 'booked', $3) RETURNING id",
                 patient_id,
                 starts_at,
+                reason,
             )
     except asyncpg.UniqueViolationError:
         log.warning("double-booking attempted patient=%s starts_at=%s", patient_id, starts_at)
@@ -248,7 +261,7 @@ async def reschedule(
         async with pool.acquire() as conn:
             async with conn.transaction():
                 existing = await conn.fetchrow(
-                    "SELECT id, calendar_event_id FROM appointments "
+                    "SELECT id, calendar_event_id, notes FROM appointments "
                     "WHERE id = $1 AND patient_id = $2 AND status = 'booked' "
                     "FOR UPDATE",
                     appointment_id,
@@ -260,11 +273,14 @@ async def reschedule(
                         "error": "not_found",
                         "appointment_id": appointment_id,
                     }
+                # Carry the original reason-for-visit over to the new slot —
+                # it's the same visit, just moved, not a new one.
                 new_row = await conn.fetchrow(
-                    "INSERT INTO appointments (patient_id, starts_at, status) "
-                    "VALUES ($1, $2, 'booked') RETURNING id",
+                    "INSERT INTO appointments (patient_id, starts_at, status, notes) "
+                    "VALUES ($1, $2, 'booked', $3) RETURNING id",
                     patient_id,
                     new_starts_at,
+                    existing.get("notes"),
                 )
                 await conn.execute(
                     "UPDATE appointments SET status = 'cancelled' WHERE id = $1",

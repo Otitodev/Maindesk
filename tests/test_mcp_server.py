@@ -67,16 +67,20 @@ async def test_suggest_slots_passthrough(monkeypatch):
 async def test_book_appointment_happy_path(known_patient, monkeypatch):
     booked = {}
 
-    async def fake_book(patient_id, starts_at):
+    async def fake_book(patient_id, starts_at, *, reason=None):
         booked["patient_id"] = patient_id
         booked["starts_at"] = starts_at
+        booked["reason"] = reason
         return {"tool": "book", "id": "appt-1", "starts_at": starts_at.isoformat()}
 
     monkeypatch.setattr(mcp_mod.appointments, "book", fake_book)
-    out = await mcp_mod.book_appointment(PATIENT["phone"], "2026-06-20T14:00:00+00:00")
+    out = await mcp_mod.book_appointment(
+        PATIENT["phone"], "2026-06-20T14:00:00+00:00", reason="follow-up"
+    )
     assert out["booked"] is True
     assert out["appointment_id"] == "appt-1"
     assert booked["patient_id"] == str(PATIENT["id"])
+    assert booked["reason"] == "follow-up"
 
 
 async def test_book_appointment_unknown_patient(known_patient):
@@ -90,7 +94,7 @@ async def test_book_appointment_bad_timestamp(known_patient):
 
 
 async def test_book_appointment_slot_taken(known_patient, monkeypatch):
-    async def fake_book(patient_id, starts_at):
+    async def fake_book(patient_id, starts_at, *, reason=None):
         return {"tool": "book", "error": "slot_taken", "starts_at": starts_at.isoformat()}
 
     monkeypatch.setattr(mcp_mod.appointments, "book", fake_book)

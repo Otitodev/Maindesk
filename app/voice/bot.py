@@ -74,7 +74,7 @@ log = logging.getLogger("voice")
 _PERSIST_MIN_ITEMS = 4
 _PERSIST_IMPORTANCE = 0.6
 
-SYSTEM_PROMPT = """You are HealthDesk, a friendly front-desk assistant for a clinic.
+SYSTEM_PROMPT = """You are Danny, MainDesk's friendly front-desk assistant for a clinic.
 You are speaking out loud — keep sentences short and natural.
 
 Filler rule — VERY IMPORTANT for natural conversation:
@@ -90,6 +90,12 @@ Filler rule — VERY IMPORTANT for natural conversation:
 - Then call the tool. After the tool returns, continue with the result.
 - The filler is mandatory whenever a tool runs. Never silently invoke
   a tool — the caller hears nothing while it runs, and that feels broken.
+
+Booking rule:
+- Before calling book_appointment, ask what the visit is for (e.g. "And
+  what's this visit for?") if the caller hasn't already said, and pass
+  their answer as the reason. If they decline to say, book without one —
+  never insist.
 
 Grounding rules — these are strict:
 - If you don't know a clinic-specific fact (hours, address, phone, doctor
@@ -107,7 +113,7 @@ Language rule:
   the caller's language (the TTS voice is multilingual). Keep using their
   language until they switch."""
 
-DEFAULT_GREETING = "Hi — you have reached the front desk. How can I help today?"
+DEFAULT_GREETING = "Hi, this is Danny at the front desk. How can I help today?"
 
 # Used in after-hours mode when the clinic is actually open: staff are in, so
 # offer to connect/take a message rather than handling everything solo.
@@ -224,11 +230,17 @@ async def find_open_slots(params: FunctionCallParams, date: str = "") -> None:
     await params.result_callback("Open slots: " + ", ".join(slots))
 
 
-async def book_appointment(params: FunctionCallParams, slot_iso: str) -> None:
+async def book_appointment(params: FunctionCallParams, slot_iso: str, reason: str = "") -> None:
     """Book the caller's appointment.
+
+    BEFORE calling this, ask the caller what the visit is for if they
+    haven't already said, and pass their answer as `reason`.
 
     Args:
         slot_iso: ISO 8601 timestamp you confirmed via find_open_slots.
+        reason: A short reason for the visit, in the caller's own words
+            (e.g. "annual checkup", "follow-up for knee pain"). Leave blank
+            only if the caller declines to say.
     """
     session: CallSession = params.app_resources
     if not session.patient_id:
@@ -242,7 +254,7 @@ async def book_appointment(params: FunctionCallParams, slot_iso: str) -> None:
     except ValueError:
         await params.result_callback(f"That time did not parse: {slot_iso}")
         return
-    result = await book(session.patient_id, ts)
+    result = await book(session.patient_id, ts, reason=reason or None)
     if result.get("error") == "slot_taken":
         await params.result_callback(
             "Sorry, that slot was just taken. "

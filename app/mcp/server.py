@@ -89,9 +89,13 @@ async def lookup_patient(phone: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def book_appointment(phone: str, slot_iso: str) -> dict[str, Any]:
+async def book_appointment(
+    phone: str, slot_iso: str, reason: str = ""
+) -> dict[str, Any]:
     """Book an appointment for the patient with this phone number at
     `slot_iso` (an ISO 8601 timestamp confirmed via suggest_slots).
+    `reason` is an optional short reason for the visit, in the patient's
+    own words — pass it along if the caller mentioned one.
     Refuses double-bookings: returns slot_taken if the slot just went."""
     patient = await _patient_or_error(phone)
     if "error" in patient:
@@ -101,7 +105,7 @@ async def book_appointment(phone: str, slot_iso: str) -> dict[str, Any]:
     except ValueError:
         return {"error": "bad_timestamp", "slot_iso": slot_iso,
                 "hint": "Pass an ISO 8601 timestamp from suggest_slots."}
-    result = await appointments.book(patient["id"], starts_at)
+    result = await appointments.book(patient["id"], starts_at, reason=reason or None)
     if result.get("error"):
         return {"error": result["error"], "starts_at": result.get("starts_at")}
     return {"booked": True, "appointment_id": result["id"], "starts_at": result["starts_at"],

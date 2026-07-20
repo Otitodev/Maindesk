@@ -8,7 +8,7 @@ import asyncpg
 import pytest
 
 from app.gateway.schema import PatientMessage
-from app.tools.appointments import book, cancel, reschedule, suggest_slots
+from app.tools.appointments import book, cancel, find_existing, reschedule, suggest_slots
 
 
 def _txn_cm():
@@ -135,6 +135,24 @@ async def test_book_success(mock_pool):
     assert "error" not in result
 
 
+async def test_book_passes_reason_to_insert(mock_pool):
+    mock_pool.fetchrow.return_value = {"id": "uuid-1"}
+    ts = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
+    await book("patient-1", ts, reason="annual checkup")
+    args = mock_pool.fetchrow.call_args[0]
+    assert args[1] == "patient-1"
+    assert args[2] == ts
+    assert args[3] == "annual checkup"
+
+
+async def test_book_without_reason_stores_none(mock_pool):
+    mock_pool.fetchrow.return_value = {"id": "uuid-1"}
+    ts = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
+    await book("patient-1", ts)
+    args = mock_pool.fetchrow.call_args[0]
+    assert args[3] is None
+
+
 async def test_book_slot_taken_returns_error(mock_pool):
     mock_pool.fetchrow.side_effect = asyncpg.UniqueViolationError()
     ts = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
@@ -152,6 +170,19 @@ async def test_suggest_slots_cancelled_slot_is_available(mock_pool):
     result = await suggest_slots(_msg(), n=3)
     # All 3 slots are available because cancelled rows are excluded from the query
     assert len(result["slots"]) == 3
+
+
+async def test_find_existing_includes_reason(mock_pool):
+    ts = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
+    mock_pool.fetch.return_value = [
+        {"id": "a1", "starts_at": ts, "status": "booked", "notes": "annual checkup"}
+    ]
+    msg = PatientMessage(
+        message_id="m1", session_id="s1", patient_id="patient-1",
+        channel="web", content="book appt",
+    )
+    result = await find_existing(msg)
+    assert result["appointments"][0]["reason"] == "annual checkup"
 
 
 # ── cancel ──────────────────────────────────────────────────────────────
@@ -190,6 +221,20 @@ async def test_reschedule_success(mock_pool):
     assert result["starts_at"] == ts.isoformat()
     assert "error" not in result
     mock_pool.execute.assert_awaited_once()  # old row cancelled
+
+
+async def test_reschedule_carries_reason_to_new_slot(mock_pool):
+    """The reason-for-visit is the same visit, just moved — carry it over."""
+    mock_pool.transaction = MagicMock(return_value=_txn_cm())
+    mock_pool.fetchrow.side_effect = [
+        {"id": "old-1", "calendar_event_id": None, "notes": "sore throat"},
+        {"id": "new-1"},
+    ]
+    mock_pool.execute = AsyncMock()
+    ts = datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
+    await reschedule("patient-1", "old-1", ts)
+    insert_args = mock_pool.fetchrow.call_args_list[1][0]
+    assert insert_args[3] == "sore throat"
 
 
 async def test_reschedule_not_found(mock_pool):

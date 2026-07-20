@@ -30,8 +30,10 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""
     # Pipecat's ElevenLabsTTSService requires an explicit voice id (the old
     # LiveKit plugin had a built-in default; Pipecat does not). Defaults to
-    # ElevenLabs' stock "Rachel" voice — override per clinic if desired.
-    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
+    # ElevenLabs' stock "Adam" voice to match the agent's default persona
+    # name (Danny) — verify this ID is still valid in your ElevenLabs
+    # dashboard (Voice Library) before relying on it; override per clinic.
+    elevenlabs_voice_id: str = "pNInz6obpgDQGcFmaJgB"
 
     # WhatsApp / Evolution API
     evolution_api_url: str = ""

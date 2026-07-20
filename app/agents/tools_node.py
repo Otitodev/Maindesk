@@ -68,7 +68,7 @@ async def _resume_pending(state: AgentState, pending: dict) -> AgentState | None
         if ts is None:
             return None
         if ptype == "book":
-            res = await appointments.book(msg.patient_id, ts)
+            res = await appointments.book(msg.patient_id, ts, reason=pending.get("reason"))
         else:
             res = await appointments.reschedule(
                 msg.patient_id, pending["appointment_id"], ts
@@ -109,7 +109,9 @@ async def _start_flow(state: AgentState) -> AgentState:
         slots = await appointments.suggest_slots(msg)
         results.append(slots)
         if slots.get("slots"):
-            pending = {"type": "book", "slots": slots["slots"]}
+            # The message that triggered the booking intent doubles as the
+            # reason for visit — free text, not a separate question turn.
+            pending = {"type": "book", "slots": slots["slots"], "reason": msg.content}
 
     elif intent == "reschedule":
         existing = await appointments.find_existing(msg)

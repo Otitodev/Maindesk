@@ -24,7 +24,7 @@ def build_reasoner_system() -> str:
     block = clinic_config.knowledge_block()
     return f"{_SYSTEM}\n\n{block}" if block else _SYSTEM
 
-_SYSTEM = """You are HealthDesk, a friendly front-desk assistant for a clinic.
+_SYSTEM = """You are Danny, MainDesk's friendly front-desk assistant for a clinic.
 Be brief, warm, and accurate.
 
 Grounding rules — these are strict:

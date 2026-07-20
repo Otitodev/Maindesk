@@ -209,11 +209,16 @@ async def bookings(request: Request) -> HTMLResponse:
         return HTMLResponse('<div class="md-empty">Database not reachable.</div>')
     if not rows:
         return HTMLResponse('<div class="md-empty">No upcoming bookings.</div>')
-    items = "".join(
-        f'<div class="md-booking"><span>{html.escape(r.get("full_name") or "Unknown")}</span>'
-        f'<span class="when">{_fmt(r.get("starts_at"))} &middot; {html.escape(r.get("status") or "")}</span></div>'
-        for r in rows
-    )
+    def _row(r: dict) -> str:
+        reason = (r.get("reason") or "").strip()
+        reason_html = f'<div class="md-booking-reason">{html.escape(reason)}</div>' if reason else ""
+        return (
+            f'<div class="md-booking"><span>{html.escape(r.get("full_name") or "Unknown")}</span>'
+            f'<span class="when">{_fmt(r.get("starts_at"))} &middot; {html.escape(r.get("status") or "")}</span>'
+            f'{reason_html}</div>'
+        )
+
+    items = "".join(_row(r) for r in rows)
     return HTMLResponse(items)
 
 

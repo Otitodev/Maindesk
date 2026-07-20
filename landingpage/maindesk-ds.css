@@ -1356,6 +1356,7 @@ a { color: inherit; }
 
 .md-booking {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   padding: 10px 0;
@@ -1364,3 +1365,9 @@ a { color: inherit; }
 }
 .md-booking:last-child { border-bottom: 0; }
 .md-booking .when { color: var(--ink-soft); }
+.md-booking-reason {
+  flex-basis: 100%;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-style: italic;
+}
