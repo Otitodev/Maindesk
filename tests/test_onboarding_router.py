@@ -26,8 +26,8 @@ def client(monkeypatch):
 def test_get_form_renders_prefilled(client):
     r = client.get("/onboarding")
     assert r.status_code == 200
-    assert "Clinic setup" in r.text
-    assert "HealthDesk" in r.text  # default agent name prefilled
+    assert "MainDesk — Configure" in r.text
+    assert "MainDesk" in r.text  # default agent name prefilled
 
 
 def test_post_saves_parsed_config(client, monkeypatch):

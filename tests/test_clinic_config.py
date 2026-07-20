@@ -24,7 +24,7 @@ def test_current_returns_env_defaults_without_cache():
     cfg = clinic_config.current()
     assert cfg["timezone"] == get_settings().clinic_timezone
     assert cfg["answer_mode"] == "always"
-    assert cfg["agent_name"] == "HealthDesk"
+    assert cfg["agent_name"] == "MainDesk"
     assert cfg["working_days"] == [1, 2, 3, 4, 5]
 
 

@@ -112,7 +112,7 @@ def knowledge_block(cfg: dict[str, Any] | None = None) -> str:
     faqs = (cfg.get("faqs") or "").strip()
     if not name and not faqs:
         return ""
-    agent = (cfg.get("agent_name") or "HealthDesk").strip()
+    agent = (cfg.get("agent_name") or "MainDesk").strip()
     lines = [
         f"You are {agent}, the front-desk assistant" + (f" for {name}" if name else "") + "."
     ]

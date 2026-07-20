@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,6 +31,12 @@ def client(monkeypatch):
         return StubGraph()
 
     monkeypatch.setattr(main_mod, "build_graph", fake_build_graph)
+    # Isolate from whatever DB happens to be reachable in this environment:
+    # clinic_config.refresh() runs at app startup regardless of these tests'
+    # own store-level FakePool mocking, and a real, live Postgres would leak
+    # its connection pool across the (function-scoped) event loops these
+    # tests run under.
+    monkeypatch.setattr("app.clinic_config.get_pool", AsyncMock(side_effect=RuntimeError("no db")))
     with TestClient(main_mod.app) as c:
         yield c
 
@@ -94,7 +101,7 @@ def _open_escalation_row():
 def test_staff_index_serves_page(client):
     r = client.get("/staff")
     assert r.status_code == 200
-    assert "Staff Console" in r.text
+    assert "MainDesk — Overview" in r.text
     assert "sse-connect" in r.text
 
 
@@ -135,7 +142,10 @@ def test_action_resolves_and_returns_queue(client, monkeypatch):
         headers={"content-type": "application/x-www-form-urlencoded"},
     )
     assert r.status_code == 200
-    update = next(q for q in conn.queries if q[0].startswith("UPDATE escalations"))
+    # resolve_escalation wraps the UPDATE in a CTE (`WITH updated AS (UPDATE ...)`)
+    # so it can join patient contact info in the same round trip — match on
+    # substring, not prefix.
+    update = next(q for q in conn.queries if "UPDATE escalations" in q[0])
     assert update[1][0] == ESC_ID
     assert update[1][1] == "approved"
     assert update[1][2] == "called the patient"

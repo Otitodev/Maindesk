@@ -70,7 +70,7 @@ def _parse_form(form: dict[str, list[str]]) -> dict:
 
     return {
         "clinic_name": one("clinic_name"),
-        "agent_name": one("agent_name", "HealthDesk") or "HealthDesk",
+        "agent_name": one("agent_name", "MainDesk") or "MainDesk",
         "greeting": one("greeting"),
         "timezone": tz,
         "open_hour": open_hour,
