@@ -1,5 +1,14 @@
+import asyncio
+import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
+
+if sys.platform == "win32":
+    # psycopg's async mode (used by langgraph-checkpoint-postgres's
+    # AsyncPostgresSaver) requires a SelectorEventLoop; Windows has defaulted
+    # to ProactorEventLoop since Python 3.8. Only affects local dev — the
+    # ECS deploy target is Linux, where this distinction doesn't exist.
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +29,9 @@ from app.gateway.adapters.whatsapp import router as whatsapp_router
 from app.gateway.limiter import limiter
 from app.gateway.demo_inbox import router as demo_inbox_router
 from app.gateway.readiness import router as readiness_router
+from app.voice.router import router as voice_router
+from app.voice.webrtc_router import close as close_webrtc_handler
+from app.voice.webrtc_router import router as voice_web_router
 
 
 @asynccontextmanager
@@ -35,6 +47,7 @@ async def lifespan(app: FastAPI):
     finally:
         await close_evolution_client()
         await close_email_client()
+        await close_webrtc_handler()
         await app.state.exit_stack.aclose()
 
 
@@ -49,6 +62,8 @@ app.include_router(onboarding_router)
 app.include_router(chat_router)
 app.include_router(readiness_router)
 app.include_router(demo_inbox_router)
+app.include_router(voice_router)
+app.include_router(voice_web_router)
 
 
 @app.get("/health")

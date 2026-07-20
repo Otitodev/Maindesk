@@ -145,7 +145,7 @@ That's the sticker line. It goes on the last frame, in the video description, an
 - [ ] Total length ≤ 3:00 (stopwatch it, not estimate)
 - [ ] Public visibility on YouTube / Vimeo / Youku
 - [ ] Captions burned in or auto-generated (helps judges skimming without audio)
-- [ ] No third-party wordmarks visible (WhatsApp, Google Calendar, LiveKit logos cropped or covered)
+- [ ] No third-party wordmarks visible (WhatsApp, Google Calendar, Twilio logos cropped or covered)
 - [ ] No copyrighted music
 - [ ] Repo URL visible in the final frame **and** the video description
 - [ ] Video URL pasted into the Devpost submission

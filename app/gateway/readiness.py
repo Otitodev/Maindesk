@@ -36,13 +36,13 @@ async def gateways() -> dict:
     email_creds = _ready(s.email_api_url, s.email_api_token, s.email_from)
     email_ready = email_creds or demo
 
-    voice_ready = _ready(
-        s.livekit_url,
-        s.livekit_api_key,
-        s.livekit_api_secret,
-        s.deepgram_api_key,
-        s.elevenlabs_api_key,
-    ) and s.healthdesk_voice
+    voice_core_ready = _ready(s.deepgram_api_key, s.elevenlabs_api_key, s.dashscope_api_key)
+    telephony_ready = _ready(s.twilio_account_sid, s.twilio_auth_token)
+    # Web widget needs no telephony vendor — it's a self-hosted WebRTC
+    # transport (aiortc), so it's live as soon as STT/TTS/LLM creds are set.
+    voice_web_ready = bool(voice_core_ready and s.healthdesk_voice)
+    voice_phone_ready = bool(voice_core_ready and telephony_ready and s.healthdesk_voice)
+    voice_ready = voice_web_ready or voice_phone_ready
 
     return {
         "web": {
@@ -72,9 +72,14 @@ async def gateways() -> dict:
             ),
         },
         "voice": {
-            "endpoint": "LiveKit worker (agent_name=healthdesk)",
+            "endpoint": "WS /voice/twilio/media, POST /voice/web/offer",
             "live": voice_ready,
-            "notes": "LiveKit + Deepgram + ElevenLabs required; HEALTHDESK_VOICE=true",
+            "phone": voice_phone_ready,
+            "web": voice_web_ready,
+            "notes": (
+                "web widget needs Deepgram + ElevenLabs + DashScope; "
+                "phone additionally needs Twilio; HEALTHDESK_VOICE=true"
+            ),
         },
         "summary": {
             "total": 4,

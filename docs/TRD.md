@@ -5,6 +5,8 @@
 **Author:** Otito Ogene  
 **Submission:** Global AI Hackathon Series with Qwen Cloud — Track 4: Autopilot Agent
 
+> **Post-submission update:** the voice layer described below (LiveKit Agents + native SIP) was replaced with **Pipecat + Twilio Media Streams** — see `app/voice/bot.py` and `app/voice/router.py` for the current implementation, and `docs/GATEWAYS_SETUP.md` §2 for the current setup steps. The rest of this document (LangGraph orchestrator, memory, WhatsApp/web/email gateways) still reflects the live system. Sections below referencing LiveKit/SIP describe the original hackathon-era design, kept for history.
+
 ---
 
 ## 1. System Overview

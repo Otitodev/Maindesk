@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MainDesk — Call the front desk</title>
+  <link rel="stylesheet" href="/vendor/fonts.css" />
+  <link rel="stylesheet" href="/maindesk-ds.css" />
+  <style>
+    html, body { height: 100%; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .md-call-card {
+      max-width: 380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 28px;
+      text-align: center;
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+    }
+    .md-call-card h1 {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      margin: 0 0 6px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .md-call-card .sub { color: var(--ink-soft); font-size: 0.85rem; margin: 0 0 24px; }
+    .md-call-orb {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--border-soft);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      transition: box-shadow 0.2s ease;
+    }
+    .md-call-orb.is-connecting { box-shadow: 0 0 0 6px var(--border-soft); animation: md-pulse 1.2s ease-in-out infinite; }
+    .md-call-orb.is-connected { border-color: var(--border-strong); box-shadow: 0 0 0 6px var(--border-soft); }
+    @keyframes md-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px var(--border-soft); }
+      50% { box-shadow: 0 0 0 10px var(--border-soft); }
+    }
+    .md-call-status { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 20px; min-height: 1.2em; }
+    .md-call-hint { color: var(--ink-soft); font-size: 0.72rem; margin-top: 18px; }
+  </style>
+</head>
+<body class="md-page">
+  <div class="md-call-card">
+    <h1>MainDesk <span class="badge"><span class="badge__dot"></span>live</span></h1>
+    <p class="sub">Talk to the front-desk agent — booking, hours, or anything a patient would ask.</p>
+    <div id="orb" class="md-call-orb">🎙️</div>
+    <p id="status" class="md-call-status">Ready to call</p>
+    <button id="call-btn" class="btn btn--primary" type="button">Call the front desk</button>
+    <audio id="audio-el" autoplay></audio>
+    <p class="md-call-hint">Demo mode · synthetic data only · no PHI</p>
+  </div>
+
+  <script>
+    const orbEl = document.getElementById('orb');
+    const statusEl = document.getElementById('status');
+    const buttonEl = document.getElementById('call-btn');
+    const audioEl = document.getElementById('audio-el');
+
+    let peerConnection = null;
+    let connected = false;
+
+    const OFFER_URL = '/voice/web/offer';
+
+    const sendIceCandidate = async (pc, candidate) => {
+      await fetch(OFFER_URL, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pc_id: pc.pc_id,
+          candidates: [{
+            candidate: candidate.candidate,
+            sdp_mid: candidate.sdpMid,
+            sdp_mline_index: candidate.sdpMLineIndex,
+          }],
+        }),
+      });
+    };
+
+    const addPeerConnectionEventListeners = (pc) => {
+      pc.onconnectionstatechange = () => {
+        const state = pc?.connectionState;
+        if (state === 'connected') onConnected();
+        else if (state === 'disconnected' || state === 'failed' || state === 'closed') onDisconnected();
+      };
+      pc.onicecandidate = async (event) => {
+        if (!event.candidate) return;
+        if (pc.canSendIceCandidates && pc.pc_id) {
+          await sendIceCandidate(pc, event.candidate);
+        } else {
+          pc.pendingIceCandidates.push(event.candidate);
+        }
+      };
+    };
+
+    const createConnection = async (audioTrack) => {
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      });
+      pc.pendingIceCandidates = [];
+      pc.canSendIceCandidates = false;
+
+      addPeerConnectionEventListeners(pc);
+      pc.ontrack = (e) => { audioEl.srcObject = e.streams[0]; };
+      // SmallWebRTCTransport expects both transceivers even for audio-only calls.
+      pc.addTransceiver(audioTrack, { direction: 'sendrecv' });
+      pc.addTransceiver('video', { direction: 'sendrecv' });
+
+      await pc.setLocalDescription(await pc.createOffer());
+      const offer = pc.localDescription;
+      const response = await fetch(OFFER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sdp: offer.sdp, type: offer.type }),
+      });
+      if (!response.ok) {
+        throw new Error('offer rejected: ' + response.status);
+      }
+      const answer = await response.json();
+      pc.pc_id = answer.pc_id;
+      await pc.setRemoteDescription(answer);
+
+      pc.canSendIceCandidates = true;
+      for (const candidate of pc.pendingIceCandidates) {
+        await sendIceCandidate(pc, candidate);
+      }
+      pc.pendingIceCandidates = [];
+
+      return pc;
+    };
+
+    function onConnecting() {
+      connected = true;
+      orbEl.className = 'md-call-orb is-connecting';
+      statusEl.textContent = 'Connecting…';
+      buttonEl.textContent = 'Hang up';
+    }
+    function onConnected() {
+      orbEl.className = 'md-call-orb is-connected';
+      statusEl.textContent = 'Connected — go ahead and speak';
+      buttonEl.textContent = 'Hang up';
+    }
+    function onDisconnected() {
+      connected = false;
+      orbEl.className = 'md-call-orb';
+      statusEl.textContent = 'Call ended';
+      buttonEl.textContent = 'Call the front desk';
+      peerConnection = null;
+    }
+
+    async function startCall() {
+      onConnecting();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        peerConnection = await createConnection(stream.getAudioTracks()[0]);
+      } catch (err) {
+        statusEl.textContent = 'Could not start the call — check microphone permission.';
+        onDisconnected();
+      }
+    }
+
+    function endCall() {
+      if (peerConnection) {
+        peerConnection.close();
+      }
+      onDisconnected();
+    }
+
+    buttonEl.addEventListener('click', () => {
+      if (!connected) {
+        startCall();
+      } else {
+        endCall();
+      }
+    });
+  </script>
+</body>
+</html>

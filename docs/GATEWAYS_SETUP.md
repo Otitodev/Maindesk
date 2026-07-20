@@ -21,44 +21,43 @@ Or open [https://maindesk.otito.site/chat](https://maindesk.otito.site/chat) in 
 
 ---
 
-## 2. Voice — LiveKit + Deepgram + ElevenLabs (~15 min)
+## 2. Voice — Pipecat + Twilio + Deepgram + ElevenLabs (~15 min)
 
-**Status**: number bought (`+1 484 270 7025`), dispatch rule created (`SDR_2eGJxpC4xohv`). Two things left:
+Voice runs in-process as FastAPI routes (`app/voice/router.py` + `app/voice/bot.py`) — there is no separate worker process to start; it comes up automatically with the gateway container.
 
-### 2a. Attach the dispatch rule to the number
+### 2a. Buy a Twilio number and point it at the app
 
-CLI is blocked by a "catch-all rule" safety check. Use the console instead:
+1. [console.twilio.com](https://console.twilio.com/) → **Phone Numbers → Buy a number** (pick one that supports Voice).
+2. Open the number → **Voice Configuration**:
+   - "A call comes in" → **Webhook**
+   - URL: `https://maindesk.otito.site/voice/twilio/incoming`
+   - Method: `HTTP POST`
+3. Save. That webhook returns TwiML that opens a Media Stream back to `wss://maindesk.otito.site/voice/twilio/media` — no static TwiML Bin needed, it's generated per-call so the caller's number rides along automatically.
 
-1. [cloud.livekit.io](https://cloud.livekit.io) → **Telephony → Phone Numbers**
-2. Click **+1 484 270 7025**
-3. **Dispatch Rule** → pick `MainDesk inbound`
-4. Save
-
-Verify: `lk number list` shows `SDR_2eGJxpC4xohv` in the "SIP Dispatch Rules" column.
-
-### 2b. Fill the 5 voice env vars
+### 2b. Fill the voice env vars
 
 Locally in `.env`, or on the ECS box in `/opt/maindesk/.env`:
 
 ```env
-LIVEKIT_URL=wss://qwen-hackathon-3o35vwom.livekit.cloud
-LIVEKIT_API_KEY=APIszEksEqodD8j...
-LIVEKIT_API_SECRET=<from LiveKit console -> Settings -> Keys>
+TWILIO_ACCOUNT_SID=<from console.twilio.com -> Account -> API keys & tokens>
+TWILIO_AUTH_TOKEN=<same page>
 DEEPGRAM_API_KEY=<from console.deepgram.com -> API Keys>
 ELEVENLABS_API_KEY=<from elevenlabs.io -> Profile -> API Keys>
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM   # or any other ElevenLabs voice id
 HEALTHDESK_VOICE=true
 HEALTHDESK_ENV=demo
 ```
 
-### 2c. Start the worker
+### 2c. Bring the app up
 
-**Locally** (for demo recording):
+**Locally** (for demo recording), then tunnel it so Twilio can reach your machine:
 ```powershell
 cd C:\Users\DELL\Qwen_desk\healthdesk-ai
-.venv\Scripts\python -m app.voice.agent_worker start
+.venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000
+# in another terminal:
+ngrok http 8000
 ```
-
-Watch for `registered worker id=... agent_name=healthdesk`.
+Point the Twilio number's webhook at the ngrok HTTPS URL (`https://<subdomain>.ngrok.io/voice/twilio/incoming`) while testing locally.
 
 **On the ECS box** (permanent):
 ```bash
@@ -66,13 +65,24 @@ Watch for `registered worker id=... agent_name=healthdesk`.
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-The supervisord config runs the worker alongside the API in the same container.
+No supervisord, no second process — `uvicorn app.main:app` is the only thing running in the container.
 
-### 2d. Ring **+1 484 270 7025**
+### 2d. Ring your Twilio number
 
-Dial from any phone. Cost: $0 to caller carrier + LiveKit's free 50 inbound minutes.
+Dial from any phone. Cost profile: Twilio's per-minute inbound rate (varies by number/country, typically ~$0.0085/min for a US number) + $0.0043/min Deepgram + ~$0.30 per 1k chars ElevenLabs. Under $5/day at demo volumes.
 
-**Cost profile after free tier**: ~$0.03/min inbound (US number, LiveKit) + $0.0043/min Deepgram + ~$0.30 per 1k chars ElevenLabs. Under $5/day at demo volumes.
+### 2e. Browser call widget — no phone number needed
+
+There's a second voice entry point that customers reach without dialing anything: **`https://maindesk.otito.site/voice/web`**. It's a self-hosted WebRTC transport (Pipecat's `SmallWebRTCTransport`, backed by `aiortc`) — no Twilio, no third-party WebRTC vendor, no extra credentials beyond the `DEEPGRAM_API_KEY` / `ELEVENLABS_API_KEY` / `DASHSCOPE_API_KEY` already set above. It talks to the exact same agent pipeline (`app/voice/bot.py`) as the phone line.
+
+Embed it on a clinic's site with an iframe, same pattern as `/chat`:
+```html
+<iframe src="https://maindesk.otito.site/voice/web" width="380" height="420" style="border:0"></iframe>
+```
+
+`/health/gateways` reports the phone and web voice paths separately (`voice.phone` / `voice.web`) since they have different credential requirements — the web widget can be `true` even with no Twilio account at all.
+
+**Known limitation**: the widget only configures a public STUN server (no TURN relay), so a small fraction of visitors behind strict corporate/symmetric NATs won't be able to connect. Fine for a demo; worth adding a TURN server (e.g. via Twilio's own TURN service or a self-hosted `coturn`) before relying on it for real customer traffic at scale.
 
 ---
 
@@ -181,7 +191,7 @@ Example response when everything's wired:
   "web":      { "endpoint": "POST /webhooks/web",       "live": true,  ... },
   "whatsapp": { "endpoint": "POST /webhooks/whatsapp",  "live": true,  ... },
   "email":    { "endpoint": "POST /webhooks/email",     "live": true,  ... },
-  "voice":    { "endpoint": "LiveKit worker",           "live": true,  ... },
+  "voice":    { "endpoint": "WS /voice/twilio/media",   "live": true,  ... },
   "summary":  { "total": 4, "live": 4 }
 }
 ```

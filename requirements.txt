@@ -39,17 +39,14 @@ google-auth==2.35.0
 # ── Supabase / pgvector ─────────────────────────────────────────────────
 supabase==2.31.0          # latest stable, Jun 2026
 
-# ── LiveKit Agents 1.x ──────────────────────────────────────────────────
-# All four plugins below were cut on the same 1.5.18 train (Jun 5 2026)
-# and declare `livekit-agents>=1.5.x`. Pin agents to 1.5.17 (the latest
-# *unyanked* release: 1.5.18 itself was yanked as "not ready"; plugins
-# still install fine against 1.5.17). The plugins do not pin agents to
-# an exact patch, so this combination resolves cleanly.
-livekit-agents==1.5.17
-livekit-plugins-openai==1.5.17        # LLM(base_url=…) accepted — Qwen via DashScope
-livekit-plugins-deepgram==1.5.17      # supports model="nova-3"
-livekit-plugins-elevenlabs==1.5.17    # supports model="eleven_flash_v2_5"
-livekit-plugins-silero==1.5.17        # silero.VAD.load() unchanged
+# ── Pipecat (voice pipeline) ─────────────────────────────────────────────
+# Telephony is Twilio Media Streams (WebSocket) and a self-hosted browser
+# widget (SmallWebRTC, via aiortc — no third-party WebRTC vendor), both
+# embedded directly in the FastAPI app — no separate worker process.
+# Extras: deepgram/elevenlabs/silero services, openai-compatible LLM (used
+# against DashScope's compatible-mode endpoint), the FastAPI websocket
+# transport (Twilio), and webrtc (browser widget; pulls in aiortc).
+pipecat-ai[deepgram,elevenlabs,openai,silero,websocket,webrtc]==1.5.0
 
 # ── MCP server ──────────────────────────────────────────────────────────
 # Official Model Context Protocol SDK; FastMCP stdio server in app/mcp/.

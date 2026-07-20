@@ -14,7 +14,7 @@ Most agent-demo submissions are *"ChatGPT with a webhook"* — stateless, generi
 
 1. **Patient-specific memory that survives sessions.** Recalled from pgvector on every turn, on every channel, with decay-aware re-ranking. The agent volunteers context the patient never mentioned in the current message ("I see you prefer afternoons after 3pm").
 2. **Strict grounding.** It refuses to invent clinic-specific facts — hours, prices, doctors, insurance — and offers to check with staff instead. *"I don't know"* is a feature.
-3. **Channel parity.** WhatsApp, web, and voice all use the same memory layer and the same tool implementations. Voice is not a stripped-down sibling; it has full feature parity via LiveKit's `llm_node` hook + `@function_tool` decorators.
+3. **Channel parity.** WhatsApp, web, and voice all use the same memory layer and the same tool implementations. Voice is not a stripped-down sibling; it has full feature parity via a Pipecat frame processor for memory recall + direct-function tool calls.
 
 ---
 
@@ -22,7 +22,7 @@ Most agent-demo submissions are *"ChatGPT with a webhook"* — stateless, generi
 
 ```mermaid
 flowchart TB
-    VOICE["📞 Voice<br/>LiveKit · Deepgram · ElevenLabs"]
+    VOICE["📞 Voice<br/>Twilio · Deepgram · ElevenLabs"]
     WA["💬 WhatsApp<br/>Evolution API v2"]
     WEB["🌐 Web chat"]
     EMAIL["✉️ Email<br/>provider webhook"]
@@ -47,9 +47,9 @@ flowchart TB
         HANDOFF --> WRITER
     end
 
-    subgraph VOICEW["LiveKit voice worker — own process"]
-        LLMNODE["llm_node → memory recall"]
-        FTOOLS["@function_tool<br/>find · book · reschedule · cancel · escalate"]
+    subgraph VOICEW["Pipecat voice pipeline — in-process, per-call"]
+        LLMNODE["MemoryRecallProcessor → memory recall"]
+        FTOOLS["direct-function tools<br/>find · book · reschedule · cancel · escalate"]
     end
 
     MCP["MCP server · 7 clinic tools<br/>(Claude Desktop / Cursor)"]
@@ -124,9 +124,9 @@ flowchart TB
 
 > Static render for slides/print: [`docs/architecture.png`](docs/architecture.png).
 >
-> **Legend:** 🟦 channels · ⬜ gateway · 🟪 agent brain (text graph + voice worker) · 🟩 shared tool layer · 🟨 Postgres/pgvector · 🟥 ops surfaces (`/staff`, `/onboarding`, n8n) · 🟧 external (MCP, Google Calendar).
+> **Legend:** 🟦 channels · ⬜ gateway · 🟪 agent brain (text graph + voice pipeline) · 🟩 shared tool layer · 🟨 Postgres/pgvector · 🟥 ops surfaces (`/staff`, `/onboarding`, n8n) · 🟧 external (MCP, Google Calendar).
 
-The shape of the system is the headline: **four channels and an MCP server all funnel into one shared tool layer**, so booking / reschedule / cancel / escalation behave identically everywhere and write once to Postgres (the source of truth) while mirroring to Google Calendar. Decay-weighted pgvector memory feeds both the text graph and the voice worker; clinic config set in the onboarding wizard is read live by both.
+The shape of the system is the headline: **four channels and an MCP server all funnel into one shared tool layer**, so booking / reschedule / cancel / escalation behave identically everywhere and write once to Postgres (the source of truth) while mirroring to Google Calendar. Decay-weighted pgvector memory feeds both the text graph and the voice pipeline; clinic config set in the onboarding wizard is read live by both.
 
 | Layer | Tech |
 |---|---|
@@ -136,7 +136,7 @@ The shape of the system is the headline: **four channels and an MCP server all f
 | Orchestration | LangGraph 1.x with AsyncPostgresSaver checkpointing |
 | Voice STT | Deepgram Nova-3 |
 | Voice TTS | ElevenLabs Flash v2.5 |
-| Voice runtime | LiveKit Agents 1.5 |
+| Voice runtime | Pipecat 1.5, Twilio Media Streams |
 | WhatsApp transport | Evolution API v2 (`evoapicloud/evolution-api`) |
 | Email transport | Provider webhook + send (Postmark-shaped, swappable) |
 | Calendar | Google Calendar v3 — free/busy + booking mirror; local fallback |
@@ -154,7 +154,7 @@ The shape of the system is the headline: **four channels and an MCP server all f
 - Docker Desktop (for Postgres + pgvector + n8n)
 - Python 3.12 (the pinned deps don't yet have wheels for 3.14)
 - A Qwen API key from Alibaba Model Studio (international console)
-- For voice: a LiveKit Cloud project + Deepgram + ElevenLabs API keys
+- For voice: a Twilio account + phone number, plus Deepgram + ElevenLabs API keys
 - For WhatsApp: an Evolution API v2 instance (e.g. deployed on Railway with `evoapicloud/evolution-api:latest`)
 
 ### Bring up the stack
@@ -163,7 +163,7 @@ The shape of the system is the headline: **four channels and an MCP server all f
 # 1. Copy and fill the environment file
 cp .env.example .env
 # At minimum: DASHSCOPE_API_KEY, QWEN_API_BASE
-# For full demo: + DATABASE_URL, EVOLUTION_*, LIVEKIT_*, DEEPGRAM_*, ELEVENLABS_*
+# For full demo: + DATABASE_URL, EVOLUTION_*, TWILIO_*, DEEPGRAM_*, ELEVENLABS_*
 
 # 2. Bring up Postgres on host port 5433 (avoids collisions with a native install)
 docker compose up -d postgres
@@ -171,11 +171,10 @@ docker compose up -d postgres
 # 3. Seed three demo patients with memories embedded against Qwen
 python -m evals.seed_demo
 
-# 4. Start the FastAPI gateway (WhatsApp + web)
+# 4. Start the FastAPI gateway (WhatsApp + web + voice — one process)
 uvicorn app.main:app --reload
-
-# 5. (Optional) Start the voice worker against LiveKit Cloud
-python -m app.voice.agent_worker dev
+# Voice needs a public URL for Twilio to reach; tunnel with e.g. `ngrok http 8000`
+# and point the Twilio number's voice webhook at <ngrok-url>/voice/twilio/incoming
 ```
 
 ### Smoke tests
@@ -193,7 +192,7 @@ curl -X POST localhost:8000/webhooks/web \
 # Intent eval (30 cases, hits real Qwen)
 python -m evals.run_intent_eval
 
-# Full test suite — 111 cases, no Qwen/LiveKit/Postgres required
+# Full test suite — no Qwen/Twilio/Postgres required
 pytest
 ```
 
@@ -242,10 +241,13 @@ app/
   mcp/
     server.py              FastMCP stdio server — clinic tools for MCP clients
   voice/
-    agent_worker.py        LiveKit Agents 1.x worker w/ full parity:
-                           - llm_node override → memory recall
-                           - @function_tool methods (find/book/escalate)
-                           - on_exit → session memory write-back
+    bot.py                 Pipecat pipeline w/ full parity:
+                           - MemoryRecallProcessor → memory recall
+                           - direct-function tools (find/book/escalate)
+                           - call-end → session memory write-back
+    router.py              Twilio TwiML webhook + Media Stream websocket
+    webrtc_router.py        Browser call widget (SmallWebRTC/aiortc, no Twilio needed)
+    templates/web_widget.html  Embeddable "call the front desk" widget page
 supabase/migrations/
   0001_init.sql            pgvector(1024), patients, memories, appointments
 n8n/
@@ -258,10 +260,8 @@ evals/
     intent_eval_results.json  committed output of the last eval run
   memory_recall_cases.json 10 scripted recall scenarios
   seed_demo.py             3 demo patients × 8 memories (embedded via Qwen)
-deploy/
-  supervisord.conf         gateway + voice supervisor (for single-container deploy)
-tests/                     111 cases, all green
-Dockerfile                 supervisord-based image (FastAPI + voice worker)
+tests/                     all green
+Dockerfile                 single-process image (uvicorn — gateway + voice, no separate worker)
 docker-compose.yml         app + postgres(pgvector) + n8n
 ```
 
@@ -339,7 +339,7 @@ When a patient messages or calls, the agent uses the recovered memories without 
 |---|---|---|---|---|---|
 | WhatsApp | live (Evolution v2) | live | ✅ | ✅ | ✅ |
 | Web | live | live | ✅ | ✅ | ✅ |
-| Voice | live (LiveKit Cloud) | live | ✅ | ✅ | ✅ |
+| Voice | live (Twilio) | live | ✅ | ✅ | ✅ |
 | Email | live (provider webhook) | live (threaded reply) | ✅ (by email) | ✅ | ✅ |
 
 | Capability | Status |
@@ -370,8 +370,9 @@ When a patient messages or calls, the agent uses the recovered memories without 
 - **No real patient data.** Synthetic only. PHI handling is considered in the design but production HIPAA infrastructure is out of scope for the hackathon.
 - **Secret redaction.** Every outbound reply passes through `gateway.redact.redact()` before reaching the platform.
 - **Webhook auth.** WhatsApp webhooks support three auth modes (HMAC `X-Hub-Signature-256`, shared-secret token + IP allowlist, or Evolution v2's `apikey` header), switched via `EVOLUTION_AUTH_MODE`.
-- **Voice as a flag.** Set `HEALTHDESK_VOICE=false` to disable the voice worker if LiveKit Cloud isn't available.
-- **Caller identity in voice demos.** Browser-based voice uses `HEALTHDESK_DEMO_PATIENT_PHONE` to identify the caller (so recall demos work). SIP-driven sessions would use the real caller ID via room metadata.
+- **Voice as a flag.** Set `HEALTHDESK_VOICE=false` to disable voice if Twilio/Deepgram/ElevenLabs credentials aren't available.
+- **Two ways into voice.** A Twilio phone number (`/voice/twilio/incoming`) and a self-hosted browser call widget (`/voice/web`, embeddable via iframe) both run the same Pipecat pipeline. The widget needs no Twilio account — just Deepgram/ElevenLabs/DashScope — since it's WebRTC via `aiortc`, not a telephony vendor.
+- **Caller identity in voice demos.** Real Twilio calls resolve the caller from the `From` number automatically. Local websocket-client testing (no real PSTN call) falls back to `HEALTHDESK_DEMO_PATIENT_PHONE` so recall demos still work.
 
 ---
 

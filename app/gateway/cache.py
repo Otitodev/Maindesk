@@ -1,7 +1,7 @@
 """Time-aware LRU session cache for non-voice channels (TRD §6.2).
 
-LiveKit voice sessions are managed by the LiveKit worker process and do
-not use this cache.
+Voice sessions are managed per-call by the Pipecat pipeline (app.voice.bot)
+and do not use this cache.
 """
 
 from time import monotonic

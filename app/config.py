@@ -21,14 +21,17 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_key: str = ""
 
-    # LiveKit
-    livekit_url: str = ""
-    livekit_api_key: str = ""
-    livekit_api_secret: str = ""
+    # Twilio (voice telephony — Media Streams over WebSocket)
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
 
     # STT / TTS
     deepgram_api_key: str = ""
     elevenlabs_api_key: str = ""
+    # Pipecat's ElevenLabsTTSService requires an explicit voice id (the old
+    # LiveKit plugin had a built-in default; Pipecat does not). Defaults to
+    # ElevenLabs' stock "Rachel" voice — override per clinic if desired.
+    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
 
     # WhatsApp / Evolution API
     evolution_api_url: str = ""
@@ -55,9 +58,10 @@ class Settings(BaseSettings):
     # POSTs so the end-to-end loop is testable without a live Evolution
     # instance or Postmark server. Never enable in production.
     healthdesk_demo_mode: bool = False
-    # Phone used to identify the caller when LiveKit gives us no metadata
-    # (e.g. browser-based Agents Playground sessions). Maps to a seeded
-    # patient via memory.profile.resolve_by_phone so recall still works.
+    # Phone used to identify the caller when Twilio gives us no caller ID
+    # (e.g. local websocket test-client sessions with no real PSTN call).
+    # Maps to a seeded patient via memory.profile.resolve_by_phone so
+    # recall still works.
     healthdesk_demo_patient_phone: str = ""
 
     # Web chat

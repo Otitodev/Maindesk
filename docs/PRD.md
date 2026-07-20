@@ -5,6 +5,8 @@
 **Author:** Otito Ogene  
 **Submission:** Global AI Hackathon Series with Qwen Cloud — Track 4: Autopilot Agent
 
+> **Post-submission update:** the voice layer described below (LiveKit Agents + native SIP) was replaced with **Pipecat + Twilio Media Streams**. See `docs/GATEWAYS_SETUP.md` §2 for current setup steps. The rest of this document still reflects the live system.
+
 ---
 
 ## 1. Overview
