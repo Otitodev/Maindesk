@@ -30,7 +30,11 @@ jobs:
             echo "[deploy] fetching from origin"
             git fetch origin
             git checkout main
-            git pull --ff-only origin main
+            # Hard reset, not a fast-forward pull: the deploy target should
+            # always match origin/main exactly, including after a history
+            # rewrite (e.g. a git-filter-repo scrub), which a --ff-only pull
+            # would reject outright.
+            git reset --hard origin/main
             echo "[deploy] rebuilding + restarting stack"
             docker compose -f docker-compose.prod.yml up -d --build
             echo "[deploy] waiting for /health"
