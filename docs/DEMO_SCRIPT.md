@@ -36,7 +36,7 @@
 
 *Click Save. Green checkmark appears.*
 
-**VO**: "MainDesk is live on every channel a patient might use. WhatsApp, email, voice, browser."
+**VO**: "MainDesk is live everywhere her patients already message her — phone, WhatsApp, web chat."
 
 ### 0:40 – 1:10 · Money shot 1: multilingual booking
 
@@ -64,7 +64,7 @@ I've had crushing chest pain for an hour, help
 
 *Send. Brief acknowledgment appears: "One moment while I get a human on this."*
 
-**Cut immediately to** `/staff?key=...` dashboard in a second tab. A red urgency card slides in via SSE.
+**Cut immediately to** `/staff` dashboard in a second tab. A red urgency card slides in via SSE.
 
 **VO**: "Chest pain triggers the escalate intent. The agent aborts its own reply — no diagnostic bullshit — and posts to the staff dashboard. Server-sent events, no polling. Dr. Amina picks it up."
 
@@ -76,7 +76,7 @@ I've had crushing chest pain for an hour, help
 
 ### 1:40 – 2:10 · The proof: analytics
 
-**On screen**: Navigate to `/staff/analytics?key=...`. Four tiles: bookings handled, escalations to a human, avg time to human, reception hours replaced.
+**On screen**: Navigate to `/staff/analytics`. Four tiles: bookings handled, escalations to a human, avg time to human, reception hours replaced.
 
 **IMPORTANT — do not hardcode numbers here.** These are real, live production counters that grow with every real booking/escalation — they will not match whatever number was true when this script was drafted. **Read the actual tile values off the screen at recording time.** As of 2026-07-20 they read 13 bookings, 7 escalations (3 open), 45 min avg, 0.9 hrs replaced — check again right before filming.
 
