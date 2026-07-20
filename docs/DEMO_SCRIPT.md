@@ -104,7 +104,7 @@ I've had crushing chest pain for an hour, help
 
 **On screen**: Cut back to the landing page hero. `maindesk.otito.site/chat` visible in the URL bar.
 
-**VO**: "Deployed on Alibaba Cloud ECS in Singapore. Two hundred seventeen tests green. Thirty-two of thirty-three on the intent eval — including all three Mandarin cases. Live now at maindesk.otito.site."
+**VO**: "Deployed on Alibaba Cloud ECS in Singapore. Two hundred twenty-two tests green. Thirty-two of thirty-three on the intent eval — including all three Mandarin cases. Live now at maindesk.otito.site."
 
 *(Test count verified via `pytest -q` and eval numbers via `python -m evals.run_intent_eval` on 2026-07-20 — re-run both right before recording if anything's changed since.)*
 
@@ -128,7 +128,7 @@ I've had crushing chest pain for an hour, help
 ## Voiceover writing rules
 
 - **Present tense, active voice.** "The agent replies." Not "The agent will reply."
-- **Concrete numbers earn attention.** "215 tests," "62 hours," "$0.30 per booking," "9 AM slot."
+- **Concrete numbers earn attention.** "222 tests," "62 hours," "$0.30 per booking," "9 AM slot."
 - **Say Qwen model names out loud.** `qwen3.7-plus`, `qwen3.6-flash`, `text-embedding-v4`. Judging weight #1 rewards visible Qwen usage; audible counts too.
 - **One idea per sentence.** If a sentence has two commas, split it.
 - **Read the whole script out loud with a stopwatch before recording.** 3:00 hard cap means the read has to come in at 2:50 to survive edits and breathing space.

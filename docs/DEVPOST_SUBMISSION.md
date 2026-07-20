@@ -32,7 +32,7 @@ We also learned not to trust "it's probably fine" about test infrastructure. Par
 
 ### Accomplishments we're proud of
 
-Three of four patient facing gateways verified live in production right now, including voice, twice over: phone and browser widget. 217 automated tests passing, and 32 of 33 on the intent classification eval against live Qwen, including all three Mandarin cases, not a cached result. A human in the loop escalation that actually closes the loop end to end, and cross channel memory that surfaces on its own instead of on request.
+Three of four patient facing gateways verified live in production right now, including real phone voice through Twilio. 222 automated tests passing, and 32 of 33 on the intent classification eval against live Qwen, including all three Mandarin cases, not a cached result. A human in the loop escalation that actually closes the loop end to end, and cross channel memory that surfaces on its own instead of on request.
 
 ### What we learned
 
@@ -64,10 +64,7 @@ Claude Code (Anthropic) was used throughout the build: the LangGraph orchestrato
 Web chat, no login needed: https://maindesk.otito.site/chat
 Try a normal question, then try 你好，我想预约下周二的检查 to see the multilingual booking flow.
 
-Voice by browser, no phone needed: https://maindesk.otito.site/voice/web
-Click "Call the front desk," allow microphone access, and speak.
-
-Voice by phone: dial [FILL IN YOUR TWILIO NUMBER]
+Voice by phone: dial +1 (218) 307-4659
 
 Staff dashboard, human in the loop queue: https://maindesk.otito.site/staff
 No key is currently required to view it.
@@ -85,5 +82,4 @@ Live gateway status for all four channels: https://maindesk.otito.site/health/ga
 - Architecture diagram file upload: export a PNG from `docs/architecture.mmd` in Excalidraw first, the committed `docs/architecture.png` is stale
 - Screenshot proving Alibaba Cloud deployment: this one wants an actual image, a screenshot of your ECS console showing the running instance, or of `docker compose ps` on the box itself
 - Blog or social post URL: fill in once `docs/BLOG_POST.md` is published to dev.to
-- The Twilio phone number in the testing instructions above
 - Whether you want judges messaging a real WhatsApp number tested live, and if so, what that number is

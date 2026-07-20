@@ -104,7 +104,7 @@ The multilingual part is free — the embedding model handles it. `患者对青�
 - **Ingress**: FastAPI + slowapi rate limiter + Caddy 2 TLS reverse proxy
 - **Deployment**: Docker Compose on Alibaba Cloud ECS `ecs.e-c1m2.large` in Singapore
 - **Human-in-loop**: FastAPI + HTMX + SSE dashboard at `/staff`
-- **Tests**: 217 passing, plus a 33-case intent eval (97% accuracy) that includes three Mandarin cases
+- **Tests**: 222 passing, plus a 33-case intent eval (97% accuracy) that includes three Mandarin cases
 
 Six containers of complexity, ~7,200 lines of Python, one weekend's worth of Alibaba Cloud console clicks, and a small amount of yelling at PowerShell's argument parser.
 
