@@ -108,7 +108,7 @@ ssh -i ~/.ssh/maindesk-ecs.pem root@<ecs-public-ip>
 On the ECS box:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Otitodev/healthdesk-ai/main/deploy/bootstrap.sh -o bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/Otitodev/Maindesk/main/deploy/bootstrap.sh -o bootstrap.sh
 chmod +x bootstrap.sh
 sudo ./bootstrap.sh
 ```
@@ -192,7 +192,7 @@ Use: **`app/agents/qwen_client.py`** — it holds all DashScope API calls (Qwen-
 Paste this URL into the Devpost field:
 
 ```
-https://github.com/Otitodev/healthdesk-ai/blob/main/app/agents/qwen_client.py
+https://github.com/Otitodev/Maindesk/blob/main/app/agents/qwen_client.py
 ```
 
 Add a screenshot of the running ECS instance from the console (Instance detail → Overview tab) to the Devpost images section. Judges will see the region, instance ID, public IP, and running state — undeniable proof.

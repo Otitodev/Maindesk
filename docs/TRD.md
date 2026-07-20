@@ -669,7 +669,7 @@ Triggered by the Week-1 exit gate in the PRD timeline. If the gate selects Whats
 ## 14. Repository Structure
 
 ```
-healthdesk-ai/
+Maindesk/
 ├── app/
 │   ├── main.py
 │   ├── gateway/

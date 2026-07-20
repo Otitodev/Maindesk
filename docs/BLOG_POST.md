@@ -20,7 +20,7 @@ A clinic's autonomous front desk that answers on **every channel a patient might
 
 The whole thing runs on a **$32/month Alibaba Cloud ECS box** in Singapore, with TLS via Let's Encrypt at [maindesk.otito.site](https://maindesk.otito.site/chat). Try `你好，我想预约下周二的检查` in the widget — it works, and it comes back in Mandarin with real appointment slots.
 
-Code: [github.com/Otitodev/healthdesk-ai](https://github.com/Otitodev/healthdesk-ai).
+Code: [github.com/Otitodev/Maindesk](https://github.com/Otitodev/Maindesk).
 
 Now, the interesting bits.
 
@@ -117,8 +117,8 @@ Two things I'd tell past-me:
 
 That's the build.
 
-- Repo: [github.com/Otitodev/healthdesk-ai](https://github.com/Otitodev/healthdesk-ai)
+- Repo: [github.com/Otitodev/Maindesk](https://github.com/Otitodev/Maindesk)
 - Live demo: [maindesk.otito.site/chat](https://maindesk.otito.site/chat)
-- Docs: [DEPLOY_ALIBABA_ECS.md](https://github.com/Otitodev/healthdesk-ai/blob/main/docs/DEPLOY_ALIBABA_ECS.md), [DEMO_SCRIPT.md](https://github.com/Otitodev/healthdesk-ai/blob/main/docs/DEMO_SCRIPT.md)
+- Docs: [DEPLOY_ALIBABA_ECS.md](https://github.com/Otitodev/Maindesk/blob/main/docs/DEPLOY_ALIBABA_ECS.md), [DEMO_SCRIPT.md](https://github.com/Otitodev/Maindesk/blob/main/docs/DEMO_SCRIPT.md)
 
 Questions in the comments. If you're grinding on the hackathon too, good luck — submissions close July 20.

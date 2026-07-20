@@ -3,7 +3,7 @@
 # Idempotent: safe to re-run. Root or sudo required.
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/Otitodev/healthdesk-ai.git}"
+REPO_URL="${REPO_URL:-https://github.com/Otitodev/Maindesk.git}"
 CLONE_DIR="${CLONE_DIR:-/opt/maindesk}"
 BRANCH="${BRANCH:-main}"
 

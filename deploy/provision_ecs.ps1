@@ -177,7 +177,7 @@ Write-Host "  Key file    : $KeyOutPath"
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Yellow
 Write-Host "    ssh -i $KeyOutPath root@$PublicIp"
-Write-Host "    curl -fsSL https://raw.githubusercontent.com/Otitodev/healthdesk-ai/main/deploy/bootstrap.sh -o bootstrap.sh"
+Write-Host "    curl -fsSL https://raw.githubusercontent.com/Otitodev/Maindesk/main/deploy/bootstrap.sh -o bootstrap.sh"
 Write-Host "    chmod +x bootstrap.sh && sudo ./bootstrap.sh"
 Write-Host ""
 Write-Host "  To release everything later:"

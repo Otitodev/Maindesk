@@ -50,7 +50,7 @@ Self serve signup for multiple clinics instead of one deployment each, a signed 
 
 **URL to a code file proving Alibaba Cloud deployment**
 ```
-https://github.com/Otitodev/healthdesk-ai/blob/main/deploy/provision_ecs.ps1
+https://github.com/Otitodev/Maindesk/blob/main/deploy/provision_ecs.ps1
 ```
 This script calls the Alibaba Cloud CLI directly (`aliyun ecs CreateVpc`, `aliyun ecs RunInstances`, security groups, key pairs, all of it) to stand up the actual box `maindesk.otito.site` runs on. It is the clearest single file showing real API usage rather than a generic Docker setup, so link this one specifically rather than `docker-compose.prod.yml`.
 
