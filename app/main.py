@@ -11,6 +11,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -54,6 +55,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="MainDesk", version="0.1.0", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# The embeddable widget (landingpage/widget/maindesk-widget.js) is meant to
+# run on arbitrary clinic websites, so /webhooks/web and /voice/web/* need
+# cross-origin fetches from origins we can't know in advance. No credentials
+# (cookies/auth headers) are exchanged, so a wildcard origin doesn't expose
+# anything a same-origin request wouldn't; app-level auth (WEB_API_KEY, the
+# per-call WebRTC handshake) is unaffected by CORS either way.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH"],
+    allow_headers=["Content-Type", "X-API-Key"],
+)
 app.include_router(whatsapp_router)
 app.include_router(web_router)
 app.include_router(email_router)

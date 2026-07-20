@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Widget embed test — pretend third-party clinic site</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 720px; margin: 60px auto; padding: 0 20px; }
+    h1 { font-size: 1.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Example Family Clinic (not really — this is a test page)</h1>
+  <p>This page stands in for a real clinic's own website. It is served from the same origin as the widget script here for convenience, but the widget itself talks cross-origin to the API base below regardless of what page it's embedded on — that's the point of this test.</p>
+  <p>Click the floating button in the bottom-right corner to try voice and chat.</p>
+
+  <script src="/widget/maindesk-widget.js"
+          data-api-base="https://maindesk.otito.site"
+          data-mode="dual"
+          data-color="#3d8f96"
+          data-title="MainDesk"
+          data-subtitle="Voice & Chat Support"
+          data-agent-name="Danny"
+          data-fab-text="Chat or Talk to Danny"></script>
+</body>
+</html>
