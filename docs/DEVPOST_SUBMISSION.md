@@ -44,11 +44,46 @@ Self serve signup for multiple clinics instead of one deployment each, a signed 
 
 ---
 
-## Submission checklist
+## Additional info, for judges and organizers
 
-- [ ] Video URL (YouTube, Vimeo, or Facebook, public): ___________
-- [ ] Repo URL: https://github.com/Otitodev/healthdesk-ai
-- [ ] Live demo URL: https://maindesk.otito.site
-- [ ] Track: Track 4, Autopilot Agent
-- [ ] Proof of Alibaba Cloud deployment: link the live URL above, consider attaching an ECS console screenshot as backup
-- [ ] Architecture diagram: `docs/architecture.png` (re export from `docs/architecture.mmd` first, the committed PNG is stale)
+### Ready to paste as is
+
+**URL to a code file proving Alibaba Cloud deployment**
+```
+https://github.com/Otitodev/healthdesk-ai/blob/main/deploy/provision_ecs.ps1
+```
+This script calls the Alibaba Cloud CLI directly (`aliyun ecs CreateVpc`, `aliyun ecs RunInstances`, security groups, key pairs, all of it) to stand up the actual box `maindesk.otito.site` runs on. It is the clearest single file showing real API usage rather than a generic Docker setup, so link this one specifically rather than `docker-compose.prod.yml`.
+
+**Which AI tools have you leveraged**
+```
+Claude Code (Anthropic) was used throughout the build: the LangGraph orchestrator, the memory and escalation tooling, the migration of the voice channel from LiveKit to Pipecat and Twilio, adding a self hosted browser call widget as a second voice entry point, and general debugging and deployment work. All AI generated code was reviewed and tested before being committed, including a full pass verifying every claim in this submission against the live, running product rather than assuming past documentation was still accurate.
+```
+
+**Testing instructions for judges**
+```
+Web chat, no login needed: https://maindesk.otito.site/chat
+Try a normal question, then try 你好，我想预约下周二的检查 to see the multilingual booking flow.
+
+Voice by browser, no phone needed: https://maindesk.otito.site/voice/web
+Click "Call the front desk," allow microphone access, and speak.
+
+Voice by phone: dial [FILL IN YOUR TWILIO NUMBER]
+
+Staff dashboard, human in the loop queue: https://maindesk.otito.site/staff
+No key is currently required to view it.
+
+Try an escalation from the chat widget: a message like "I've had crushing chest pain for an hour" will pause the normal reply and post to the staff dashboard within a couple of seconds.
+
+Live gateway status for all four channels: https://maindesk.otito.site/health/gateways
+```
+
+### Needs your own input, not something I can fill in
+
+- Submitter type, organization name if any, and country of residence
+- Start date is already prefilled as 6/9/2026 in the form, which matches the project's own PRD and TRD documents, so no correction needed
+- New vs existing project: New is correct
+- Architecture diagram file upload: export a PNG from `docs/architecture.mmd` in Excalidraw first, the committed `docs/architecture.png` is stale
+- Screenshot proving Alibaba Cloud deployment: this one wants an actual image, a screenshot of your ECS console showing the running instance, or of `docker compose ps` on the box itself
+- Blog or social post URL: fill in once `docs/BLOG_POST.md` is published to dev.to
+- The Twilio phone number in the testing instructions above
+- Whether you want judges messaging a real WhatsApp number tested live, and if so, what that number is
